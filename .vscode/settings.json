@@ -3,6 +3,7 @@
         "isbot",
         "Pipeable",
         "Quickstart",
+        "tailwindcss",
         "typecheck"
     ]
 }
