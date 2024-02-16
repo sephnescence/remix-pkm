@@ -1,4 +1,5 @@
-import { cssBundleHref } from '@remix-run/css-bundle'
+import styles from '~/tailwind.css'
+
 import type {
   LinksFunction,
   LoaderFunction,
@@ -12,13 +13,12 @@ import {
   Scripts,
   ScrollRestoration,
 } from '@remix-run/react'
+import faviconAssetUrl from './assets/favicon.svg'
 
 import { rootAuthLoader } from '@clerk/remix/ssr.server'
 import { ClerkApp, ClerkErrorBoundary } from '@clerk/remix'
 
-export const links: LinksFunction = () => [
-  ...(cssBundleHref ? [{ rel: 'stylesheet', href: cssBundleHref }] : []),
-]
+export const links: LinksFunction = () => [{ rel: 'stylesheet', href: styles }]
 export const meta: MetaFunction = () => [
   { title: 'New Remix App' },
   { charset: 'utf-8' },
@@ -35,6 +35,7 @@ function App() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" type="image/svg+xml" href={faviconAssetUrl} />
         <Meta />
         <Links />
       </head>
