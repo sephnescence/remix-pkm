@@ -1,4 +1,4 @@
-import { RedirectToSignIn, SignedIn, SignedOut } from '@clerk/remix'
+import { RedirectToSignIn, SignedIn, SignedOut, UserButton } from '@clerk/remix'
 
 export default function Blake() {
   return (
@@ -11,6 +11,7 @@ export default function Blake() {
           <div className="max-w-[600px] w-full mx-auto">
             <h1 className="text-6xl mb-4">The best journal app, period.</h1>
             <p className="text-2xl text-white/60 mb-4">You&apos;re all set!</p>
+            <UserButton afterSignOutUrl="/" />
           </div>
         </div>
       </SignedIn>
