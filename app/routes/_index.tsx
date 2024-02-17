@@ -1,6 +1,9 @@
+import { useAuth } from '@clerk/remix'
 import { Link } from '@remix-run/react'
 
 export default function Index() {
+  const { sessionId } = useAuth()
+
   return (
     <div className="w-screen h-screen bg-black flex justify-center items-center text-white">
       <div className="max-w-[600px] w-full mx-auto">
@@ -9,7 +12,7 @@ export default function Index() {
           All you have to do is be honest
         </p>
         <div>
-          <Link to="/sign-up">
+          <Link to={sessionId ? 'dashboard' : 'sign-up'}>
             <button className="bg-blue-600 px-4 py-2 rounded-lg" type="button">
               Get started
             </button>
