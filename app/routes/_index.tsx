@@ -5,20 +5,25 @@ export default function Index() {
   const { sessionId } = useAuth()
 
   return (
-    <div className="w-screen h-screen bg-black flex justify-center items-center text-white">
-      <div className="max-w-[600px] w-full mx-auto">
-        <h1 className="text-6xl mb-4">The best journal app, period.</h1>
-        <p className="text-2xl text-white/60 mb-4">
-          All you have to do is be honest
-        </p>
-        <div>
-          <Link to={sessionId ? 'dashboard' : 'sign-up'}>
-            <button className="bg-blue-600 px-4 py-2 rounded-lg" type="button">
-              Get started
-            </button>
-          </Link>
+    <>
+      <div className="w-screen h-screen bg-black flex justify-center items-center text-white">
+        <div className="">
+          <h1 className="text-5xl mb-4">Personal Knowledge Management</h1>
+          <p className="text-2xl text-white/60 mb-4">
+            Your journey starts here
+          </p>
+          <div>
+            <Link to={sessionId ? 'dashboard' : 'sign-up'}>
+              <button
+                className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg"
+                type="button"
+              >
+                Get started
+              </button>
+            </Link>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
