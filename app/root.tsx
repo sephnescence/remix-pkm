@@ -18,7 +18,10 @@ import faviconAssetUrl from './assets/favicon.svg'
 import { rootAuthLoader } from '@clerk/remix/ssr.server'
 import { ClerkApp, ClerkErrorBoundary } from '@clerk/remix'
 
-export const links: LinksFunction = () => [{ rel: 'stylesheet', href: styles }]
+export const links: LinksFunction = () => [
+  { rel: 'icon', type: 'image/svg+xml', href: faviconAssetUrl },
+  { rel: 'stylesheet', href: styles },
+]
 export const meta: MetaFunction = () => [
   { title: 'New Remix App' },
   { charset: 'utf-8' },
@@ -35,15 +38,18 @@ function App() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" type="image/svg+xml" href={faviconAssetUrl} />
         <Meta />
         <Links />
       </head>
-      <body>
-        <Outlet />
-        <ScrollRestoration />
-        <Scripts />
-        <LiveReload />
+      <body className="bg-black">
+        <div className="w-screen min-h-screen h-full bg-white/5 flex text-white">
+          <div className="max-w-[1200px] w-full mx-auto bg-white/5">
+            <Outlet />
+            <ScrollRestoration />
+            <Scripts />
+            <LiveReload />
+          </div>
+        </div>
       </body>
     </html>
   )
