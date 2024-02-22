@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  remix-pkm:
+    build:
+      context: .
+    command: 'npm run dev'
+    container_name: remix-pkm
+    env_file:
+      - .env
+    ports:
+      - '3100:3100'
+    volumes:
+      - .:/app
+      - /app/node_modules

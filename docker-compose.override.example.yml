@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  remix-pkm:
+    # Override these ports to avoid conflicting with other containers
+    command: 'npm run dev'
+    environment:
+      PORT: 3105
+    ports:
+      - '3105:3105'

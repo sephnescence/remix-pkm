@@ -1,3 +1,9 @@
+# Notes
+
+Refer to https://github.com/kiliman/remix-flat-routes?tab=readme-ov-file#conventions for how to name route files
+
+---
+
 # Welcome to Remix!
 
 - [Remix Docs](https://remix.run/docs)
