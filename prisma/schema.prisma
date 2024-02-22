@@ -1,0 +1,117 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PRISMA_DB_URL")
+}
+
+model User {
+  id String @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clerkId String @unique
+  email String @unique
+  name String?
+  username String @unique
+
+  pkm_history PkmHistory[]
+  epiphany_items PkmEpiphany[]
+  inbox_items PkmInbox[]
+  passing_thought_items PkmPassingThought[]
+  todo_items PkmTodo[]
+  voided_passing_thought_items PkmVoid[]
+}
+
+model PkmHistory {
+  history_id String @id @default(uuid()) @db.Uuid
+  model_id String @default(uuid()) @db.Uuid
+  model_type String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id String @db.Uuid
+
+  epiphany_item PkmEpiphany?
+  inbox_item PkmInbox?
+  passing_thought_item PkmPassingThought?
+  todo_item PkmTodo?
+  void_item PkmVoid?
+}
+
+model PkmEpiphany {
+  history_id String @id @default(uuid()) @db.Uuid
+  model_id String @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  content String
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id String @db.Uuid
+
+  // Not sure how to achieve polymorphism. I'm not sold on https://github.com/prisma/prisma/discussions/11108
+  history PkmHistory @relation(fields: [history_id], references: [history_id], onDelete: Cascade)
+}
+
+model PkmInbox {
+  history_id String @id @default(uuid()) @db.Uuid
+  model_id String @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  content String
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id String @db.Uuid
+
+  history PkmHistory @relation(fields: [history_id], references: [history_id], onDelete: Cascade)
+}
+
+model PkmPassingThought {
+  history_id String @id @default(uuid()) @db.Uuid
+  model_id String @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  content String
+  void_at DateTime
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id String @db.Uuid
+
+  history PkmHistory @relation(fields: [history_id], references: [history_id], onDelete: Cascade)
+}
+
+model PkmTodo {
+  history_id String @id @default(uuid()) @db.Uuid
+  model_id String @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  content String
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id String @db.Uuid
+
+  history PkmHistory @relation(fields: [history_id], references: [history_id], onDelete: Cascade)
+}
+
+model PkmVoid {
+  history_id String @id @default(uuid()) @db.Uuid
+  model_id String @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  content String
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id String @db.Uuid
+
+  history PkmHistory @relation(fields: [history_id], references: [history_id], onDelete: Cascade)
+}

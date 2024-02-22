@@ -13,3 +13,19 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
+
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    ports:
+      - '${DB_PORT}:5432'
+    environment:
+      POSTGRES_PASSWORD: '${DB_PASSWORD}'
+      POSTGRES_USER: '${DB_USERNAME}'
+      POSTGRES_DB: '${DB_DATABASE}'
+    volumes:
+      - 'sail-pgsql:/var/lib/postgresql/data'
+
+volumes:
+  sail-pgsql:
+    driver: local
