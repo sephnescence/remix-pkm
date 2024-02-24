@@ -1,6 +1,6 @@
 import { RedirectToSignIn, SignedIn, SignedOut, UserButton } from '@clerk/remix'
 import { Link, useLoaderData } from '@remix-run/react'
-import { db } from '../../../../utils/db'
+import { db } from '@/utils/db'
 
 export const loader = async () => {
   // Just using the test user for now
