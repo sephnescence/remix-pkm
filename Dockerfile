@@ -11,3 +11,7 @@ RUN cd /tmp && npm install
 WORKDIR /app
 
 RUN cp -a /tmp/node_modules /app/node_modules
+
+COPY prisma/schema.prisma /app/prisma/schema.prisma
+
+RUN npx prisma generate
