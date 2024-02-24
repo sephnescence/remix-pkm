@@ -6,7 +6,7 @@ export default function Index() {
 
   return (
     <>
-      <div className="w-screen h-screen bg-black flex justify-center items-center text-white">
+      <div className="w-full h-full bg-black/50 flex justify-center items-center">
         <div className="">
           <h1 className="text-5xl mb-4">Personal Knowledge Management</h1>
           <p className="text-2xl text-white/60 mb-4">
