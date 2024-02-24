@@ -11,8 +11,7 @@ export const loader: LoaderFunction = async (args) => {
     return redirect('/')
   }
 
-  // Just using the test user for now
-  const user = await db.user.findFirst({
+  const user = await db.user.findUnique({
     where: {
       clerkId: userId,
     },

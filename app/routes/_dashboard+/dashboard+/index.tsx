@@ -1,12 +1,18 @@
 import { RedirectToSignIn, SignedIn, SignedOut, UserButton } from '@clerk/remix'
-import { Link, useLoaderData } from '@remix-run/react'
+import { Link, redirect, useLoaderData } from '@remix-run/react'
 import { db } from '@/utils/db'
+import { getClerkId } from '@/utils/auth'
+import { LoaderFunctionArgs } from '@remix-run/node'
 
-export const loader = async () => {
+export const loader = async (args: LoaderFunctionArgs) => {
+  const clerkId = await getClerkId(args)
+  if (!clerkId) {
+    return redirect('/')
+  }
   // Just using the test user for now
   const user = await db.user.findFirst({
     where: {
-      clerkId: '00000000-0000-0000-0000-000000000000',
+      clerkId,
     },
     select: {
       pkm_history: {
@@ -44,7 +50,7 @@ export const loader = async () => {
   })
 
   /*
-    Interesting to not right now that this performs seven queries. It's probably easier to just pull
+    Interesting to note right now that this performs seven queries. It's probably easier to just pull
     from each of the tables separately? Though it doesn't have relationship info built in
 
     i.e.
@@ -57,26 +63,11 @@ export const loader = async () => {
     0ms SELECT "public"."PkmVoid"."history_id", "public"."PkmVoid"."content" FROM "public"."PkmVoid" WHERE "public"."PkmVoid"."history_id" IN ($1,$2,$3,$4,$5) OFFSET $6
   */
 
-  user?.pkm_history.map((history) => {
-    if (history.model_type === 'PkmEpiphany') {
-      console.log(history.epiphany_item?.content)
-    } else if (history.model_type === 'PkmInbox') {
-      console.log(history.inbox_item?.content)
-    } else if (history.model_type === 'PkmPassingThought') {
-      console.log(history.passing_thought_item?.content)
-    } else if (history.model_type === 'PkmTodo') {
-      console.log(history.todo_item?.content)
-    } else {
-      console.log(history.void_item?.content)
-    }
-  })
-
   return { history: user?.pkm_history }
 }
 
 export default function DashboardRoute() {
   const loaderData = useLoaderData<typeof loader>()
-  console.log(loaderData.history)
   return (
     <>
       <SignedOut>
@@ -106,7 +97,9 @@ export default function DashboardRoute() {
               })
               .map((item) => {
                 return (
-                  <div key={item.model_id}>{item.epiphany_item?.content}</div>
+                  <div key={item.model_id} className="ml-4">
+                    {item.epiphany_item?.content}
+                  </div>
                 )
               })}
             <div className="">
@@ -119,7 +112,11 @@ export default function DashboardRoute() {
                 return item.model_type === 'PkmInbox'
               })
               .map((item) => {
-                return <div key={item.model_id}>{item.inbox_item?.content}</div>
+                return (
+                  <div key={item.model_id} className="ml-4">
+                    {item.inbox_item?.content}
+                  </div>
+                )
               })}
             <div className="">
               <Link
@@ -135,7 +132,7 @@ export default function DashboardRoute() {
               })
               .map((item) => {
                 return (
-                  <div key={item.model_id}>
+                  <div key={item.model_id} className="ml-4">
                     {item.passing_thought_item?.content}
                   </div>
                 )
@@ -150,7 +147,11 @@ export default function DashboardRoute() {
                 return item.model_type === 'PkmTodo'
               })
               .map((item) => {
-                return <div key={item.model_id}>{item.todo_item?.content}</div>
+                return (
+                  <div key={item.model_id} className="ml-4">
+                    {item.todo_item?.content}
+                  </div>
+                )
               })}
             <div className="">
               <Link className="hover:underline" to="/dashboard/void/create">
@@ -162,7 +163,11 @@ export default function DashboardRoute() {
                 return item.model_type === 'PkmVoid'
               })
               .map((item) => {
-                return <div key={item.model_id}>{item.void_item?.content}</div>
+                return (
+                  <div key={item.model_id} className="ml-4">
+                    {item.void_item?.content}
+                  </div>
+                )
               })}
           </div>
         </div>
