@@ -42,6 +42,9 @@ model PkmHistory {
   passing_thought_item PkmPassingThought?
   todo_item PkmTodo?
   void_item PkmVoid?
+
+  // Add an index for non unique foreign keys
+  @@index([user_id])
 }
 
 model PkmEpiphany {
@@ -57,6 +60,9 @@ model PkmEpiphany {
 
   // Not sure how to achieve polymorphism. I'm not sold on https://github.com/prisma/prisma/discussions/11108
   history PkmHistory @relation(fields: [history_id], references: [history_id], onDelete: Cascade)
+
+  // Add an index for non unique foreign keys
+  @@index([user_id])
 }
 
 model PkmInbox {
@@ -71,6 +77,9 @@ model PkmInbox {
   user_id String @db.Uuid
 
   history PkmHistory @relation(fields: [history_id], references: [history_id], onDelete: Cascade)
+
+  // Add an index for non unique foreign keys
+  @@index([user_id])
 }
 
 model PkmPassingThought {
@@ -86,6 +95,9 @@ model PkmPassingThought {
   user_id String @db.Uuid
 
   history PkmHistory @relation(fields: [history_id], references: [history_id], onDelete: Cascade)
+
+  // Add an index for non unique foreign keys
+  @@index([user_id])
 }
 
 model PkmTodo {
@@ -100,6 +112,9 @@ model PkmTodo {
   user_id String @db.Uuid
 
   history PkmHistory @relation(fields: [history_id], references: [history_id], onDelete: Cascade)
+
+  // Add an index for non unique foreign keys
+  @@index([user_id])
 }
 
 model PkmVoid {
@@ -114,4 +129,7 @@ model PkmVoid {
   user_id String @db.Uuid
 
   history PkmHistory @relation(fields: [history_id], references: [history_id], onDelete: Cascade)
+
+  // Add an index for non unique foreign keys
+  @@index([user_id])
 }
