@@ -1,12 +1,11 @@
-import { NewPkmItemForm } from '@/components/NewPkmItemForm'
 import { getUserAuth } from '@/utils/auth'
 import { db } from '@/utils/db'
 import { ActionFunctionArgs, TypedResponse, redirect } from '@remix-run/node'
-import { useActionData, useLoaderData } from '@remix-run/react'
+import { Form, Link, useActionData, useLoaderData } from '@remix-run/react'
 
 export type EpiphanyCreateResponses = {
   loaderData: EpiphanyLoaderResponse
-  actionResponse: EpiphanyActionResponse
+  actionData: EpiphanyActionResponse | undefined
 }
 
 export type EpiphanyActionResponse = {
@@ -66,20 +65,52 @@ export const action = async (
 
 export const loader = async (): Promise<EpiphanyLoaderResponse> => {
   return {
-    content: 'Edit this',
+    content: 'Create a new Epiphany Item',
   }
 }
 
 export default function EpiphanyCreate() {
-  const data = useLoaderData<EpiphanyLoaderResponse>()
-  const actionData = useActionData<typeof action>()
-
-  const fieldErrors = actionData?.errors?.fieldErrors ?? null
+  const loaderData = useLoaderData<EpiphanyLoaderResponse>()
+  const actionData = useActionData<EpiphanyActionResponse>()
 
   return (
     <div className="mx-4 my-4">
       <div className="text-5xl mb-4">New Epiphany</div>
-      <NewPkmItemForm data={data} fieldErrors={fieldErrors} />
+      {/* <NewPkmItemForm loaderData={loaderData} actionData={actionData} /> */}
+      <Form method="POST" className="flex">
+        <div className="w-full">
+          <div className="mb-4">
+            <label>
+              <div className="mb-4">Content</div>
+              <textarea
+                className="min-w-full min-h-96 bg-white/20 p-4"
+                name="content"
+                defaultValue={loaderData.content}
+              />
+            </label>
+            <br />
+            {actionData?.errors.fieldErrors.content && (
+              <div className="text-red-500">
+                {actionData.errors.fieldErrors?.content}
+              </div>
+            )}
+          </div>
+          <button
+            className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg"
+            type="submit"
+          >
+            Submit
+          </button>
+          <Link to={'/dashboard'}>
+            <button
+              className="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg ml-4"
+              type="button"
+            >
+              Cancel
+            </button>
+          </Link>
+        </div>
+      </Form>
     </div>
   )
 }
