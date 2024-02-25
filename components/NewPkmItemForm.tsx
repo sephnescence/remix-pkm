@@ -2,8 +2,10 @@ import { Form } from '@remix-run/react'
 import { Link } from 'react-router-dom'
 import { EpiphanyCreateResponses } from '~/routes/_dashboard+/dashboard+/epiphanies_+/create'
 
-export const NewPkmItemForm = (formData: EpiphanyCreateResponses) => {
-  const { loaderData, actionResponse } = formData
+export const NewPkmItemForm = ({
+  loaderData,
+  actionResponse,
+}: EpiphanyCreateResponses) => {
   return (
     <Form method="POST" className="flex">
       <div className="w-full">
