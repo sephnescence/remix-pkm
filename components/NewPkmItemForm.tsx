@@ -1,7 +1,9 @@
 import { Form } from '@remix-run/react'
 import { Link } from 'react-router-dom'
+import { EpiphanyCreateResponses } from '~/routes/_dashboard+/dashboard+/epiphanies_+/create'
 
-export const NewPkmItemForm = ({ data, fieldErrors }) => {
+export const NewPkmItemForm = (formData: EpiphanyCreateResponses) => {
+  const { loaderData, actionResponse } = formData
   return (
     <Form method="POST" className="flex">
       <div className="w-full">
@@ -11,12 +13,14 @@ export const NewPkmItemForm = ({ data, fieldErrors }) => {
             <textarea
               className="min-w-full min-h-96 bg-white/20 p-4"
               name="content"
-              defaultValue={data.content}
+              defaultValue={loaderData.content}
             />
           </label>
           <br />
-          {fieldErrors?.content && (
-            <div className="text-red-500">{fieldErrors?.content}</div>
+          {actionResponse.errors.fieldErrors?.content && (
+            <div className="text-red-500">
+              {actionResponse.errors.fieldErrors?.content}
+            </div>
           )}
         </div>
         <button

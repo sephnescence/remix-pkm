@@ -1,10 +1,29 @@
 import { NewPkmItemForm } from '@/components/NewPkmItemForm'
 import { getUserAuth } from '@/utils/auth'
 import { db } from '@/utils/db'
-import { ActionFunctionArgs, redirect } from '@remix-run/node'
+import { ActionFunctionArgs, TypedResponse, redirect } from '@remix-run/node'
 import { useActionData, useLoaderData } from '@remix-run/react'
 
-export const action = async (args: ActionFunctionArgs) => {
+export type EpiphanyCreateResponses = {
+  loaderData: EpiphanyLoaderResponse
+  actionResponse: EpiphanyActionResponse
+}
+
+export type EpiphanyActionResponse = {
+  errors: {
+    fieldErrors: {
+      content: string
+    }
+  }
+}
+
+export type EpiphanyLoaderResponse = {
+  content: string
+}
+
+export const action = async (
+  args: ActionFunctionArgs,
+): Promise<EpiphanyActionResponse | TypedResponse<never>> => {
   const user = await getUserAuth(args)
   if (!user) {
     return redirect('/')
@@ -45,14 +64,14 @@ export const action = async (args: ActionFunctionArgs) => {
   return redirect('/dashboard')
 }
 
-export const loader = async () => {
+export const loader = async (): Promise<EpiphanyLoaderResponse> => {
   return {
     content: 'Edit this',
   }
 }
 
 export default function EpiphanyCreate() {
-  const data = useLoaderData<typeof loader>()
+  const data = useLoaderData<EpiphanyLoaderResponse>()
   const actionData = useActionData<typeof action>()
 
   const fieldErrors = actionData?.errors?.fieldErrors ?? null
