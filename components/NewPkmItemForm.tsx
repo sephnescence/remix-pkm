@@ -2,9 +2,13 @@ import { Form } from '@remix-run/react'
 import { Link } from 'react-router-dom'
 import { EpiphanyCreateResponses } from '~/routes/_dashboard+/dashboard+/epiphanies_+/create'
 
+/**
+ * For some reason HMR doesn't work with this component
+ */
+
 export const NewPkmItemForm = ({
   loaderData,
-  actionResponse,
+  actionData,
 }: EpiphanyCreateResponses) => {
   return (
     <Form method="POST" className="flex">
@@ -19,9 +23,9 @@ export const NewPkmItemForm = ({
             />
           </label>
           <br />
-          {actionResponse.errors.fieldErrors?.content && (
+          {actionData?.errors.fieldErrors.content && (
             <div className="text-red-500">
-              {actionResponse.errors.fieldErrors?.content}
+              {actionData.errors.fieldErrors?.content}
             </div>
           )}
         </div>
