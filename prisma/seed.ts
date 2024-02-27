@@ -25,6 +25,7 @@ await prisma.user.create({
     pkm_history: {
       create: [
         {
+          is_current: true,
           model_type: 'PkmEpiphany',
           epiphany_item: {
             create: {

@@ -43,6 +43,8 @@ model PkmHistory {
   todo_item PkmTodo?
   void_item PkmVoid?
 
+  is_current Boolean @default(false)
+
   // Add an index for non unique foreign keys
   @@index([user_id])
 }

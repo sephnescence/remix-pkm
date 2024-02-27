@@ -50,6 +50,7 @@ export const action = async (
   await db.pkmHistory.create({
     data: {
       user_id: user.id,
+      is_current: true,
       model_type: 'PkmVoid',
       void_item: {
         create: {
