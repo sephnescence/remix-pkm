@@ -102,7 +102,12 @@ export default function DashboardRoute() {
               .map((item) => {
                 return (
                   <div key={item.model_id} className="ml-4">
-                    {item.epiphany_item?.content}
+                    <Link
+                      className="hover:underline"
+                      to={`/dashboard/epiphanies/edit/${item.model_id}/${item.history_id}`}
+                    >
+                      {item.epiphany_item?.content}
+                    </Link>
                   </div>
                 )
               })}
@@ -118,7 +123,12 @@ export default function DashboardRoute() {
               .map((item) => {
                 return (
                   <div key={item.model_id} className="ml-4">
-                    {item.inbox_item?.content}
+                    <Link
+                      className="hover:underline"
+                      to={`/dashboard/inbox/edit/${item.model_id}/${item.history_id}`}
+                    >
+                      {item.inbox_item?.content}
+                    </Link>
                   </div>
                 )
               })}
@@ -137,7 +147,12 @@ export default function DashboardRoute() {
               .map((item) => {
                 return (
                   <div key={item.model_id} className="ml-4">
-                    {item.passing_thought_item?.content}
+                    <Link
+                      className="hover:underline"
+                      to={`/dashboard/passing-thought/edit/${item.model_id}/${item.history_id}`}
+                    >
+                      {item.passing_thought_item?.content}
+                    </Link>
                   </div>
                 )
               })}
@@ -174,7 +189,12 @@ export default function DashboardRoute() {
               .map((item) => {
                 return (
                   <div key={item.model_id} className="ml-4">
-                    {item.void_item?.content}
+                    <Link
+                      className="hover:underline"
+                      to={`/dashboard/void/edit/${item.model_id}/${item.history_id}`}
+                    >
+                      {item.void_item?.content}
+                    </Link>
                   </div>
                 )
               })}
