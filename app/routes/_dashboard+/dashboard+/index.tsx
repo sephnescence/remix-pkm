@@ -9,14 +9,18 @@ export const loader = async (args: LoaderFunctionArgs) => {
   if (!clerkId) {
     return redirect('/')
   }
-  // Just using the test user for now
+
   const user = await db.user.findFirst({
     where: {
       clerkId,
     },
     select: {
       pkm_history: {
+        where: {
+          is_current: true,
+        },
         select: {
+          history_id: true,
           model_id: true,
           model_type: true,
           epiphany_item: {
@@ -149,7 +153,12 @@ export default function DashboardRoute() {
               .map((item) => {
                 return (
                   <div key={item.model_id} className="ml-4">
-                    {item.todo_item?.content}
+                    <Link
+                      className="hover:underline"
+                      to={`/dashboard/todo/edit/${item.model_id}/${item.history_id}`}
+                    >
+                      {item.todo_item?.content}
+                    </Link>
                   </div>
                 )
               })}
