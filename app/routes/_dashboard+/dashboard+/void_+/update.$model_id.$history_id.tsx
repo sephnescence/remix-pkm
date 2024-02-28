@@ -8,35 +8,37 @@ import {
   redirect,
 } from '@remix-run/node'
 import { Form, Link, useActionData, useLoaderData } from '@remix-run/react'
+import { UpdateVoidItem } from '~/repositories/PkmVoidRepository'
 
-export type PassingThoughtEditResponses = {
-  loaderData: PassingThoughtEditLoaderResponse
-  actionData: PassingThoughtEditActionResponse | undefined
+export type VoidEditResponses = {
+  loaderData: VoidEditLoaderResponse
+  actionData: VoidEditActionResponse | undefined
 }
 
-type PassingThoughtEditActionResponse = {
+type VoidEditActionResponse = {
   errors: {
     fieldErrors: {
-      content: string
+      content?: string
+      general?: string
     }
   }
 }
 
-type PassingThoughtEditLoaderResponse = {
+type VoidEditLoaderResponse = {
   content: string
 }
 
 export const action = async (
   args: ActionFunctionArgs,
-): Promise<PassingThoughtEditActionResponse | TypedResponse<never>> => {
+): Promise<VoidEditActionResponse | TypedResponse<never>> => {
   const user = await getUserAuth(args)
   if (!user) {
     return redirect('/')
   }
 
-  const passingThoughtItem = await getPassingThoughtItemForUser(args, user)
+  const voidItem = await getVoidItemForUser(args, user)
 
-  if (passingThoughtItem === null) {
+  if (voidItem === null) {
     return redirect('/')
   }
 
@@ -59,57 +61,47 @@ export const action = async (
     }
   }
 
-  await db.$transaction([
-    db.pkmHistory.update({
-      where: {
-        history_id: passingThoughtItem.history_id,
-      },
-      data: {
-        is_current: false,
-      },
-    }),
-    db.pkmHistory.create({
-      data: {
-        user_id: user.id,
-        is_current: true,
-        model_type: 'PkmPassingThought',
-        model_id: passingThoughtItem.passing_thought_item?.model_id,
-        passing_thought_item: {
-          create: {
-            content: content.toString(),
-            model_id: passingThoughtItem.passing_thought_item?.model_id,
-            user_id: user.id,
-            void_at: new Date('9000-01-01 00:00:00'),
-          },
+  const updated = await UpdateVoidItem({
+    userId: user.id,
+    content: content.toString(),
+    historyId: voidItem.history_id,
+    modelId: voidItem.void_item!.model_id,
+  })
+
+  if (!updated) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Failed to update inbox item. Please try again.',
         },
       },
-    }),
-  ])
+    }
+  }
 
   return redirect('/dashboard')
 }
 
 export const loader = async (
   args: LoaderFunctionArgs,
-): Promise<PassingThoughtEditLoaderResponse | TypedResponse<never>> => {
+): Promise<VoidEditLoaderResponse | TypedResponse<never>> => {
   const user = await getUserAuth(args)
   if (!user) {
     return redirect('/')
   }
 
-  const passingThoughtItem = await getPassingThoughtItemForUser(args, user)
+  const voidItem = await getVoidItemForUser(args, user)
 
-  if (passingThoughtItem === null) {
+  if (voidItem === null) {
     return redirect('/')
   }
 
   return {
-    content: passingThoughtItem.passing_thought_item?.content || '',
+    content: voidItem.void_item?.content || '',
   }
 }
 
 // Letting TypeScript make inferences here
-const getPassingThoughtItemForUser = async (
+const getVoidItemForUser = async (
   args: LoaderFunctionArgs | ActionFunctionArgs,
   user: User,
 ) => {
@@ -119,9 +111,9 @@ const getPassingThoughtItemForUser = async (
     return null
   }
 
-  const passingThoughtItemId = args.params.model_id
+  const voidItemId = args.params.model_id
 
-  if (!passingThoughtItemId) {
+  if (!voidItemId) {
     return null
   }
 
@@ -130,11 +122,11 @@ const getPassingThoughtItemForUser = async (
       user_id: user.id,
       is_current: true, // Protect against dirty reads. You can only update the current one
       history_id: historyItemId,
-      model_id: passingThoughtItemId,
+      model_id: voidItemId,
     },
     select: {
       history_id: true,
-      passing_thought_item: {
+      void_item: {
         select: {
           content: true,
           model_id: true,
@@ -145,12 +137,17 @@ const getPassingThoughtItemForUser = async (
 }
 
 export default function InboxEditRoute() {
-  const loaderData = useLoaderData<PassingThoughtEditLoaderResponse>()
-  const actionData = useActionData<PassingThoughtEditActionResponse>()
+  const loaderData = useLoaderData<VoidEditLoaderResponse>()
+  const actionData = useActionData<VoidEditActionResponse>()
 
   return (
     <div className="mx-4 my-4">
-      <div className="text-5xl mb-4">Edit PassingThought Item</div>
+      {actionData?.errors.fieldErrors.general && (
+        <div className="text-red-500">
+          {actionData.errors.fieldErrors.general}
+        </div>
+      )}
+      <div className="text-5xl mb-4">Edit Void Item</div>
       <Form method="POST" className="flex">
         <div className="w-full">
           <div className="mb-4">

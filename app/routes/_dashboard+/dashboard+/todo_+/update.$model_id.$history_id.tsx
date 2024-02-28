@@ -8,35 +8,37 @@ import {
   redirect,
 } from '@remix-run/node'
 import { Form, Link, useActionData, useLoaderData } from '@remix-run/react'
+import { UpdateTodoItem } from '~/repositories/PkmTodoRepository'
 
-export type VoidEditResponses = {
-  loaderData: VoidEditLoaderResponse
-  actionData: VoidEditActionResponse | undefined
+export type TodoEditResponses = {
+  loaderData: TodoEditLoaderResponse
+  actionData: TodoEditActionResponse | undefined
 }
 
-type VoidEditActionResponse = {
+type TodoEditActionResponse = {
   errors: {
     fieldErrors: {
-      content: string
+      content?: string
+      general?: string
     }
   }
 }
 
-type VoidEditLoaderResponse = {
+type TodoEditLoaderResponse = {
   content: string
 }
 
 export const action = async (
   args: ActionFunctionArgs,
-): Promise<VoidEditActionResponse | TypedResponse<never>> => {
+): Promise<TodoEditActionResponse | TypedResponse<never>> => {
   const user = await getUserAuth(args)
   if (!user) {
     return redirect('/')
   }
 
-  const voidItem = await getVoidItemForUser(args, user)
+  const todoItem = await getTodoItemForUser(args, user)
 
-  if (voidItem === null) {
+  if (todoItem === null) {
     return redirect('/')
   }
 
@@ -59,56 +61,47 @@ export const action = async (
     }
   }
 
-  await db.$transaction([
-    db.pkmHistory.update({
-      where: {
-        history_id: voidItem.history_id,
-      },
-      data: {
-        is_current: false,
-      },
-    }),
-    db.pkmHistory.create({
-      data: {
-        user_id: user.id,
-        is_current: true,
-        model_type: 'PkmVoid',
-        model_id: voidItem.void_item?.model_id,
-        void_item: {
-          create: {
-            content: content.toString(),
-            model_id: voidItem.void_item?.model_id,
-            user_id: user.id,
-          },
+  const updated = await UpdateTodoItem({
+    userId: user.id,
+    content: content.toString(),
+    historyId: todoItem.history_id,
+    modelId: todoItem.todo_item!.model_id,
+  })
+
+  if (!updated) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Failed to update todo item. Please try again.',
         },
       },
-    }),
-  ])
+    }
+  }
 
   return redirect('/dashboard')
 }
 
 export const loader = async (
   args: LoaderFunctionArgs,
-): Promise<VoidEditLoaderResponse | TypedResponse<never>> => {
+): Promise<TodoEditLoaderResponse | TypedResponse<never>> => {
   const user = await getUserAuth(args)
   if (!user) {
     return redirect('/')
   }
 
-  const voidItem = await getVoidItemForUser(args, user)
+  const todoItem = await getTodoItemForUser(args, user)
 
-  if (voidItem === null) {
+  if (todoItem === null) {
     return redirect('/')
   }
 
   return {
-    content: voidItem.void_item?.content || '',
+    content: todoItem.todo_item?.content || '',
   }
 }
 
 // Letting TypeScript make inferences here
-const getVoidItemForUser = async (
+const getTodoItemForUser = async (
   args: LoaderFunctionArgs | ActionFunctionArgs,
   user: User,
 ) => {
@@ -118,9 +111,9 @@ const getVoidItemForUser = async (
     return null
   }
 
-  const voidItemId = args.params.model_id
+  const todoItemId = args.params.model_id
 
-  if (!voidItemId) {
+  if (!todoItemId) {
     return null
   }
 
@@ -129,11 +122,11 @@ const getVoidItemForUser = async (
       user_id: user.id,
       is_current: true, // Protect against dirty reads. You can only update the current one
       history_id: historyItemId,
-      model_id: voidItemId,
+      model_id: todoItemId,
     },
     select: {
       history_id: true,
-      void_item: {
+      todo_item: {
         select: {
           content: true,
           model_id: true,
@@ -144,12 +137,17 @@ const getVoidItemForUser = async (
 }
 
 export default function InboxEditRoute() {
-  const loaderData = useLoaderData<VoidEditLoaderResponse>()
-  const actionData = useActionData<VoidEditActionResponse>()
+  const loaderData = useLoaderData<TodoEditLoaderResponse>()
+  const actionData = useActionData<TodoEditActionResponse>()
 
   return (
     <div className="mx-4 my-4">
-      <div className="text-5xl mb-4">Edit Void Item</div>
+      {actionData?.errors.fieldErrors.general && (
+        <div className="text-red-500">
+          {actionData.errors.fieldErrors.general}
+        </div>
+      )}
+      <div className="text-5xl mb-4">Edit Todo Item</div>
       <Form method="POST" className="flex">
         <div className="w-full">
           <div className="mb-4">

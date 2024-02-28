@@ -8,6 +8,7 @@ import {
   redirect,
 } from '@remix-run/node'
 import { Form, Link, useActionData, useLoaderData } from '@remix-run/react'
+import { UpdateEpiphanyItem } from '~/repositories/PkmEpiphanyRepository'
 
 export type EpiphanyEditResponses = {
   loaderData: EpiphanyEditLoaderResponse
@@ -17,7 +18,8 @@ export type EpiphanyEditResponses = {
 type EpiphanyEditActionResponse = {
   errors: {
     fieldErrors: {
-      content: string
+      content?: string
+      general?: string
     }
   }
 }
@@ -59,31 +61,22 @@ export const action = async (
     }
   }
 
-  await db.$transaction([
-    db.pkmHistory.update({
-      where: {
-        history_id: epiphanyItem.history_id,
-      },
-      data: {
-        is_current: false,
-      },
-    }),
-    db.pkmHistory.create({
-      data: {
-        user_id: user.id,
-        is_current: true,
-        model_type: 'PkmEpiphany',
-        model_id: epiphanyItem.epiphany_item?.model_id,
-        epiphany_item: {
-          create: {
-            content: content.toString(),
-            model_id: epiphanyItem.epiphany_item?.model_id,
-            user_id: user.id,
-          },
+  const updated = await UpdateEpiphanyItem({
+    userId: user.id,
+    content: content.toString(),
+    historyId: epiphanyItem.history_id,
+    modelId: epiphanyItem.epiphany_item!.model_id,
+  })
+
+  if (!updated) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Failed to update epiphany item. Please try again.',
         },
       },
-    }),
-  ])
+    }
+  }
 
   return redirect('/dashboard')
 }
@@ -149,6 +142,11 @@ export default function InboxEditRoute() {
 
   return (
     <div className="mx-4 my-4">
+      {actionData?.errors.fieldErrors.general && (
+        <div className="text-red-500">
+          {actionData.errors.fieldErrors.general}
+        </div>
+      )}
       <div className="text-5xl mb-4">Edit Epiphany Item</div>
       <Form method="POST" className="flex">
         <div className="w-full">
