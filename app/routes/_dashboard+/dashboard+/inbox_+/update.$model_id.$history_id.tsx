@@ -8,6 +8,7 @@ import {
   redirect,
 } from '@remix-run/node'
 import { Form, Link, useActionData, useLoaderData } from '@remix-run/react'
+import { UpdateInboxItem } from '~/repositories/PkmInboxRepository'
 
 export type InboxEditResponses = {
   loaderData: InboxEditLoaderResponse
@@ -59,31 +60,12 @@ export const action = async (
     }
   }
 
-  await db.$transaction([
-    db.pkmHistory.update({
-      where: {
-        history_id: inboxItem.history_id,
-      },
-      data: {
-        is_current: false,
-      },
-    }),
-    db.pkmHistory.create({
-      data: {
-        user_id: user.id,
-        is_current: true,
-        model_type: 'PkmInbox',
-        model_id: inboxItem.inbox_item?.model_id,
-        inbox_item: {
-          create: {
-            content: content.toString(),
-            model_id: inboxItem.inbox_item?.model_id,
-            user_id: user.id,
-          },
-        },
-      },
-    }),
-  ])
+  await UpdateInboxItem({
+    userId: user.id,
+    content: content.toString(),
+    historyId: inboxItem.history_id,
+    modelId: inboxItem.inbox_item!.model_id,
+  })
 
   return redirect('/dashboard')
 }

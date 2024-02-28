@@ -1,76 +1,33 @@
 import { RedirectToSignIn, SignedIn, SignedOut, UserButton } from '@clerk/remix'
 import { Link, redirect, useLoaderData } from '@remix-run/react'
-import { db } from '@/utils/db'
 import { getClerkId } from '@/utils/auth'
-import { LoaderFunctionArgs } from '@remix-run/node'
+import { LoaderFunctionArgs, TypedResponse } from '@remix-run/node'
+import { getUserDashboardByClerkId } from '~/repositories/PkmUserRepository'
+import type { PkmHistoryForDashboard } from '~/repositories/PkmHistoryRepository'
 
-export const loader = async (args: LoaderFunctionArgs) => {
+type DashboardInboxLoaderResponse =
+  | PkmHistoryForDashboard
+  | TypedResponse<never>
+  | null
+
+export const loader = async (
+  args: LoaderFunctionArgs,
+): Promise<DashboardInboxLoaderResponse> => {
   const clerkId = await getClerkId(args)
   if (!clerkId) {
     return redirect('/')
   }
 
-  const user = await db.user.findFirst({
-    where: {
-      clerkId,
-    },
-    select: {
-      pkm_history: {
-        where: {
-          is_current: true,
-        },
-        select: {
-          history_id: true,
-          model_id: true,
-          model_type: true,
-          epiphany_item: {
-            select: {
-              content: true,
-            },
-          },
-          inbox_item: {
-            select: {
-              content: true,
-            },
-          },
-          passing_thought_item: {
-            select: {
-              content: true,
-            },
-          },
-          todo_item: {
-            select: {
-              content: true,
-            },
-          },
-          void_item: {
-            select: {
-              content: true,
-            },
-          },
-        },
-      },
-    },
-  })
+  const user = await getUserDashboardByClerkId(clerkId)
 
-  /*
-    Interesting to note right now that this performs seven queries. It's probably easier to just pull
-    from each of the tables separately? Though it doesn't have relationship info built in
+  if (!user) {
+    return redirect('/')
+  }
 
-    i.e.
-    0ms SELECT "public"."User"."id" FROM "public"."User" WHERE "public"."User"."clerkId" = $1 LIMIT $2 OFFSET $3
-    0ms SELECT "public"."PkmHistory"."history_id", "public"."PkmHistory"."model_type", "public"."PkmHistory"."user_id" FROM "public"."PkmHistory" WHERE "public"."PkmHistory"."user_id" IN ($1) OFFSET $2
-    0ms SELECT "public"."PkmEpiphany"."history_id", "public"."PkmEpiphany"."content" FROM "public"."PkmEpiphany" WHERE "public"."PkmEpiphany"."history_id" IN ($1,$2,$3,$4,$5) OFFSET $6
-    0ms SELECT "public"."PkmInbox"."history_id", "public"."PkmInbox"."content" FROM "public"."PkmInbox" WHERE "public"."PkmInbox"."history_id" IN ($1,$2,$3,$4,$5) OFFSET $6
-    0ms SELECT "public"."PkmPassingThought"."history_id", "public"."PkmPassingThought"."content" FROM "public"."PkmPassingThought" WHERE "public"."PkmPassingThought"."history_id" IN ($1,$2,$3,$4,$5) OFFSET $6
-    0ms SELECT "public"."PkmTodo"."history_id", "public"."PkmTodo"."content" FROM "public"."PkmTodo" WHERE "public"."PkmTodo"."history_id" IN ($1,$2,$3,$4,$5) OFFSET $6
-    0ms SELECT "public"."PkmVoid"."history_id", "public"."PkmVoid"."content" FROM "public"."PkmVoid" WHERE "public"."PkmVoid"."history_id" IN ($1,$2,$3,$4,$5) OFFSET $6
-  */
-
-  return { history: user?.pkm_history }
+  return { history: user.pkm_history }
 }
 
-export default function DashboardRoute() {
+export default function DashboardIndexRoute() {
   const loaderData = useLoaderData<typeof loader>()
   return (
     <>
@@ -92,10 +49,10 @@ export default function DashboardRoute() {
                 className="hover:underline"
                 to="/dashboard/epiphanies/create"
               >
-                Create Epiphany
+                Create Epiphany Item
               </Link>
             </div>
-            {loaderData.history
+            {loaderData?.history
               ?.filter((item) => {
                 return item.model_type === 'PkmEpiphany'
               })
@@ -113,10 +70,10 @@ export default function DashboardRoute() {
               })}
             <div className="">
               <Link className="hover:underline" to="/dashboard/inbox/create">
-                Create Inbox
+                Create Inbox Item
               </Link>
             </div>
-            {loaderData.history
+            {loaderData?.history
               ?.filter((item) => {
                 return item.model_type === 'PkmInbox'
               })
@@ -125,7 +82,7 @@ export default function DashboardRoute() {
                   <div key={item.model_id} className="ml-4">
                     <Link
                       className="hover:underline"
-                      to={`/dashboard/inbox/edit/${item.model_id}/${item.history_id}`}
+                      to={`/dashboard/inbox/update/${item.model_id}/${item.history_id}`}
                     >
                       {item.inbox_item?.content}
                     </Link>
@@ -137,10 +94,10 @@ export default function DashboardRoute() {
                 className="hover:underline"
                 to="/dashboard/passing-thought/create"
               >
-                Create Passing Thought
+                Create Passing Thought Item
               </Link>
             </div>
-            {loaderData.history
+            {loaderData?.history
               ?.filter((item) => {
                 return item.model_type === 'PkmPassingThought'
               })
@@ -158,10 +115,10 @@ export default function DashboardRoute() {
               })}
             <div className="">
               <Link className="hover:underline" to="/dashboard/todo/create">
-                Create Todo
+                Create Todo Item
               </Link>
             </div>
-            {loaderData.history
+            {loaderData?.history
               ?.filter((item) => {
                 return item.model_type === 'PkmTodo'
               })
@@ -179,10 +136,10 @@ export default function DashboardRoute() {
               })}
             <div className="">
               <Link className="hover:underline" to="/dashboard/void/create">
-                Create Void
+                Create Void Item
               </Link>
             </div>
-            {loaderData.history
+            {loaderData?.history
               ?.filter((item) => {
                 return item.model_type === 'PkmVoid'
               })
