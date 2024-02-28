@@ -1,39 +1,43 @@
 import { db } from '@/utils/db'
 
-export const PkmInboxRepository = {}
+export const PkmPassingThoughtRepository = {}
 
-type CreateInboxArgs = {
+type CreatePassingThoughtArgs = {
   content: string
   userId: string
 }
 
-type UpdateInboxArgs = CreateInboxArgs & {
+type UpdatePassingThoughtArgs = CreatePassingThoughtArgs & {
   historyId: string
   modelId: string
 }
 
-export const CreateInboxItem = async ({ userId, content }: CreateInboxArgs) => {
+export const CreatePassingThoughtItem = async ({
+  userId,
+  content,
+}: CreatePassingThoughtArgs) => {
   await db.pkmHistory.create({
     data: {
       user_id: userId,
       is_current: true,
-      model_type: 'PkmInbox',
-      inbox_item: {
+      model_type: 'PkmPassingThought',
+      passing_thought_item: {
         create: {
           content,
           user_id: userId,
+          void_at: new Date('9000-01-01 00:00:00'),
         },
       },
     },
   })
 }
 
-export const UpdateInboxItem = async ({
+export const UpdatePassingThoughtItem = async ({
   content,
   historyId,
   modelId,
   userId,
-}: UpdateInboxArgs) => {
+}: UpdatePassingThoughtArgs) => {
   return await db
     .$transaction([
       db.pkmHistory.update({
@@ -49,13 +53,14 @@ export const UpdateInboxItem = async ({
         data: {
           user_id: userId,
           is_current: true,
-          model_type: 'PkmInbox',
+          model_type: 'PkmPassingThought',
           model_id: modelId,
-          inbox_item: {
+          passing_thought_item: {
             create: {
               content,
               model_id: modelId,
               user_id: userId,
+              void_at: new Date('9000-01-01 00:00:00'),
             },
           },
         },

@@ -61,7 +61,7 @@ export default function DashboardIndexRoute() {
                   <div key={item.model_id} className="ml-4">
                     <Link
                       className="hover:underline"
-                      to={`/dashboard/epiphanies/edit/${item.model_id}/${item.history_id}`}
+                      to={`/dashboard/epiphanies/update/${item.model_id}/${item.history_id}`}
                     >
                       {item.epiphany_item?.content}
                     </Link>
@@ -106,7 +106,7 @@ export default function DashboardIndexRoute() {
                   <div key={item.model_id} className="ml-4">
                     <Link
                       className="hover:underline"
-                      to={`/dashboard/passing-thought/edit/${item.model_id}/${item.history_id}`}
+                      to={`/dashboard/passing-thought/update/${item.model_id}/${item.history_id}`}
                     >
                       {item.passing_thought_item?.content}
                     </Link>
@@ -127,7 +127,7 @@ export default function DashboardIndexRoute() {
                   <div key={item.model_id} className="ml-4">
                     <Link
                       className="hover:underline"
-                      to={`/dashboard/todo/edit/${item.model_id}/${item.history_id}`}
+                      to={`/dashboard/todo/update/${item.model_id}/${item.history_id}`}
                     >
                       {item.todo_item?.content}
                     </Link>
@@ -148,7 +148,7 @@ export default function DashboardIndexRoute() {
                   <div key={item.model_id} className="ml-4">
                     <Link
                       className="hover:underline"
-                      to={`/dashboard/void/edit/${item.model_id}/${item.history_id}`}
+                      to={`/dashboard/void/update/${item.model_id}/${item.history_id}`}
                     >
                       {item.void_item?.content}
                     </Link>

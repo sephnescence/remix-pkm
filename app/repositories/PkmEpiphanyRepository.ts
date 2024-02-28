@@ -1,24 +1,27 @@
 import { db } from '@/utils/db'
 
-export const PkmInboxRepository = {}
+export const PkmEpiphanyRepository = {}
 
-type CreateInboxArgs = {
+type CreateEpiphanyArgs = {
   content: string
   userId: string
 }
 
-type UpdateInboxArgs = CreateInboxArgs & {
+type UpdateEpiphanyArgs = CreateEpiphanyArgs & {
   historyId: string
   modelId: string
 }
 
-export const CreateInboxItem = async ({ userId, content }: CreateInboxArgs) => {
+export const CreateEpiphanyItem = async ({
+  userId,
+  content,
+}: CreateEpiphanyArgs) => {
   await db.pkmHistory.create({
     data: {
       user_id: userId,
       is_current: true,
-      model_type: 'PkmInbox',
-      inbox_item: {
+      model_type: 'PkmEpiphany',
+      epiphany_item: {
         create: {
           content,
           user_id: userId,
@@ -28,12 +31,12 @@ export const CreateInboxItem = async ({ userId, content }: CreateInboxArgs) => {
   })
 }
 
-export const UpdateInboxItem = async ({
+export const UpdateEpiphanyItem = async ({
   content,
   historyId,
   modelId,
   userId,
-}: UpdateInboxArgs) => {
+}: UpdateEpiphanyArgs) => {
   return await db
     .$transaction([
       db.pkmHistory.update({
@@ -49,9 +52,9 @@ export const UpdateInboxItem = async ({
         data: {
           user_id: userId,
           is_current: true,
-          model_type: 'PkmInbox',
+          model_type: 'PkmEpiphany',
           model_id: modelId,
-          inbox_item: {
+          epiphany_item: {
             create: {
               content,
               model_id: modelId,

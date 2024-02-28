@@ -1,7 +1,7 @@
 import { getUserAuth } from '@/utils/auth'
-import { db } from '@/utils/db'
 import { ActionFunctionArgs, TypedResponse, redirect } from '@remix-run/node'
 import { Form, Link, useActionData, useLoaderData } from '@remix-run/react'
+import { CreatePassingThoughtItem } from '~/repositories/PkmPassingThoughtRepository'
 
 export type PassingThoughtCreateResponses = {
   loaderData: PassingThoughtLoaderResponse
@@ -47,19 +47,10 @@ export const action = async (
     }
   }
 
-  await db.pkmHistory.create({
-    data: {
-      user_id: user.id,
-      is_current: true,
-      model_type: 'PkmPassingThought',
-      passing_thought_item: {
-        create: {
-          content: content.toString(),
-          user_id: user.id,
-          void_at: new Date('9000-01-01 00:00:00'),
-        },
-      },
-    },
+  await CreatePassingThoughtItem({
+    userId: user.id,
+    content: content.toString(),
+    // voidAt: new Date('9000-01-01T00:00:00Z'), // TODO: Add voidAt to the form
   })
 
   return redirect('/dashboard')

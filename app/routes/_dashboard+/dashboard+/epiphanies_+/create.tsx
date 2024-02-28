@@ -1,7 +1,7 @@
 import { getUserAuth } from '@/utils/auth'
-import { db } from '@/utils/db'
 import { ActionFunctionArgs, TypedResponse, redirect } from '@remix-run/node'
 import { Form, Link, useActionData, useLoaderData } from '@remix-run/react'
+import { CreateEpiphanyItem } from '~/repositories/PkmEpiphanyRepository'
 
 export type EpiphanyCreateResponses = {
   loaderData: EpiphanyLoaderResponse
@@ -47,18 +47,9 @@ export const action = async (
     }
   }
 
-  await db.pkmHistory.create({
-    data: {
-      user_id: user.id,
-      is_current: true,
-      model_type: 'PkmEpiphany',
-      epiphany_item: {
-        create: {
-          content: content.toString(),
-          user_id: user.id,
-        },
-      },
-    },
+  await CreateEpiphanyItem({
+    userId: user.id,
+    content: content.toString(),
   })
 
   return redirect('/dashboard')

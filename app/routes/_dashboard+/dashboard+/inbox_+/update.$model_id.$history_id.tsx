@@ -18,7 +18,8 @@ export type InboxEditResponses = {
 type InboxEditActionResponse = {
   errors: {
     fieldErrors: {
-      content: string
+      content?: string
+      general?: string
     }
   }
 }
@@ -60,12 +61,22 @@ export const action = async (
     }
   }
 
-  await UpdateInboxItem({
+  const updated = await UpdateInboxItem({
     userId: user.id,
     content: content.toString(),
     historyId: inboxItem.history_id,
     modelId: inboxItem.inbox_item!.model_id,
   })
+
+  if (!updated) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Failed to update inbox item. Please try again.',
+        },
+      },
+    }
+  }
 
   return redirect('/dashboard')
 }
@@ -131,6 +142,11 @@ export default function InboxEditRoute() {
 
   return (
     <div className="mx-4 my-4">
+      {actionData?.errors.fieldErrors.general && (
+        <div className="text-red-500">
+          {actionData.errors.fieldErrors.general}
+        </div>
+      )}
       <div className="text-5xl mb-4">Edit Inbox Item</div>
       <Form method="POST" className="flex">
         <div className="w-full">
