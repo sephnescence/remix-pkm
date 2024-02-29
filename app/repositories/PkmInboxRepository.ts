@@ -1,6 +1,7 @@
 import { db } from '@/utils/db'
-
-export const PkmInboxRepository = {}
+import { randomUUID } from 'node:crypto'
+import { User } from '@prisma/client'
+import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 
 type CreateInboxArgs = {
   content: string
@@ -12,23 +13,83 @@ type UpdateInboxArgs = CreateInboxArgs & {
   modelId: string
 }
 
-export const CreateInboxItem = async ({ userId, content }: CreateInboxArgs) => {
-  await db.pkmHistory.create({
-    data: {
-      user_id: userId,
+// Get the current inbox item for the user
+// Can add another method later if we ever need to grab the non-current one
+export const getCurrentInboxItemForUser = async (
+  args: LoaderFunctionArgs | ActionFunctionArgs,
+  user: User,
+) => {
+  const historyItemId = args.params.history_id
+
+  if (!historyItemId) {
+    return null
+  }
+
+  const inboxItemId = args.params.model_id
+
+  if (!inboxItemId) {
+    return null
+  }
+
+  const inboxItem = await db.pkmHistory.findFirst({
+    where: {
+      user_id: user.id,
       is_current: true,
-      model_type: 'PkmInbox',
+      history_id: historyItemId,
+      model_id: inboxItemId,
+    },
+    select: {
       inbox_item: {
-        create: {
-          content,
-          user_id: userId,
+        select: {
+          content: true,
+          model_id: true,
+          history_id: true,
         },
       },
     },
   })
+
+  if (!inboxItem || !inboxItem.inbox_item) {
+    return null
+  }
+
+  return inboxItem.inbox_item
 }
 
-export const UpdateInboxItem = async ({
+export const storeInboxItem = async ({ userId, content }: CreateInboxArgs) => {
+  const modelId = randomUUID()
+
+  return await db.pkmHistory
+    .create({
+      data: {
+        user_id: userId,
+        is_current: true,
+        model_type: 'PkmInbox',
+        model_id: modelId,
+        inbox_item: {
+          create: {
+            content,
+            model_id: modelId,
+            user_id: userId,
+          },
+        },
+      },
+    })
+    .then((inboxItem) => {
+      return {
+        success: true,
+        inboxItem,
+      }
+    })
+    .catch(() => {
+      return {
+        success: false,
+        inboxItem: null,
+      }
+    })
+}
+
+export const updateInboxItem = async ({
   content,
   historyId,
   modelId,
@@ -61,6 +122,16 @@ export const UpdateInboxItem = async ({
         },
       }),
     ])
-    .then(() => true)
-    .catch(() => false)
+    .then((inboxItem) => {
+      return {
+        success: true,
+        inboxItem: inboxItem[1],
+      }
+    })
+    .catch(() => {
+      return {
+        success: false,
+        inboxItem: null,
+      }
+    })
 }

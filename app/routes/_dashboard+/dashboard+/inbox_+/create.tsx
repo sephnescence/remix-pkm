@@ -1,74 +1,29 @@
-import { getUserAuth } from '@/utils/auth'
-import { ActionFunctionArgs, TypedResponse, redirect } from '@remix-run/node'
 import { Form, Link, useActionData, useLoaderData } from '@remix-run/react'
-import { CreateInboxItem } from '~/repositories/PkmInboxRepository'
+import {
+  InboxActionCreateResponse,
+  inboxActionCreate,
+} from '~/controllers/InboxController'
 
-export type InboxCreateResponses = {
-  loaderData: InboxLoaderResponse
-  actionData: InboxActionResponse | undefined
-}
+export const action = inboxActionCreate
 
-type InboxActionResponse = {
-  errors: {
-    fieldErrors: {
-      content: string
-    }
-  }
-}
-
-type InboxLoaderResponse = {
-  content: string
-}
-
-export const action = async (
-  args: ActionFunctionArgs,
-): Promise<InboxActionResponse | TypedResponse<never>> => {
-  const user = await getUserAuth(args)
-  if (!user) {
-    return redirect('/')
-  }
-
-  const { request } = args
-
-  const formData = await request.formData()
-  if (!formData) {
-    return redirect('/')
-  }
-
-  const content: FormDataEntryValue | null = formData.get('content') // Why does this think it's type "File"
-
-  if (!content || content === '') {
-    return {
-      errors: {
-        fieldErrors: {
-          content: 'Content cannot be empty',
-        },
-      },
-    }
-  }
-
-  await CreateInboxItem({
-    userId: user.id,
-    content: content.toString(),
-  })
-
-  return redirect('/dashboard')
-}
-
-export const loader = async (): Promise<InboxLoaderResponse> => {
+export const loader = async () => {
   return {
     content: 'Create a new Inbox Item',
   }
 }
 
-export default function EpiphanyCreate() {
-  const loaderData = useLoaderData<InboxLoaderResponse>()
-  const actionData = useActionData<InboxActionResponse>()
+export default function InboxCreateRoute() {
+  const loaderData = useLoaderData<typeof loader>()
+  const actionData = useActionData<InboxActionCreateResponse>()
 
   return (
     <div className="mx-4 my-4">
-      <div className="text-5xl mb-4">New Inbox Item</div>
-      {/* <NewPkmItemForm loaderData={loaderData} actionData={actionData} /> */}
+      {actionData?.errors.fieldErrors.general && (
+        <div className="text-red-500">
+          {actionData.errors.fieldErrors.general}
+        </div>
+      )}
+      <div className="text-5xl mb-4">New Inbox</div>
       <Form method="POST" className="flex">
         <div className="w-full">
           <div className="mb-4">
@@ -83,7 +38,7 @@ export default function EpiphanyCreate() {
             <br />
             {actionData?.errors.fieldErrors.content && (
               <div className="text-red-500">
-                {actionData.errors.fieldErrors.content}
+                {actionData.errors.fieldErrors?.content}
               </div>
             )}
           </div>
