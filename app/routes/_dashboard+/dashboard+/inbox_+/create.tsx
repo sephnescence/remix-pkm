@@ -1,4 +1,10 @@
-import { Form, Link, useActionData, useLoaderData } from '@remix-run/react'
+import {
+  Form,
+  Link,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+} from '@remix-run/react'
 import {
   InboxActionCreateResponse,
   inboxActionCreate,
@@ -15,6 +21,8 @@ export const loader = async () => {
 export default function InboxCreateRoute() {
   const loaderData = useLoaderData<typeof loader>()
   const actionData = useActionData<InboxActionCreateResponse>()
+
+  const { state } = useNavigation()
 
   return (
     <div className="mx-4 my-4">
@@ -43,8 +51,9 @@ export default function InboxCreateRoute() {
             )}
           </div>
           <button
-            className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg"
+            className={`bg-blue-600 px-4 py-2 rounded-lg ${(state !== 'idle' && 'bg-gray-400') || 'hover:bg-blue-500'}`}
             type="submit"
+            disabled={state !== 'idle'}
           >
             Submit
           </button>
@@ -52,6 +61,7 @@ export default function InboxCreateRoute() {
             <button
               className="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg ml-4"
               type="button"
+              disabled={state !== 'idle'}
             >
               Cancel
             </button>
