@@ -23,6 +23,7 @@ export default function InboxViewRoute() {
             </label>
           </div>
           <Link
+            prefetch="intent"
             to={`/dashboard/inbox/edit/${inboxItem.modelId}/${inboxItem.historyId}`}
           >
             <button

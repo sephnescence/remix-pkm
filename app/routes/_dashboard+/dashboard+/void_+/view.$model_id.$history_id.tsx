@@ -23,6 +23,7 @@ export default function VoidViewRoute() {
             </label>
           </div>
           <Link
+            prefetch="intent"
             to={`/dashboard/void/edit/${voidItem.modelId}/${voidItem.historyId}`}
           >
             <button

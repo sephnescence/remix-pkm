@@ -26,6 +26,7 @@ export default function PassingThoughtViewRoute() {
             </label>
           </div>
           <Link
+            prefetch="intent"
             to={`/dashboard/passing-thought/edit/${passingThoughtItem.modelId}/${passingThoughtItem.historyId}`}
           >
             <button
