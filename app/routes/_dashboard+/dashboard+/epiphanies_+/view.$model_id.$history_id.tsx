@@ -26,6 +26,7 @@ export default function EpiphanyViewRoute() {
             </label>
           </div>
           <Link
+            prefetch="intent"
             to={`/dashboard/epiphanies/edit/${epiphanyItem.modelId}/${epiphanyItem.historyId}`}
           >
             <button

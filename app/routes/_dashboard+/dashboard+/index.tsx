@@ -47,6 +47,7 @@ export default function DashboardIndexRoute() {
             <div className="">
               <Link
                 className="hover:underline"
+                prefetch="intent"
                 to="/dashboard/epiphanies/create"
               >
                 Create Epiphany Item
@@ -61,7 +62,8 @@ export default function DashboardIndexRoute() {
                   <div key={item.model_id} className="ml-4">
                     <Link
                       className="hover:underline"
-                      to={`/dashboard/epiphanies/view/${item.model_id}/${item.history_id}`}
+                      prefetch="intent"
+                      to={`/dashboard/epiphanies/edit/${item.model_id}/${item.history_id}`}
                     >
                       {item.epiphany_item?.content}
                     </Link>
@@ -69,7 +71,11 @@ export default function DashboardIndexRoute() {
                 )
               })}
             <div className="">
-              <Link className="hover:underline" to="/dashboard/inbox/create">
+              <Link
+                className="hover:underline"
+                prefetch="intent"
+                to="/dashboard/inbox/create"
+              >
                 Create Inbox Item
               </Link>
             </div>
@@ -82,7 +88,8 @@ export default function DashboardIndexRoute() {
                   <div key={item.model_id} className="ml-4">
                     <Link
                       className="hover:underline"
-                      to={`/dashboard/inbox/view/${item.model_id}/${item.history_id}`}
+                      prefetch="intent"
+                      to={`/dashboard/inbox/edit/${item.model_id}/${item.history_id}`}
                     >
                       {item.inbox_item?.content}
                     </Link>
@@ -92,6 +99,7 @@ export default function DashboardIndexRoute() {
             <div className="">
               <Link
                 className="hover:underline"
+                prefetch="intent"
                 to="/dashboard/passing-thought/create"
               >
                 Create Passing Thought Item
@@ -106,7 +114,8 @@ export default function DashboardIndexRoute() {
                   <div key={item.model_id} className="ml-4">
                     <Link
                       className="hover:underline"
-                      to={`/dashboard/passing-thought/view/${item.model_id}/${item.history_id}`}
+                      prefetch="intent"
+                      to={`/dashboard/passing-thought/edit/${item.model_id}/${item.history_id}`}
                     >
                       {item.passing_thought_item?.content}
                     </Link>
@@ -114,7 +123,11 @@ export default function DashboardIndexRoute() {
                 )
               })}
             <div className="">
-              <Link className="hover:underline" to="/dashboard/todo/create">
+              <Link
+                className="hover:underline"
+                prefetch="intent"
+                to="/dashboard/todo/create"
+              >
                 Create Todo Item
               </Link>
             </div>
@@ -127,7 +140,8 @@ export default function DashboardIndexRoute() {
                   <div key={item.model_id} className="ml-4">
                     <Link
                       className="hover:underline"
-                      to={`/dashboard/todo/view/${item.model_id}/${item.history_id}`}
+                      prefetch="intent"
+                      to={`/dashboard/todo/edit/${item.model_id}/${item.history_id}`}
                     >
                       {item.todo_item?.content}
                     </Link>
@@ -135,7 +149,11 @@ export default function DashboardIndexRoute() {
                 )
               })}
             <div className="">
-              <Link className="hover:underline" to="/dashboard/void/create">
+              <Link
+                className="hover:underline"
+                prefetch="intent"
+                to="/dashboard/void/create"
+              >
                 Create Void Item
               </Link>
             </div>
@@ -148,7 +166,8 @@ export default function DashboardIndexRoute() {
                   <div key={item.model_id} className="ml-4">
                     <Link
                       className="hover:underline"
-                      to={`/dashboard/void/view/${item.model_id}/${item.history_id}`}
+                      prefetch="intent"
+                      to={`/dashboard/void/edit/${item.model_id}/${item.history_id}`}
                     >
                       {item.void_item?.content}
                     </Link>

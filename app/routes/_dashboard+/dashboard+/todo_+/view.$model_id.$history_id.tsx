@@ -23,6 +23,7 @@ export default function TodoViewRoute() {
             </label>
           </div>
           <Link
+            prefetch="intent"
             to={`/dashboard/todo/edit/${todoItem.modelId}/${todoItem.historyId}`}
           >
             <button
