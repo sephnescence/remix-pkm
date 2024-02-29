@@ -61,7 +61,7 @@ export default function DashboardIndexRoute() {
                   <div key={item.model_id} className="ml-4">
                     <Link
                       className="hover:underline"
-                      to={`/dashboard/epiphanies/update/${item.model_id}/${item.history_id}`}
+                      to={`/dashboard/epiphanies/view/${item.model_id}/${item.history_id}`}
                     >
                       {item.epiphany_item?.content}
                     </Link>
