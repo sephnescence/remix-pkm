@@ -11,7 +11,7 @@ export default function PassingThoughtViewRoute() {
 
   return (
     <div className="mx-4 my-4">
-      <div className="text-5xl mb-4">View PassingThought Item</div>
+      <div className="text-5xl mb-4">View Passing Thought Item</div>
       <Form method="POST" className="flex">
         <div className="w-full">
           <div className="mb-4">

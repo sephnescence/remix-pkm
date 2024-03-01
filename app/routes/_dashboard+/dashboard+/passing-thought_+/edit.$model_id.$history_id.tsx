@@ -1,4 +1,5 @@
 import { Form, Link, useActionData, useLoaderData } from '@remix-run/react'
+import MoveTo from '~/components/MoveTo'
 import {
   PassingThoughtActionUpdateResponse,
   PassingThoughtLoaderResponse,
@@ -20,7 +21,7 @@ export default function PassingThoughtEditRoute() {
           {actionData.errors.fieldErrors.general}
         </div>
       )}
-      <div className="text-5xl mb-4">Edit PassingThought Item</div>
+      <div className="text-5xl mb-4">Edit Passing Thought Item</div>
       <Form method="POST" className="flex">
         <div className="w-full">
           <div className="mb-4">
@@ -55,6 +56,8 @@ export default function PassingThoughtEditRoute() {
           </Link>
         </div>
       </Form>
+      <hr className="my-4" />
+      <MoveTo item={passingThoughtItem} />
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { Form, Link, useActionData, useLoaderData } from '@remix-run/react'
+import MoveTo from '~/components/MoveTo'
 import {
   EpiphanyActionUpdateResponse,
   EpiphanyLoaderResponse,
@@ -53,6 +54,8 @@ export default function EpiphanyEditRoute() {
               Cancel
             </button>
           </Link>
+          <hr className="my-4" />
+          <MoveTo item={epiphanyItem} />
         </div>
       </Form>
     </div>

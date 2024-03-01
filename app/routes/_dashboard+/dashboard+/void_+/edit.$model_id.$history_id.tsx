@@ -1,4 +1,5 @@
 import { Form, Link, useActionData, useLoaderData } from '@remix-run/react'
+import MoveTo from '~/components/MoveTo'
 import {
   VoidActionUpdateResponse,
   VoidLoaderResponse,
@@ -55,6 +56,8 @@ export default function VoidEditRoute() {
           </Link>
         </div>
       </Form>
+      <hr className="my-4" />
+      <MoveTo item={voidItem} />
     </div>
   )
 }

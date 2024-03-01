@@ -1,4 +1,5 @@
 import { Form, Link, useActionData, useLoaderData } from '@remix-run/react'
+import MoveTo from '~/components/MoveTo'
 import {
   InboxActionUpdateResponse,
   InboxLoaderResponse,
@@ -56,25 +57,7 @@ export default function InboxEditRoute() {
         </div>
       </Form>
       <hr className="my-4" />
-      {[{ display: 'Epiphany', moveTo: 'epiphany' }].map(
-        ({ display, moveTo }) => {
-          return (
-            <Form
-              key={moveTo}
-              action={`/dashboard/history/move/${inboxItem.modelId}/${inboxItem.historyId}/epiphany`}
-              method="POST"
-              className="flex"
-            >
-              <button
-                className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg mr-4"
-                type="submit"
-              >
-                Move to {display}
-              </button>
-            </Form>
-          )
-        },
-      )}
+      <MoveTo item={inboxItem} />
     </div>
   )
 }

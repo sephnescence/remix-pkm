@@ -8,7 +8,7 @@ type CreatePassingThoughtArgs = {
   userId: string
 }
 
-type UpdatePassingThoughtArgs = CreatePassingThoughtArgs & {
+export type UpdatePassingThoughtArgs = CreatePassingThoughtArgs & {
   historyId: string
   modelId: string
 }

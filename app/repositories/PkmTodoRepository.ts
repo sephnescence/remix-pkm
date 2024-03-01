@@ -8,7 +8,7 @@ type CreateTodoArgs = {
   userId: string
 }
 
-type UpdateTodoArgs = CreateTodoArgs & {
+export type UpdateTodoArgs = CreateTodoArgs & {
   historyId: string
   modelId: string
 }
