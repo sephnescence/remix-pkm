@@ -8,7 +8,7 @@ type CreateEpiphanyArgs = {
   userId: string
 }
 
-type UpdateEpiphanyArgs = CreateEpiphanyArgs & {
+export type UpdateEpiphanyArgs = CreateEpiphanyArgs & {
   historyId: string
   modelId: string
 }
