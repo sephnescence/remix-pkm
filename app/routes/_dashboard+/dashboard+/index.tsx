@@ -1,4 +1,4 @@
-import { RedirectToSignIn, SignedIn, SignedOut, UserButton } from '@clerk/remix'
+import { RedirectToSignIn, SignedIn, SignedOut } from '@clerk/remix'
 import { Link, useLoaderData } from '@remix-run/react'
 import { dashboardIndexLoader } from '~/controllers/DashboardController'
 
