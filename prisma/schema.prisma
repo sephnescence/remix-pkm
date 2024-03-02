@@ -26,6 +26,7 @@ model User {
   passing_thought_items PkmPassingThought[]
   todo_items PkmTodo[]
   voided_passing_thought_items PkmVoid[]
+  trash_items PkmTrash[]
 }
 
 model PkmHistory {
@@ -42,6 +43,7 @@ model PkmHistory {
   passing_thought_item PkmPassingThought?
   todo_item PkmTodo?
   void_item PkmVoid?
+  trash_item PkmTrash?
 
   is_current Boolean @default(false)
 
@@ -120,6 +122,23 @@ model PkmTodo {
 }
 
 model PkmVoid {
+  history_id String @id @default(uuid()) @db.Uuid
+  model_id String @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  content String
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id String @db.Uuid
+
+  history PkmHistory @relation(fields: [history_id], references: [history_id], onDelete: Cascade)
+
+  // Add an index for non unique foreign keys
+  @@index([user_id])
+}
+
+model PkmTrash {
   history_id String @id @default(uuid()) @db.Uuid
   model_id String @default(uuid()) @db.Uuid
   createdAt DateTime @default(now())

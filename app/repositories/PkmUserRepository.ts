@@ -23,6 +23,9 @@ export const getUserDashboardByClerkId = async (clerkId: string) => {
       pkm_history: {
         where: {
           is_current: true,
+          model_type: {
+            not: 'PkmTrash',
+          },
         },
         select: {
           createdAt: true,
