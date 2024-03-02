@@ -15,6 +15,10 @@ export type PkmHistoryForDashboard = {
   history: PkmHistoryItemForDashboard[]
 }
 
+export type PkmTrashForDashboard = {
+  trash: PkmHistoryItemForDashboard[]
+}
+
 export const getHistoryItem = async (
   modelId: string,
   historyId: string,
