@@ -8,7 +8,7 @@ type CreateVoidArgs = {
   userId: string
 }
 
-type UpdateVoidArgs = CreateVoidArgs & {
+export type UpdateVoidArgs = CreateVoidArgs & {
   historyId: string
   modelId: string
 }

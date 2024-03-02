@@ -5,6 +5,22 @@ import {
   updateEpiphanyItem,
 } from '~/repositories/PkmEpiphanyRepository'
 import { getHistoryItem } from '~/repositories/PkmHistoryRepository'
+import {
+  UpdateInboxArgs,
+  updateInboxItem,
+} from '~/repositories/PkmInboxRepository'
+import {
+  UpdatePassingThoughtArgs,
+  updatePassingThoughtItem,
+} from '~/repositories/PkmPassingThoughtRepository'
+import {
+  UpdateTodoArgs,
+  updateTodoItem,
+} from '~/repositories/PkmTodoRepository'
+import {
+  UpdateVoidArgs,
+  updateVoidItem,
+} from '~/repositories/PkmVoidRepository'
 
 export const historyActionMove = async (args: ActionFunctionArgs) => {
   const user = await getUserAuth(args)
@@ -25,7 +41,10 @@ export const historyActionMove = async (args: ActionFunctionArgs) => {
       userId,
     )
 
-    if (historyItemResponse.success === false) {
+    if (
+      historyItemResponse.success === false ||
+      !historyItemResponse.historyItem
+    ) {
       return {
         errors: {
           fieldErrors: {
@@ -35,16 +54,48 @@ export const historyActionMove = async (args: ActionFunctionArgs) => {
       }
     }
 
-    const content = historyItemResponse.historyItem?.['inbox_item']!.content
+    const item =
+      historyItemResponse.historyItem.inbox_item ||
+      historyItemResponse.historyItem.epiphany_item ||
+      historyItemResponse.historyItem.passing_thought_item ||
+      historyItemResponse.historyItem.todo_item ||
+      historyItemResponse.historyItem.void_item
+
+    if (!item) {
+      return {
+        errors: {
+          fieldErrors: {
+            general: 'No item found',
+          },
+        },
+      }
+    }
+
+    const content = item?.content
+
+    const moveArgs:
+      | UpdateEpiphanyArgs
+      | UpdateInboxArgs
+      | UpdatePassingThoughtArgs
+      | UpdateTodoArgs
+      | UpdateVoidArgs = {
+      content: content!,
+      historyId: historyId!,
+      modelId: modelId!,
+      userId,
+    }
 
     let redirectUrl
     if (moveTo === 'epiphany') {
-      redirectUrl = await moveToEpiphanyItem({
-        content: content!,
-        historyId: historyId!,
-        modelId: modelId!,
-        userId,
-      })
+      redirectUrl = await moveToEpiphanyItem(moveArgs)
+    } else if (moveTo === 'inbox') {
+      redirectUrl = await moveToInboxItem(moveArgs)
+    } else if (moveTo === 'passing-thought') {
+      redirectUrl = await moveToPassingThoughtItem(moveArgs)
+    } else if (moveTo === 'todo') {
+      redirectUrl = await moveToTodoItem(moveArgs)
+    } else if (moveTo === 'void') {
+      redirectUrl = await moveToVoidItem(moveArgs)
     }
 
     if (redirectUrl) {
@@ -84,6 +135,86 @@ const moveToEpiphanyItem = async ({
 
   if (response.success === true && response.epiphanyItem) {
     return `/dashboard/epiphanies/view/${response.epiphanyItem.model_id}/${response.epiphanyItem.history_id}`
+  }
+
+  return null
+}
+
+const moveToInboxItem = async ({
+  content,
+  historyId,
+  modelId,
+  userId,
+}: UpdateInboxArgs) => {
+  const response = await updateInboxItem({
+    content: content!,
+    historyId: historyId!,
+    modelId: modelId!,
+    userId,
+  })
+
+  if (response.success === true && response.inboxItem) {
+    return `/dashboard/inbox/view/${response.inboxItem.model_id}/${response.inboxItem.history_id}`
+  }
+
+  return null
+}
+
+const moveToPassingThoughtItem = async ({
+  content,
+  historyId,
+  modelId,
+  userId,
+}: UpdatePassingThoughtArgs) => {
+  const response = await updatePassingThoughtItem({
+    content: content!,
+    historyId: historyId!,
+    modelId: modelId!,
+    userId,
+  })
+
+  if (response.success === true && response.passingThoughtItem) {
+    return `/dashboard/passing-thought/view/${response.passingThoughtItem.model_id}/${response.passingThoughtItem.history_id}`
+  }
+
+  return null
+}
+
+const moveToTodoItem = async ({
+  content,
+  historyId,
+  modelId,
+  userId,
+}: UpdateTodoArgs) => {
+  const response = await updateTodoItem({
+    content: content!,
+    historyId: historyId!,
+    modelId: modelId!,
+    userId,
+  })
+
+  if (response.success === true && response.todoItem) {
+    return `/dashboard/todo/view/${response.todoItem.model_id}/${response.todoItem.history_id}`
+  }
+
+  return null
+}
+
+const moveToVoidItem = async ({
+  content,
+  historyId,
+  modelId,
+  userId,
+}: UpdateVoidArgs) => {
+  const response = await updateVoidItem({
+    content: content!,
+    historyId: historyId!,
+    modelId: modelId!,
+    userId,
+  })
+
+  if (response.success === true && response.voidItem) {
+    return `/dashboard/void/view/${response.voidItem.model_id}/${response.voidItem.history_id}`
   }
 
   return null

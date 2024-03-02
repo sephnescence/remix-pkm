@@ -8,7 +8,7 @@ type CreateInboxArgs = {
   userId: string
 }
 
-type UpdateInboxArgs = CreateInboxArgs & {
+export type UpdateInboxArgs = CreateInboxArgs & {
   historyId: string
   modelId: string
 }

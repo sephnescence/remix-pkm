@@ -14,7 +14,7 @@ export const action = passingThoughtActionCreate
 
 export const loader = async () => {
   return {
-    content: 'Create a new PassingThought Item',
+    content: 'Create a new Passing Thought Item',
   }
 }
 
