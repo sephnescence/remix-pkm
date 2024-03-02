@@ -18,11 +18,18 @@ import {
   updateTodoItem,
 } from '~/repositories/PkmTodoRepository'
 import {
+  MoveToTrashArgs,
+  moveItemToTrash,
+} from '~/repositories/PkmTrashRepository'
+import {
   UpdateVoidArgs,
   updateVoidItem,
 } from '~/repositories/PkmVoidRepository'
 
-export const historyActionMove = async (args: ActionFunctionArgs) => {
+const _historyActionMove = async (
+  args: ActionFunctionArgs,
+  moveTo: 'epiphany' | 'inbox' | 'passing-thought' | 'todo' | 'trash' | 'void',
+) => {
   const user = await getUserAuth(args)
   if (!user) {
     return redirect('/')
@@ -30,7 +37,7 @@ export const historyActionMove = async (args: ActionFunctionArgs) => {
 
   try {
     const {
-      params: { model_id: modelId, history_id: historyId, move_to: moveTo },
+      params: { model_id: modelId, history_id: historyId },
     } = args
 
     const userId = user.id
@@ -59,7 +66,8 @@ export const historyActionMove = async (args: ActionFunctionArgs) => {
       historyItemResponse.historyItem.epiphany_item ||
       historyItemResponse.historyItem.passing_thought_item ||
       historyItemResponse.historyItem.todo_item ||
-      historyItemResponse.historyItem.void_item
+      historyItemResponse.historyItem.void_item ||
+      historyItemResponse.historyItem.trash_item
 
     if (!item) {
       return {
@@ -94,6 +102,8 @@ export const historyActionMove = async (args: ActionFunctionArgs) => {
       redirectUrl = await moveToPassingThoughtItem(moveArgs)
     } else if (moveTo === 'todo') {
       redirectUrl = await moveToTodoItem(moveArgs)
+    } else if (moveTo === 'trash') {
+      redirectUrl = await moveToTrashItem(moveArgs)
     } else if (moveTo === 'void') {
       redirectUrl = await moveToVoidItem(moveArgs)
     }
@@ -119,6 +129,26 @@ export const historyActionMove = async (args: ActionFunctionArgs) => {
     }
   }
 }
+
+export const historyActionMoveToEpiphany = async (args: ActionFunctionArgs) =>
+  _historyActionMove(args, 'epiphany')
+export const historyActionMoveToInbox = async (args: ActionFunctionArgs) =>
+  _historyActionMove(args, 'inbox')
+export const historyActionMoveToPassingThought = async (
+  args: ActionFunctionArgs,
+) => _historyActionMove(args, 'passing-thought')
+export const historyActionMoveToTodo = async (args: ActionFunctionArgs) =>
+  _historyActionMove(args, 'todo')
+export const historyActionMoveToTrash = async (args: ActionFunctionArgs) =>
+  _historyActionMove(args, 'trash')
+export const historyActionMoveToVoid = async (args: ActionFunctionArgs) =>
+  _historyActionMove(args, 'void')
+
+export const historyActionRestoreToEpiphany = historyActionMoveToEpiphany
+export const historyActionRestoreToInbox = historyActionMoveToInbox
+export const historyActionRestoreToPassingThought =
+  historyActionMoveToPassingThought
+export const historyActionRestoreToTodo = historyActionMoveToTodo
 
 const moveToEpiphanyItem = async ({
   content,
@@ -219,3 +249,77 @@ const moveToVoidItem = async ({
 
   return null
 }
+
+export const moveToTrashItem = async ({
+  content,
+  historyId,
+  modelId,
+  userId,
+}: MoveToTrashArgs) => {
+  const response = await moveItemToTrash({
+    content: content!,
+    historyId: historyId!,
+    modelId: modelId!,
+    userId,
+  })
+
+  if (response.success === true && response.trashItem) {
+    return `/dashboard/trash/view/${response.trashItem.model_id}/${response.trashItem.history_id}`
+  }
+
+  return null
+}
+
+export const historyActionMove = async (args: ActionFunctionArgs) => {
+  const {
+    params: { move_to: moveTo },
+  } = args
+
+  if (moveTo === 'epiphany') {
+    return historyActionMoveToEpiphany(args)
+  } else if (moveTo === 'inbox') {
+    return historyActionMoveToInbox(args)
+  } else if (moveTo === 'passing-thought') {
+    return historyActionMoveToPassingThought(args)
+  } else if (moveTo === 'todo') {
+    return historyActionMoveToTodo(args)
+  } else if (moveTo === 'void') {
+    return historyActionMoveToVoid(args)
+  }
+
+  return {
+    errors: {
+      fieldErrors: {
+        general:
+          'Invalid move to. Please return to the previous page and try again',
+      },
+    },
+  }
+}
+
+export const historyActionRestore = async (args: ActionFunctionArgs) => {
+  const {
+    params: { move_to: restoreTo },
+  } = args
+
+  if (restoreTo === 'epiphany') {
+    return historyActionMoveToEpiphany(args)
+  } else if (restoreTo === 'inbox') {
+    return historyActionMoveToInbox(args)
+  } else if (restoreTo === 'passing-thought') {
+    return historyActionMoveToPassingThought(args)
+  } else if (restoreTo === 'todo') {
+    return historyActionMoveToTodo(args)
+  }
+
+  return {
+    errors: {
+      fieldErrors: {
+        general:
+          'Invalid move to. Please return to the previous page and try again',
+      },
+    },
+  }
+}
+
+export const historyActionTrash = historyActionMoveToTrash

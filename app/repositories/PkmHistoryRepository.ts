@@ -7,6 +7,8 @@ type PkmHistoryItemForDashboard = Omit<PkmHistory, 'user_id' | 'is_current'> & {
   passing_thought_item?: { content: string } | null
 } & { todo_item?: { content: string } | null } & {
   void_item?: { content: string } | null
+} & {
+  trash_item?: { content: string } | null
 }
 
 export type PkmHistoryForDashboard = {
@@ -44,6 +46,11 @@ export const getHistoryItem = async (
           },
         },
         todo_item: {
+          select: {
+            content: true,
+          },
+        },
+        trash_item: {
           select: {
             content: true,
           },
