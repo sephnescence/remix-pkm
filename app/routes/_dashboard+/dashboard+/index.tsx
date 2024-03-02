@@ -1,31 +1,8 @@
 import { RedirectToSignIn, SignedIn, SignedOut, UserButton } from '@clerk/remix'
-import { Link, redirect, useLoaderData } from '@remix-run/react'
-import { getClerkId } from '@/utils/auth'
-import { LoaderFunctionArgs, TypedResponse } from '@remix-run/node'
-import { getUserDashboardByClerkId } from '~/repositories/PkmUserRepository'
-import type { PkmHistoryForDashboard } from '~/repositories/PkmHistoryRepository'
+import { Link, useLoaderData } from '@remix-run/react'
+import { dashboardIndexLoader } from '~/controllers/DashboardController'
 
-type DashboardInboxLoaderResponse =
-  | PkmHistoryForDashboard
-  | TypedResponse<never>
-  | null
-
-export const loader = async (
-  args: LoaderFunctionArgs,
-): Promise<DashboardInboxLoaderResponse> => {
-  const clerkId = await getClerkId(args)
-  if (!clerkId) {
-    return redirect('/')
-  }
-
-  const user = await getUserDashboardByClerkId(clerkId)
-
-  if (!user) {
-    return redirect('/')
-  }
-
-  return { history: user.pkm_history }
-}
+export const loader = dashboardIndexLoader
 
 export default function DashboardIndexRoute() {
   const loaderData = useLoaderData<typeof loader>()
@@ -35,9 +12,6 @@ export default function DashboardIndexRoute() {
         <RedirectToSignIn />
       </SignedOut>
       <SignedIn>
-        <div className="mx-4 my-4 absolute top-0 right-0">
-          <UserButton afterSignOutUrl="/" />
-        </div>
         <div className="mx-4 my-4">
           <p className="text-5xl">Dashboard</p>
           <div className="mt-4 text-xl text-white/60 mb-4">

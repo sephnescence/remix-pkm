@@ -1,5 +1,32 @@
 import { db } from '@/utils/db'
 
+export const getUserTrashByClerkId = async (clerkId: string) => {
+  return await db.user.findFirst({
+    where: {
+      clerkId,
+    },
+    select: {
+      pkm_history: {
+        where: {
+          is_current: true,
+          model_type: 'PkmTrash',
+        },
+        select: {
+          createdAt: true,
+          history_id: true,
+          model_id: true,
+          model_type: true,
+          trash_item: {
+            select: {
+              content: true,
+            },
+          },
+        },
+      },
+    },
+  })
+}
+
 export const getUserDashboardByClerkId = async (clerkId: string) => {
   /*
     Interesting to note right now that this performs seven queries. It's probably easier to just pull
