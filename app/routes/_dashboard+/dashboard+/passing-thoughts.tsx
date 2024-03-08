@@ -1,5 +1,3 @@
-import PassingThought from 'components/PassingThought'
-
 export default function PassingThoughtsRoute() {
   return (
     <>
@@ -9,12 +7,7 @@ export default function PassingThoughtsRoute() {
         bias. It might not be important to action, and will move to the Void
         after a configured age
       </div>
-      <div className="mt-4">
-        <PassingThought />
-        <PassingThought />
-        <PassingThought />
-        <PassingThought />
-      </div>
+      <div className="mt-4"></div>
     </>
   )
 }

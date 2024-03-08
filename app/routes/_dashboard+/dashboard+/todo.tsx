@@ -1,5 +1,3 @@
-import Todo from 'components/Todo'
-
 export default function TodoRoute() {
   return (
     <>
@@ -7,12 +5,7 @@ export default function TodoRoute() {
       <div className="mt-4 text-xl text-white/60 mb-4">
         Things you MUST do at a certain point in time
       </div>
-      <div className="mt-4">
-        <Todo />
-        <Todo />
-        <Todo />
-        <Todo />
-      </div>
+      <div className="mt-4"></div>
     </>
   )
 }
