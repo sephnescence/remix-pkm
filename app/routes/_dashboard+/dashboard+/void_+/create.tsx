@@ -5,7 +5,6 @@ import {
   useLoaderData,
   useNavigation,
 } from '@remix-run/react'
-import ArchiveBoxXMarkIcon from '~/components/icons/ArchiveBoxXMarkIcon'
 import {
   VoidActionCreateResponse,
   voidActionCreate,
@@ -32,10 +31,7 @@ export default function VoidCreateRoute() {
           {actionData.errors.fieldErrors.general}
         </div>
       )}
-      <div className="text-5xl mb-4">
-        New Void Item
-        <ArchiveBoxXMarkIcon />
-      </div>
+      <div className="text-5xl mb-4">New Void Item</div>
       <Form method="POST" className="flex">
         <div className="w-full">
           <div className="mb-4">

@@ -3,7 +3,7 @@ import { LoaderFunctionArgs, TypedResponse, redirect } from '@remix-run/node'
 import { PkmHistoryForDashboard } from '~/repositories/PkmHistoryRepository'
 import { getUserDashboardByClerkId } from '~/repositories/PkmUserRepository'
 
-type DashboardInboxLoaderResponse =
+export type DashboardInboxLoaderResponse =
   | PkmHistoryForDashboard
   | TypedResponse<never>
   | null
