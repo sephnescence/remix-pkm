@@ -5,6 +5,8 @@ import {
   useLoaderData,
   useNavigation,
 } from '@remix-run/react'
+import ArrowRightIcon from '~/components/icons/ArrowRightIcon'
+import LightbulbIcon from '~/components/icons/LightbulbIcon'
 import {
   EpiphanyActionCreateResponse,
   epiphanyActionCreate,
@@ -31,7 +33,11 @@ export default function EpiphanyCreateRoute() {
           {actionData.errors.fieldErrors.general}
         </div>
       )}
-      <div className="text-5xl mb-4">New Epiphany</div>
+      <div className="text-5xl mb-4">
+        New Epiphany Item
+        <LightbulbIcon />
+        <ArrowRightIcon />
+      </div>
       <Form method="POST" className="flex">
         <div className="w-full">
           <div className="mb-4">

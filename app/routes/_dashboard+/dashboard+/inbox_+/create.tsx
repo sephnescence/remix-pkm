@@ -5,6 +5,7 @@ import {
   useLoaderData,
   useNavigation,
 } from '@remix-run/react'
+import InboxStackIcon from '~/components/icons/InboxStackIcon'
 import {
   InboxActionCreateResponse,
   inboxActionCreate,
@@ -31,7 +32,10 @@ export default function InboxCreateRoute() {
           {actionData.errors.fieldErrors.general}
         </div>
       )}
-      <div className="text-5xl mb-4">New Inbox</div>
+      <div className="text-5xl mb-4">
+        New Inbox Item
+        <InboxStackIcon />
+      </div>
       <Form method="POST" className="flex">
         <div className="w-full">
           <div className="mb-4">

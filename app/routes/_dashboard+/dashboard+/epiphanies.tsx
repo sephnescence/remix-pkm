@@ -1,4 +1,4 @@
-import Epiphany from 'components/Epiphany'
+import Epiphany from '~/components/pkm/Epiphany'
 
 export default function EpiphaniesRoute() {
   return (
