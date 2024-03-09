@@ -5,7 +5,6 @@ import {
   useLoaderData,
   useNavigation,
 } from '@remix-run/react'
-import BellAlertIcon from '~/components/icons/BellAlertIcon'
 import {
   TodoActionCreateResponse,
   todoActionCreate,
@@ -32,10 +31,7 @@ export default function TodoCreateRoute() {
           {actionData.errors.fieldErrors.general}
         </div>
       )}
-      <div className="text-5xl mb-4">
-        New Todo Item
-        <BellAlertIcon />
-      </div>
+      <div className="text-5xl mb-4">New Todo Item</div>
       <Form method="POST" className="flex">
         <div className="w-full">
           <div className="mb-4">

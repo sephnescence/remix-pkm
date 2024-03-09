@@ -5,7 +5,6 @@ import {
   useLoaderData,
   useNavigation,
 } from '@remix-run/react'
-import BoltIcon from '~/components/icons/BoltIcon'
 import {
   PassingThoughtActionCreateResponse,
   passingThoughtActionCreate,
@@ -32,10 +31,7 @@ export default function PassingThoughtCreateRoute() {
           {actionData.errors.fieldErrors.general}
         </div>
       )}
-      <div className="text-5xl mb-4">
-        New Passing Thought Item
-        <BoltIcon />
-      </div>
+      <div className="text-5xl mb-4">New Passing Thought Item</div>
       <Form method="POST" className="flex">
         <div className="w-full">
           <div className="mb-4">
