@@ -23,7 +23,9 @@ export const suitesConfigLoader = async (
     userId: user.id,
   })
 
-  const suiteItemCounts = await getSuiteItemCounts(user.id)
+  const suiteItemCounts = await getSuiteItemCounts({
+    userId: user.id,
+  })
 
   return { suites, suiteItemCounts }
 }

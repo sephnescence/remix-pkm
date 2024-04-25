@@ -22,7 +22,7 @@ import { suiteDashboardLoader } from '~/controllers/SuiteController'
 export const loader = suiteDashboardLoader
 
 export default function SuiteIndexRoute() {
-  const { suiteDashboard, storeyItemCounts, tab } =
+  const { suiteDashboard, suiteItemCounts, tab } =
     useLoaderData<typeof loader>()
 
   const suiteInformationPacketTabGroupProps = {
@@ -101,7 +101,7 @@ export default function SuiteIndexRoute() {
                     description={storey.description}
                     spaceCount={storey._count.spaces}
                     storeyItemCount={
-                      storeyItemCounts[`${suiteDashboard.id}-${storey.id}`] ||
+                      suiteItemCounts[`${suiteDashboard.id}-${storey.id}`] ||
                       null
                     }
                   />

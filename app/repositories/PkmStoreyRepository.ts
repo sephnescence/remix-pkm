@@ -10,18 +10,11 @@ export type ItemCountRow = {
   void_count: number
 }
 
-export type SuiteItemCountsResults = ItemCountRow & {
+export type StoreyItemCountsResults = ItemCountRow & {
   id: string
 }
 
-type StoreSuiteArgs = {
-  userId: string
-  content: string
-  description: string
-  name: string
-}
-
-type UpdateSuiteArgs = {
+type StoreStoreyArgs = {
   suiteId: string
   userId: string
   content: string
@@ -29,47 +22,57 @@ type UpdateSuiteArgs = {
   name: string
 }
 
-export const storeSuiteConfig = async ({
+type UpdateStoreyArgs = {
+  storeyId: string
+  userId: string
+  content: string
+  description: string
+  name: string
+}
+
+export const storeStoreyConfig = async ({
+  suiteId,
   userId,
   content,
   description,
   name,
-}: StoreSuiteArgs) => {
-  return await db.suite
+}: StoreStoreyArgs) => {
+  return await db.storey
     .create({
       data: {
+        suite_id: suiteId,
         user_id: userId,
         name,
         description,
         content,
       },
     })
-    .then((suite) => {
+    .then((storey) => {
       return {
         success: true,
-        suite,
+        storey,
       }
     })
     .catch(() => {
       return {
         success: false,
-        suite: null,
+        storey: null,
       }
     })
 }
 
-export const updateSuiteConfig = async ({
-  suiteId,
+export const updateStoreyConfig = async ({
+  storeyId,
   userId,
   content,
   description,
   name,
-}: UpdateSuiteArgs) => {
-  return await db.suite
+}: UpdateStoreyArgs) => {
+  return await db.storey
     .update({
       where: {
         user_id: userId,
-        id: suiteId,
+        id: storeyId,
       },
       data: {
         name,
@@ -77,91 +80,88 @@ export const updateSuiteConfig = async ({
         content,
       },
     })
-    .then((suite) => {
+    .then((storey) => {
       return {
         success: true,
-        suite,
+        storey,
       }
     })
     .catch(() => {
       return {
         success: false,
-        suite: null,
+        storey: null,
       }
     })
 }
 
-export const getSuiteConfig = async ({
-  suiteId,
+export const getStoreyConfig = async ({
+  storeyId,
   userId,
 }: {
-  suiteId: string
+  storeyId: string
   userId: string
 }) => {
-  const suite = await db.suite.findFirst({
+  const storey = await db.storey.findFirst({
     where: {
       user_id: userId,
-      id: suiteId,
+      id: storeyId,
     },
     select: {
-      name: true,
-      description: true,
-      content: true,
       id: true,
+      suite_id: true,
+      content: true,
+      description: true,
+      name: true,
     },
   })
 
-  if (!suite) {
+  if (!storey) {
     return null
   }
 
-  return suite
+  return storey
 }
 
-export const getSuiteDashboard = async ({
+export const getStoreyDashboard = async ({
   suiteId,
+  storeyId,
   userId,
 }: {
   suiteId: string
+  storeyId: string
   userId: string
 }) => {
-  const suite = await db.suite.findFirst({
+  const storey = await db.storey.findFirst({
     where: {
       user_id: userId,
-      id: suiteId,
+      suite_id: suiteId,
+      id: storeyId,
     },
     select: {
       name: true,
       description: true,
       id: true,
+      suite_id: true,
       content: true,
-      storeys: {
+      suite: {
         select: {
-          _count: {
-            select: {
-              spaces: true,
-            },
-          },
+          id: true,
+          name: true,
+          description: true,
+        },
+      },
+      spaces: {
+        select: {
           id: true,
           name: true,
           description: true,
           content: true,
-          suite_id: true,
-          spaces: {
-            select: {
-              id: true,
-              name: true,
-              description: true,
-              content: true,
-              storey_id: true,
-            },
-          },
         },
       },
       pkm_history: {
         where: {
           suite_id: suiteId,
-          storey_id: null,
+          storey_id: storeyId,
           space_id: null,
           is_current: true,
         },
@@ -217,50 +217,38 @@ export const getSuiteDashboard = async ({
     },
   })
 
-  if (!suite) {
+  if (!storey) {
     return null
   }
 
-  return suite
+  return storey
 }
 
-export const getSuitesForUser = async ({ userId }: { userId: string }) => {
-  return await db.suite
-    .findMany({
-      where: {
-        user_id: userId,
-      },
-      select: {
-        _count: {
-          select: {
-            storeys: true,
-          },
-        },
-        name: true,
-        description: true,
-        content: true,
-        id: true,
-      },
-    })
-    .then((suites) => suites)
-}
-
-export const getSuiteItemCounts = async ({ userId }: { userId: string }) => {
+export const getStoreyItemCounts = async ({
+  storeyId,
+  userId,
+}: {
+  storeyId: string
+  userId: string
+}) => {
   // SQL injection should be impossible here
-  const query = Prisma.sql`select
-                  suite_id as id,
-                  (sum(case when model_type = 'PkmEpiphany' then 1 else 0 end))::int as epiphany_count,
-                  (sum(case when model_type = 'PkmInbox' then 1 else 0 end))::int as inbox_count,
-                  (sum(case when model_type = 'PkmPassingThought' then 1 else 0 end))::int as passing_thought_count,
-                  (sum(case when model_type = 'PkmTodo' then 1 else 0 end))::int as todo_count,
-                  (sum(case when model_type = 'PkmTrash' then 1 else 0 end))::int as trash_count,
-                  (sum(case when model_type = 'PkmVoid' then 1 else 0 end))::int as void_count
-                from "PkmHistory"
-                where user_id = ${userId}::uuid
-                and storey_id is null
-                and space_id is null
-                and is_current is true
-                group by suite_id`
+  const query = Prisma.sql`
+    select
+        storey_id || '-' || storey_id as id,
+        (sum(case when model_type = 'PkmEpiphany' then 1 else 0 end))::int as epiphany_count,
+        (sum(case when model_type = 'PkmInbox' then 1 else 0 end))::int as inbox_count,
+        (sum(case when model_type = 'PkmPassingThought' then 1 else 0 end))::int as passing_thought_count,
+        (sum(case when model_type = 'PkmTodo' then 1 else 0 end))::int as todo_count,
+        (sum(case when model_type = 'PkmTrash' then 1 else 0 end))::int as trash_count,
+        (sum(case when model_type = 'PkmVoid' then 1 else 0 end))::int as void_count
+    from "PkmHistory"
+    where user_id = ${userId}::uuid
+        and storey_id = ${storeyId}::uuid
+        and storey_id is not null
+        and space_id is null
+        and is_current is true
+    group by storey_id || '-' || storey_id
+`
 
   const results: [] = await db.$queryRaw(query)
 
@@ -268,13 +256,13 @@ export const getSuiteItemCounts = async ({ userId }: { userId: string }) => {
     return {}
   }
 
-  const suites: {
+  const storeys: {
     [key: string]: ItemCountRow
   } = {}
 
   results.map(
-    (row: SuiteItemCountsResults) =>
-      (suites[row.id] = {
+    (row: StoreyItemCountsResults) =>
+      (storeys[row.id] = {
         epiphany_count: row.epiphany_count,
         inbox_count: row.inbox_count,
         passing_thought_count: row.passing_thought_count,
@@ -284,32 +272,26 @@ export const getSuiteItemCounts = async ({ userId }: { userId: string }) => {
       }),
   )
 
-  return suites
+  return storeys
 }
 
-export const getSuiteForUser = async ({
-  suiteId,
-  userId,
-}: {
-  suiteId: string
-  userId: string
-}) => {
-  const suite = await db.suite.findFirst({
-    where: {
-      user_id: userId,
-      id: suiteId,
-    },
-    select: {
-      name: true,
-      description: true,
-      content: true,
-      id: true,
-    },
-  })
-
-  if (!suite) {
-    return null
-  }
-
-  return suite
+export const getStoreysForUser = async ({ userId }: { userId: string }) => {
+  return await db.storey
+    .findMany({
+      where: {
+        user_id: userId,
+      },
+      select: {
+        _count: {
+          select: {
+            spaces: true,
+          },
+        },
+        name: true,
+        description: true,
+        content: true,
+        id: true,
+      },
+    })
+    .then((storeys) => storeys)
 }

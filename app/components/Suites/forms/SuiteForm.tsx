@@ -73,7 +73,7 @@ const SuiteForm = ({
                 <textarea
                   className="min-w-full min-h-48 bg-slate-700 p-4"
                   name="description"
-                  value={defaultDescription}
+                  value={description}
                   disabled={!interactive || submitting}
                   onChange={(e) => setDescription(e.target.value)}
                 />

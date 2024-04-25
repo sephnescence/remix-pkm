@@ -6,14 +6,15 @@ import {
   redirect,
 } from '@remix-run/node'
 import {
-  getSuiteConfig,
-  getSuiteDashboard,
-  getSuiteItemCounts,
-  storeSuiteConfig,
-  updateSuiteConfig,
-} from '~/repositories/PkmSuiteRepository'
+  getStoreyItemCounts,
+  getStoreyConfig,
+  getStoreyDashboard,
+  storeStoreyConfig,
+  updateStoreyConfig,
+} from '~/repositories/PkmStoreyRepository'
+import { getSuiteForUser } from '~/repositories/PkmSuiteRepository'
 
-export type SuiteUpdateConfigActionResponse = {
+export type StoreyUpdateConfigActionResponse = {
   errors: {
     fieldErrors: {
       general?: string
@@ -24,16 +25,21 @@ export type SuiteUpdateConfigActionResponse = {
   }
 }
 
-export const suiteUpdateConfigAction = async (
+export const storeyUpdateConfigAction = async (
   args: ActionFunctionArgs,
-): Promise<SuiteUpdateConfigActionResponse | TypedResponse<never>> => {
+): Promise<StoreyUpdateConfigActionResponse | TypedResponse<never>> => {
   const user = await getUserAuth(args)
   if (!user) {
     return redirect('/')
   }
 
-  const suite_id = args.params.suite_id
-  if (!suite_id) {
+  const suiteId = args.params.suite_id
+  if (!suiteId) {
+    return redirect('/')
+  }
+
+  const storeyId = args.params.storey_id
+  if (!storeyId) {
     return redirect('/')
   }
 
@@ -80,8 +86,8 @@ export const suiteUpdateConfigAction = async (
     }
   }
 
-  const response = await updateSuiteConfig({
-    suiteId: suite_id,
+  const response = await updateStoreyConfig({
+    storeyId,
     userId: user.id,
     content: content.toString(),
     description: description.toString(),
@@ -92,48 +98,49 @@ export const suiteUpdateConfigAction = async (
     return {
       errors: {
         fieldErrors: {
-          general: 'Failed to update Suite. Please try again.',
+          general: 'Failed to update Storey. Please try again.',
         },
       },
     }
   }
 
-  if (response.suite) {
-    return redirect(`/suite/${response.suite.id}/config`)
+  if (response.storey) {
+    return redirect(`/suite/${suiteId}/storey/${response.storey.id}/config`)
   }
 
   return redirect('/') // Not that it should get here
 }
 
-export const suiteConfigLoader = async (args: LoaderFunctionArgs) => {
+export const storeyConfigLoader = async (args: LoaderFunctionArgs) => {
   const user = await getUserAuth(args)
   if (!user) {
     return redirect('/')
   }
 
-  const suite_id = args.params.suite_id
-  if (!suite_id) {
+  const storey_id = args.params.storey_id
+  if (!storey_id) {
     return redirect('/')
   }
 
-  const suite = await getSuiteConfig({
-    suiteId: suite_id,
+  const storey = await getStoreyConfig({
+    storeyId: storey_id,
     userId: user.id,
   })
 
-  if (!suite) {
+  if (!storey) {
     return redirect('/')
   }
 
   return {
-    id: suite.id,
-    content: suite.content,
-    description: suite.description,
-    name: suite.name,
+    id: storey.id,
+    suiteId: storey.suite_id,
+    content: storey.content,
+    description: storey.description,
+    name: storey.name,
   }
 }
 
-export const suiteDashboardLoader = async (args: LoaderFunctionArgs) => {
+export const storeyDashboardLoader = async (args: LoaderFunctionArgs) => {
   const user = await getUserAuth(args)
   if (!user) {
     return redirect('/')
@@ -144,16 +151,23 @@ export const suiteDashboardLoader = async (args: LoaderFunctionArgs) => {
     return redirect('/')
   }
 
-  const suiteDashboard = await getSuiteDashboard({
-    suiteId: suite_id,
-    userId: user.id,
-  })
-
-  if (!suiteDashboard) {
+  const storey_id = args.params.storey_id
+  if (!storey_id) {
     return redirect('/')
   }
 
-  const suiteItemCounts = await getSuiteItemCounts({
+  const storeyDashboard = await getStoreyDashboard({
+    suiteId: suite_id,
+    storeyId: storey_id,
+    userId: user.id,
+  })
+
+  if (!storeyDashboard) {
+    return redirect('/')
+  }
+
+  const storeyItemCounts = await getStoreyItemCounts({
+    storeyId: storey_id,
     userId: user.id,
   })
 
@@ -161,13 +175,39 @@ export const suiteDashboardLoader = async (args: LoaderFunctionArgs) => {
   const tab = url.searchParams.get('tab')
 
   return {
-    suiteDashboard,
-    suiteItemCounts,
+    storeyDashboard,
+    storeyItemCounts,
     tab: tab ?? 'content',
   }
 }
 
-export const suiteConfigNewAction = async (args: ActionFunctionArgs) => {
+export const storeyConfigNewLoader = async (args: ActionFunctionArgs) => {
+  const user = await getUserAuth(args)
+  if (!user) {
+    return redirect('/')
+  }
+
+  const suiteId = args.params.suite_id
+  if (!suiteId) {
+    return redirect('/')
+  }
+
+  const suite = await getSuiteForUser({
+    userId: user.id,
+    suiteId,
+  })
+
+  if (!suite) {
+    return redirect('/')
+  }
+
+  return {
+    suiteId: suite.id,
+    suiteName: suite.name,
+  }
+}
+
+export const storeyConfigNewAction = async (args: ActionFunctionArgs) => {
   const user = await getUserAuth(args)
   if (!user) {
     return redirect('/')
@@ -177,6 +217,11 @@ export const suiteConfigNewAction = async (args: ActionFunctionArgs) => {
 
   const formData = await request.formData()
   if (!formData) {
+    return redirect('/')
+  }
+
+  const suiteId = args.params.suite_id
+  if (!suiteId) {
     return redirect('/')
   }
 
@@ -216,8 +261,9 @@ export const suiteConfigNewAction = async (args: ActionFunctionArgs) => {
     }
   }
 
-  const response = await storeSuiteConfig({
+  const response = await storeStoreyConfig({
     userId: user.id,
+    suiteId: suiteId.toString(),
     content: content.toString(),
     description: description.toString(),
     name: name.toString(),
@@ -227,14 +273,14 @@ export const suiteConfigNewAction = async (args: ActionFunctionArgs) => {
     return {
       errors: {
         fieldErrors: {
-          general: 'Failed to store Suite. Please try again.',
+          general: 'Failed to store Storey. Please try again.',
         },
       },
     }
   }
 
-  if (response.suite) {
-    return redirect(`/suite/${response.suite.id}/config`)
+  if (response.storey) {
+    return redirect(`/suite/${suiteId}/storey/${response.storey.id}/config`)
   }
 
   return redirect('/') // Not that it should get here
