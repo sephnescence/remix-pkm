@@ -25,7 +25,7 @@ export default function StoreyConfigEditRoute() {
       <SuiteForm
         actionData={actionData as StoreyUpdateConfigActionResponse}
         pageTitle="Edit Storey Configuration"
-        cancelUrl={`/storey/${storey.id}/config`}
+        cancelUrl={`/suite/${storey.suiteId}/storey/${storey.id}/config`}
         defaultName={storey.name}
         defaultDescription={storey.description}
         defaultContent={storey.content}

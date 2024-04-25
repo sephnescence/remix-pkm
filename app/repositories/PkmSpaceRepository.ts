@@ -10,19 +10,11 @@ export type ItemCountRow = {
   void_count: number
 }
 
-export type StoreyItemCountsResults = ItemCountRow & {
+export type SpaceItemCountsResults = ItemCountRow & {
   id: string
 }
 
-type StoreStoreyArgs = {
-  suiteId: string
-  userId: string
-  content: string
-  description: string
-  name: string
-}
-
-type UpdateStoreyArgs = {
+type StoreSpaceArgs = {
   storeyId: string
   userId: string
   content: string
@@ -30,49 +22,57 @@ type UpdateStoreyArgs = {
   name: string
 }
 
-export const storeStoreyConfig = async ({
-  suiteId,
+type UpdateSpaceArgs = {
+  spaceId: string
+  userId: string
+  content: string
+  description: string
+  name: string
+}
+
+export const storeSpaceConfig = async ({
+  storeyId,
   userId,
   content,
   description,
   name,
-}: StoreStoreyArgs) => {
-  return await db.storey
+}: StoreSpaceArgs) => {
+  return await db.space
     .create({
       data: {
-        suite_id: suiteId,
+        storey_id: storeyId,
         user_id: userId,
         name,
         description,
         content,
       },
     })
-    .then((storey) => {
+    .then((space) => {
       return {
         success: true,
-        storey,
+        space,
       }
     })
     .catch(() => {
       return {
         success: false,
-        storey: null,
+        space: null,
       }
     })
 }
 
-export const updateStoreyConfig = async ({
-  storeyId,
+export const updateSpaceConfig = async ({
+  spaceId,
   userId,
   content,
   description,
   name,
-}: UpdateStoreyArgs) => {
-  return await db.storey
+}: UpdateSpaceArgs) => {
+  return await db.space
     .update({
       where: {
         user_id: userId,
-        id: storeyId,
+        id: spaceId,
       },
       data: {
         name,
@@ -80,94 +80,99 @@ export const updateStoreyConfig = async ({
         content,
       },
     })
-    .then((storey) => {
+    .then((space) => {
       return {
         success: true,
-        storey,
+        space,
       }
     })
     .catch(() => {
       return {
         success: false,
-        storey: null,
+        space: null,
       }
     })
 }
 
-export const getStoreyConfig = async ({
-  storeyId,
+export const getSpaceConfig = async ({
+  spaceId,
   userId,
 }: {
-  storeyId: string
+  spaceId: string
   userId: string
 }) => {
-  const storey = await db.storey.findFirst({
+  const space = await db.space.findFirst({
     where: {
       user_id: userId,
-      id: storeyId,
+      id: spaceId,
     },
     select: {
       id: true,
-      suite_id: true,
       content: true,
       description: true,
       name: true,
-      suite: {
+      storey: {
         select: {
+          id: true,
           name: true,
+          suite: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       },
     },
   })
 
-  if (!storey) {
+  if (!space) {
     return null
   }
 
-  return storey
+  return space
 }
 
-export const getStoreyDashboard = async ({
-  suiteId,
+export const getSpaceDashboard = async ({
   storeyId,
+  spaceId,
   userId,
 }: {
-  suiteId: string
   storeyId: string
+  spaceId: string
   userId: string
 }) => {
-  const storey = await db.storey.findFirst({
+  const space = await db.space.findFirst({
     where: {
       user_id: userId,
-      suite_id: suiteId,
-      id: storeyId,
+      storey_id: storeyId,
+      id: spaceId,
     },
     select: {
       name: true,
       description: true,
       id: true,
-      suite_id: true,
+      storey_id: true,
       content: true,
-      suite: {
+      storey: {
         select: {
           id: true,
           name: true,
           description: true,
-        },
-      },
-      spaces: {
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          content: true,
+          suite: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+            },
+          },
         },
       },
       pkm_history: {
         where: {
-          suite_id: suiteId,
+          suite_id: null,
           storey_id: storeyId,
-          space_id: null,
+          space_id: spaceId,
           is_current: true,
         },
         select: {
@@ -222,14 +227,14 @@ export const getStoreyDashboard = async ({
     },
   })
 
-  if (!storey) {
+  if (!space) {
     return null
   }
 
-  return storey
+  return space
 }
 
-export const getStoreyItemCounts = async ({
+export const getSpaceItemCounts = async ({
   storeyId,
   userId,
 }: {
@@ -239,21 +244,21 @@ export const getStoreyItemCounts = async ({
   // SQL injection should be impossible here
   const query = Prisma.sql`
     select
-        storey_id || '-' || storey_id as id,
-        (sum(case when model_type = 'PkmEpiphany' then 1 else 0 end))::int as epiphany_count,
-        (sum(case when model_type = 'PkmInbox' then 1 else 0 end))::int as inbox_count,
-        (sum(case when model_type = 'PkmPassingThought' then 1 else 0 end))::int as passing_thought_count,
-        (sum(case when model_type = 'PkmTodo' then 1 else 0 end))::int as todo_count,
-        (sum(case when model_type = 'PkmTrash' then 1 else 0 end))::int as trash_count,
-        (sum(case when model_type = 'PkmVoid' then 1 else 0 end))::int as void_count
+      storey_id || '-' || space_id as id,
+      (sum(case when model_type = 'PkmEpiphany' then 1 else 0 end))::int as epiphany_count,
+      (sum(case when model_type = 'PkmInbox' then 1 else 0 end))::int as inbox_count,
+      (sum(case when model_type = 'PkmPassingThought' then 1 else 0 end))::int as passing_thought_count,
+      (sum(case when model_type = 'PkmTodo' then 1 else 0 end))::int as todo_count,
+      (sum(case when model_type = 'PkmTrash' then 1 else 0 end))::int as trash_count,
+      (sum(case when model_type = 'PkmVoid' then 1 else 0 end))::int as void_count
     from "PkmHistory"
     where user_id = ${userId}::uuid
-        and storey_id = ${storeyId}::uuid
-        and storey_id is not null
-        and space_id is null
-        and is_current is true
-    group by storey_id || '-' || storey_id
-`
+      and suite_id is null
+      and storey_id = ${storeyId}::uuid
+      and space_id is not null
+      and is_current is true
+    group by storey_id || '-' || space_id
+  `
 
   const results: [] = await db.$queryRaw(query)
 
@@ -266,7 +271,7 @@ export const getStoreyItemCounts = async ({
   } = {}
 
   results.map(
-    (row: StoreyItemCountsResults) =>
+    (row: SpaceItemCountsResults) =>
       (storeys[row.id] = {
         epiphany_count: row.epiphany_count,
         inbox_count: row.inbox_count,
@@ -280,61 +285,40 @@ export const getStoreyItemCounts = async ({
   return storeys
 }
 
-export const getStoreysForUser = async ({ userId }: { userId: string }) => {
-  return await db.storey
+export const getSpacesForUser = async ({
+  userId,
+  storeyId,
+}: {
+  userId: string
+  storeyId: string
+}) => {
+  return await db.space
     .findMany({
       where: {
         user_id: userId,
+        storey_id: storeyId,
       },
       select: {
-        _count: {
-          select: {
-            spaces: true,
-          },
-        },
         name: true,
         description: true,
         content: true,
         id: true,
-      },
-    })
-    .then((storeys) => storeys)
-}
-
-export const getStoreyForUser = async ({
-  suiteId,
-  storeyId,
-  userId,
-}: {
-  suiteId: string
-  storeyId: string
-  userId: string
-}) => {
-  const storey = await db.storey.findFirst({
-    where: {
-      user_id: userId,
-      suite_id: suiteId,
-      id: storeyId,
-    },
-    select: {
-      name: true,
-      description: true,
-      content: true,
-      id: true,
-      suite: {
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          content: true,
+        storey_id: true,
+        storey: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            suite: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+              },
+            },
+          },
         },
       },
-    },
-  })
-
-  if (!storey) {
-    return null
-  }
-
-  return storey
+    })
+    .then((spaces) => spaces)
 }

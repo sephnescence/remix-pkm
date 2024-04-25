@@ -111,7 +111,7 @@ export default function StoreyIndexRoute() {
           </>
         ),
         tabContentClassName:
-          'group-has-[.innsight-tab-group#storey--tab--storeys:checked]:block',
+          'group-has-[.innsight-tab-group#storey--tab--spaces:checked]:block',
       },
       {
         tabDefaultChecked: tab === 'epiphany',

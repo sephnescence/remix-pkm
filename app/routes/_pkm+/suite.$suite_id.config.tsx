@@ -61,7 +61,7 @@ export default function SuiteConfigRoute() {
                 className="bg-blue-600 hover:bg-blue-600 px-4 py-2 rounded-lg"
                 type="button"
               >
-                View Content
+                View Content (BTTODO)
               </button>
             </Link>
             <form
@@ -73,7 +73,7 @@ export default function SuiteConfigRoute() {
                 type="submit"
                 title="Duplicate"
               >
-                Duplicate
+                Duplicate (BTTODO)
               </button>
             </form>
             <Link
