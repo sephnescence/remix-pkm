@@ -18,7 +18,7 @@ export default function StoreyConfigEditRoute() {
     <>
       <StoreyBreadcrumbs
         suiteId={storey.suiteId}
-        suiteName={'BTTODO'}
+        suiteName={storey.suiteName}
         storeyId={storey.id}
         storeyName={storey.name}
       />

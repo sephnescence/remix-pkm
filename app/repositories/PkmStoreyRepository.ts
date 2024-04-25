@@ -112,6 +112,11 @@ export const getStoreyConfig = async ({
       content: true,
       description: true,
       name: true,
+      suite: {
+        select: {
+          name: true,
+        },
+      },
     },
   })
 
