@@ -5,7 +5,6 @@ import { SuiteUpdateConfigActionResponse } from '~/controllers/SuiteController'
 
 type SuiteFormProps = {
   pageTitle: string
-  pageSubtitle: string | null
   cancelUrl?: string
   defaultName?: string
   defaultDescription?: string
@@ -15,7 +14,6 @@ type SuiteFormProps = {
 
 const SuiteForm = ({
   pageTitle,
-  pageSubtitle,
   cancelUrl,
   defaultName,
   defaultDescription,
@@ -46,9 +44,6 @@ const SuiteForm = ({
       )}
       <div className="mb-4">
         <div className="text-4xl">{pageTitle}</div>
-        {pageSubtitle && (
-          <div className="text-2xl text-zinc-400">{pageSubtitle}</div>
-        )}
       </div>
       <Form method="POST" className="grid">
         <div className="grid grid-cols-1 md:grid-cols-2 md:gap-2">

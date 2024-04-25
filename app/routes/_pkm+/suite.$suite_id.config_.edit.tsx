@@ -1,5 +1,6 @@
 import { useActionData, useLoaderData } from '@remix-run/react'
 import SuiteForm from '~/components/Suites/forms/SuiteForm'
+import SuiteBreadcrumbs from '~/components/nav/SuiteBreadcrumbs'
 import {
   SuiteUpdateConfigActionResponse,
   suiteConfigLoader,
@@ -14,14 +15,16 @@ export default function SuiteConfigEditRoute() {
   const actionData = useActionData<typeof action>()
 
   return (
-    <SuiteForm
-      actionData={actionData as SuiteUpdateConfigActionResponse}
-      pageTitle="Edit Suite Configuration"
-      pageSubtitle={suite.name}
-      cancelUrl={`/suite/${suite.id}/config`}
-      defaultName={suite.name}
-      defaultDescription={suite.description}
-      defaultContent={suite.content}
-    />
+    <>
+      <SuiteBreadcrumbs suiteId={suite.id} suiteName={suite.name} />
+      <SuiteForm
+        actionData={actionData as SuiteUpdateConfigActionResponse}
+        pageTitle="Edit Suite Configuration"
+        cancelUrl={`/suite/${suite.id}/config`}
+        defaultName={suite.name}
+        defaultDescription={suite.description}
+        defaultContent={suite.content}
+      />
+    </>
   )
 }

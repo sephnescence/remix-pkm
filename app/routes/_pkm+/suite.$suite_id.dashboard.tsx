@@ -10,6 +10,7 @@ import LightbulbIcon from '~/components/icons/LightbulbIcon'
 import ListBulletIcon from '~/components/icons/ListBulletIcon'
 import PlusIcon from '~/components/icons/PlusIcon'
 import TrashIcon from '~/components/icons/TrashIcon'
+import SuiteBreadcrumbs from '~/components/nav/SuiteBreadcrumbs'
 import Epiphany from '~/components/pkm/Epiphany'
 import Inbox from '~/components/pkm/Inbox'
 import PassingThought from '~/components/pkm/PassingThought'
@@ -389,6 +390,10 @@ export default function SuiteIndexRoute() {
 
   return (
     <>
+      <SuiteBreadcrumbs
+        suiteId={suiteDashboard.id}
+        suiteName={suiteDashboard.name}
+      />
       <p className="text-4xl mb-2">
         <Link to={`/suite/${suiteDashboard.id}/config`} prefix="intent">
           {suiteDashboard.name}

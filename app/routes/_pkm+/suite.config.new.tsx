@@ -14,7 +14,6 @@ export default function SuiteConfigNewRoute() {
     <SuiteForm
       actionData={actionData as SuiteUpdateConfigActionResponse}
       pageTitle="Configure New Suite"
-      pageSubtitle={null}
       cancelUrl="/suites"
     />
   )
