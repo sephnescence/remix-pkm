@@ -391,7 +391,7 @@ export default function StoreyIndexRoute() {
   return (
     <>
       <StoreyBreadcrumbs
-        suiteId={storeyDashboard.suite_id}
+        suiteId={storeyDashboard.suite.id}
         suiteName={storeyDashboard.suite.name}
         storeyId={storeyDashboard.id}
         storeyName={storeyDashboard.name}
