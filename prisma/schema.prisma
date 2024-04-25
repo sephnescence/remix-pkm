@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl"]
 }
 
 datasource db {
@@ -27,6 +28,12 @@ model User {
   todo_items PkmTodo[]
   voided_passing_thought_items PkmVoid[]
   trash_items PkmTrash[]
+
+  images PkmImage[]
+
+  suites Suite[]
+  storeys Storey[]
+  spaces Space[]
 }
 
 model PkmHistory {
@@ -37,6 +44,15 @@ model PkmHistory {
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
   user_id String @db.Uuid
+
+  suite Suite? @relation(fields: [suite_id], references: [id], onDelete: Cascade)
+  suite_id String? @db.Uuid
+
+  storey Storey? @relation(fields: [storey_id], references: [id], onDelete: Cascade)
+  storey_id String? @db.Uuid
+
+  space Space? @relation(fields: [space_id], references: [id], onDelete: Cascade)
+  space_id String? @db.Uuid
 
   epiphany_item PkmEpiphany?
   inbox_item PkmInbox?
@@ -49,6 +65,7 @@ model PkmHistory {
 
   // Add an index for non unique foreign keys
   @@index([user_id])
+  @@index([suite_id])
 }
 
 model PkmEpiphany {
@@ -57,7 +74,9 @@ model PkmEpiphany {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  content String
+  content String @default("Your epiphany item content here")
+  name String @default("New epiphany item")
+  summary String @default("Summarise your epiphany item here")
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
   user_id String @db.Uuid
@@ -75,7 +94,9 @@ model PkmInbox {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  content String
+  content String @default("Your inbox item content here")
+  name String @default("New inbox item")
+  summary String @default("Summarise your inbox item here")
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
   user_id String @db.Uuid
@@ -92,7 +113,9 @@ model PkmPassingThought {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  content String
+  content String @default("Your passing thought item content here")
+  name String @default("New passing thought item")
+  summary String @default("Summarise your passing thought item here")
   void_at DateTime
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -110,7 +133,9 @@ model PkmTodo {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  content String
+  content String @default("Your todo item content here")
+  name String @default("New todo item")
+  summary String @default("Summarise your todo item here")
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
   user_id String @db.Uuid
@@ -127,7 +152,9 @@ model PkmVoid {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  content String
+  content String @default("Your void item content here")
+  name String @default("New void item")
+  summary String @default("Summarise your void item here")
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
   user_id String @db.Uuid
@@ -144,7 +171,9 @@ model PkmTrash {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  content String
+  content String @default("Your trash item content here, though this should have been specified by the item before being moved to the trash")
+  name String @default("New trash item, though this should have been specified by the item before being moved to the trash")
+  summary String @default("Summarise your trash item here, though this should have been specified by the item before being moved to the trash")
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
   user_id String @db.Uuid
@@ -153,4 +182,85 @@ model PkmTrash {
 
   // Add an index for non unique foreign keys
   @@index([user_id])
+}
+
+model Suite {
+  id String @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id String @db.Uuid
+
+  name String @default("Please give your suite a name")
+  description String @default("Please describe the suite")
+  content String @default("<div class=\"bg-blue-500 p-4\">Edit to your heart's content! HTML supported! Tailwind only, please</div>")
+
+  // Add an index for non unique foreign keys
+  @@index([user_id])
+
+  pkm_history PkmHistory[]
+  storeys Storey[]
+}
+
+model Storey {
+  id String @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id String @db.Uuid
+
+  suite Suite @relation(fields: [suite_id], references: [id], onDelete: Cascade)
+  suite_id String @db.Uuid
+
+  name String @default("Please give your storey a name")
+  description String @default("Please describe the storey")
+  content String @default("<div class=\"bg-blue-500 p-4\">Edit to your heart's content! HTML supported! Tailwind only, please</div>")
+
+  // Add an index for non unique foreign keys
+  @@index([user_id])
+
+  pkm_history PkmHistory[]
+  spaces Space[]
+}
+
+model Space {
+  id String @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id String @db.Uuid
+
+  storey Storey @relation(fields: [storey_id], references: [id], onDelete: Cascade)
+  storey_id String @db.Uuid
+
+  name String @default("Please give your space a name")
+  description String @default("Please describe the space")
+  content String @default("<div class=\"bg-blue-500 p-4\">Edit to your heart's content! HTML supported! Tailwind only, please</div>")
+
+  // Add an index for non unique foreign keys
+  @@index([user_id])
+
+  pkm_history PkmHistory[]
+}
+
+// Be sure to sync changes with repositories/images.ts
+model PkmImage {
+  image_id String @id @default(uuid()) @db.Uuid
+  model_id String @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+
+  name String
+  size Int
+  type String
+  s3_url String
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id String @db.Uuid
+
+  // Add an index for non unique foreign keys
+  @@index([user_id])
+  @@index([model_id])
 }

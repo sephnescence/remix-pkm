@@ -38,12 +38,15 @@ function App() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* This is how I'm able to dynamically write content and have it render in previews.
+          Tailwind optimises the css, only including classes that are used in build time */}
+        <script src="https://cdn.tailwindcss.com"></script>
         <Meta />
         <Links />
       </head>
-      <body className="bg-black">
-        <div className="w-screen min-h-screen h-full bg-white/5 flex text-white">
-          <div className="max-w-[1200px] w-full mx-auto bg-white/5">
+      <body className={`bg-slate-950 text-blue-100`}>
+        <div className="w-screen min-h-screen h-full flex">
+          <div className="w-full mx-auto">
             <Outlet />
             <ScrollRestoration />
             <Scripts />

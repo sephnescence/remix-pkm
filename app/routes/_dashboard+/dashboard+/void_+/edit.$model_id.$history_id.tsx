@@ -46,7 +46,7 @@ export default function VoidEditRoute() {
           >
             Submit
           </button>
-          <Link to={'/dashboard'}>
+          <Link to={'/dashboard'} prefetch="intent">
             <button
               className="border-solid border-2 border-red-600 hover:bg-red-600 px-4 py-2 rounded-lg mr-4"
               type="button"
