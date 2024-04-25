@@ -1,13 +1,18 @@
+import { useActionData } from '@remix-run/react'
 import SuiteForm from '~/components/Suites/forms/SuiteForm'
-import { suiteConfigNewAction } from '~/controllers/SuiteController'
-import { suitesConfigLoader } from '~/controllers/SuitesController'
+import {
+  SuiteUpdateConfigActionResponse,
+  suiteConfigNewAction,
+} from '~/controllers/SuiteController'
 
-export const loader = suitesConfigLoader
 export const action = suiteConfigNewAction
 
 export default function SuiteConfigNewRoute() {
+  const actionData = useActionData<typeof action>()
+
   return (
     <SuiteForm
+      actionData={actionData as SuiteUpdateConfigActionResponse}
       pageTitle="Configure New Suite"
       pageSubtitle={null}
       cancelUrl="/suites"

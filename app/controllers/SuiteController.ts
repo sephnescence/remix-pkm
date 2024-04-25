@@ -174,11 +174,6 @@ export const suiteConfigNewAction = async (args: ActionFunctionArgs) => {
     return redirect('/')
   }
 
-  const suite_id = args.params.suite_id
-  if (!suite_id) {
-    return redirect('/')
-  }
-
   const { request } = args
 
   const formData = await request.formData()
