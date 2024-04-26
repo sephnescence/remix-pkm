@@ -322,3 +322,47 @@ export const getSpacesForUser = async ({
     })
     .then((spaces) => spaces)
 }
+
+export const getSpaceForUser = async ({
+  storeyId,
+  spaceId,
+  userId,
+}: {
+  storeyId: string
+  spaceId: string
+  userId: string
+}) => {
+  const space = await db.space.findFirst({
+    where: {
+      user_id: userId,
+      storey_id: storeyId,
+      id: spaceId,
+    },
+    select: {
+      name: true,
+      description: true,
+      content: true,
+      id: true,
+      storey: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          suite: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  if (!space) {
+    return null
+  }
+
+  return space
+}

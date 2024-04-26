@@ -29,6 +29,7 @@ export const trashIndexLoader = async (
     return redirect('/')
   }
 
+  // BTTODO - What do I need to do in order to fix this?
   return { trash: user.pkm_history }
 }
 

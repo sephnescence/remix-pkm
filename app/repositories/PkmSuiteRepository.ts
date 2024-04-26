@@ -287,6 +287,51 @@ export const getSuiteItemCounts = async ({ userId }: { userId: string }) => {
   return suites
 }
 
+export const getSuiteAndChildrenForUser = async ({
+  suiteId,
+  userId,
+}: {
+  suiteId: string
+  userId: string
+}) => {
+  const suite = await db.suite.findFirst({
+    where: {
+      user_id: userId,
+      id: suiteId,
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      content: true,
+      storeys: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          content: true,
+          suite_id: true,
+          spaces: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              content: true,
+              storey_id: true,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  if (!suite) {
+    return null
+  }
+
+  return suite
+}
+
 export const getSuiteForUser = async ({
   suiteId,
   userId,

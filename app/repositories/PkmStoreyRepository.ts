@@ -301,6 +301,46 @@ export const getStoreysForUser = async ({ userId }: { userId: string }) => {
     .then((storeys) => storeys)
 }
 
+export const getStoreyAndChildrenForUser = async ({
+  suiteId,
+  storeyId,
+  userId,
+}: {
+  suiteId: string
+  storeyId: string
+  userId: string
+}) => {
+  const storey = await db.storey.findFirst({
+    where: {
+      user_id: userId,
+      suite_id: suiteId,
+      id: storeyId,
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      content: true,
+      suite_id: true,
+      spaces: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          content: true,
+          storey_id: true,
+        },
+      },
+    },
+  })
+
+  if (!storey) {
+    return null
+  }
+
+  return storey
+}
+
 export const getStoreyForUser = async ({
   suiteId,
   storeyId,
