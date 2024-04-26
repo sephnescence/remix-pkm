@@ -1,6 +1,6 @@
-import { getSuiteDashboardForUser } from '@/repositories/suite'
 import { feModelTypeMap } from '@/utils/apiUtils'
 import { User } from '@prisma/client'
+import { getSuiteDashboardForUser } from '~/repositories/PkmSuiteRepository'
 
 /*
     TypeScript gymnastics. I have to manually iterate through the item types
@@ -92,7 +92,10 @@ const expandSuiteKanbans = async (
     return returnContent
   }
 
-  const suiteModel = await getSuiteDashboardForUser(suite.id, user.id)
+  const suiteModel = await getSuiteDashboardForUser({
+    suiteId: suite.id,
+    userId: user.id,
+  })
 
   if (!suiteModel) {
     return returnContent

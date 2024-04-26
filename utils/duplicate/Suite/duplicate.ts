@@ -1,8 +1,8 @@
 import { Prisma } from '@prisma/client'
 import { randomUUID } from 'node:crypto'
-import { prisma } from '../../db'
 import { historyModelTypeMap } from '../../apiUtils'
-import { getSuiteDashboardForUser } from '@/repositories/suite'
+import { getSuiteDashboardForUser } from '~/repositories/PkmSuiteRepository'
+import { db } from '@/utils/db'
 
 export const getTransactionsForDuplicateSuite = async (
   eSuiteName: string,
@@ -12,10 +12,10 @@ export const getTransactionsForDuplicateSuite = async (
   nSuiteId: string,
   userId: string,
 ) => {
-  const transactions: Prisma.PrismaPromise<any>[] = []
+  const transactions: Prisma.PrismaPromise<unknown>[] = []
 
   transactions.push(
-    prisma.suite.create({
+    db.suite.create({
       data: {
         user_id: userId,
         id: nSuiteId,
@@ -26,7 +26,10 @@ export const getTransactionsForDuplicateSuite = async (
     }),
   )
 
-  const suiteDashboard = await getSuiteDashboardForUser(eSuiteId, userId)
+  const suiteDashboard = await getSuiteDashboardForUser({
+    suiteId: eSuiteId,
+    userId,
+  })
 
   for (const historyItem of suiteDashboard?.pkm_history ?? []) {
     if (
@@ -74,7 +77,7 @@ export const getTransactionsForDuplicateSuite = async (
     }
 
     transactions.push(
-      prisma.pkmHistory.create({
+      db.pkmHistory.create({
         data: {
           model_id: newModelId,
           model_type: historyItem.model_type,
@@ -90,7 +93,7 @@ export const getTransactionsForDuplicateSuite = async (
       }),
     )
 
-    const images = await prisma.pkmImage.findMany({
+    const images = await db.pkmImage.findMany({
       where: {
         model_id: historyItem.model_id,
         user_id: userId,
@@ -107,7 +110,7 @@ export const getTransactionsForDuplicateSuite = async (
 
     images.map((image) => {
       transactions.push(
-        prisma.pkmImage.create({
+        db.pkmImage.create({
           data: {
             model_id: newModelId,
             name: image.name,

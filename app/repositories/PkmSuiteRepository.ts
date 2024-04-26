@@ -358,3 +358,109 @@ export const getSuiteForUser = async ({
 
   return suite
 }
+
+export const getSuiteDashboardForUser = async ({
+  suiteId,
+  userId,
+}: {
+  suiteId: string
+  userId: string
+}) => {
+  const suite = await db.suite.findFirst({
+    where: {
+      user_id: userId,
+      id: suiteId,
+    },
+    select: {
+      name: true,
+      description: true,
+      id: true,
+      content: true,
+      storeys: {
+        select: {
+          _count: {
+            select: {
+              spaces: true,
+            },
+          },
+          id: true,
+          name: true,
+          description: true,
+          content: true,
+          suite_id: true,
+          spaces: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              content: true,
+              storey_id: true,
+            },
+          },
+        },
+      },
+      pkm_history: {
+        where: {
+          suite_id: suiteId,
+          storey_id: null,
+          space_id: null,
+          is_current: true,
+        },
+        select: {
+          createdAt: true,
+          history_id: true,
+          model_id: true,
+          model_type: true,
+          epiphany_item: {
+            select: {
+              content: true,
+              name: true,
+              summary: true,
+            },
+          },
+          inbox_item: {
+            select: {
+              content: true,
+              name: true,
+              summary: true,
+            },
+          },
+          passing_thought_item: {
+            select: {
+              content: true,
+              name: true,
+              summary: true,
+            },
+          },
+          todo_item: {
+            select: {
+              content: true,
+              name: true,
+              summary: true,
+            },
+          },
+          trash_item: {
+            select: {
+              content: true,
+              name: true,
+              summary: true,
+            },
+          },
+          void_item: {
+            select: {
+              content: true,
+              name: true,
+              summary: true,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  if (!suite) {
+    return null
+  }
+
+  return suite
+}

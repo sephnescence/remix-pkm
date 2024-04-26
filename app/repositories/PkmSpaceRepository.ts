@@ -366,3 +366,103 @@ export const getSpaceForUser = async ({
 
   return space
 }
+
+export const getSpaceDashboardForUser = async ({
+  storeyId,
+  spaceId,
+  userId,
+}: {
+  storeyId: string
+  spaceId: string
+  userId: string
+}) => {
+  const space = await db.space.findFirst({
+    where: {
+      user_id: userId,
+      id: spaceId,
+      storey_id: storeyId,
+    },
+    select: {
+      name: true,
+      description: true,
+      id: true,
+      content: true,
+      storey: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          suite: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+            },
+          },
+        },
+      },
+      pkm_history: {
+        where: {
+          suite_id: null,
+          storey_id: storeyId,
+          space_id: spaceId,
+          is_current: true,
+        },
+        select: {
+          createdAt: true,
+          history_id: true,
+          model_id: true,
+          model_type: true,
+          epiphany_item: {
+            select: {
+              content: true,
+              name: true,
+              summary: true,
+            },
+          },
+          inbox_item: {
+            select: {
+              content: true,
+              name: true,
+              summary: true,
+            },
+          },
+          passing_thought_item: {
+            select: {
+              content: true,
+              name: true,
+              summary: true,
+            },
+          },
+          todo_item: {
+            select: {
+              content: true,
+              name: true,
+              summary: true,
+            },
+          },
+          trash_item: {
+            select: {
+              content: true,
+              name: true,
+              summary: true,
+            },
+          },
+          void_item: {
+            select: {
+              content: true,
+              name: true,
+              summary: true,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  if (!space) {
+    return null
+  }
+
+  return space
+}

@@ -1,8 +1,8 @@
 import { Prisma } from '@prisma/client'
 import { randomUUID } from 'node:crypto'
-import { prisma } from '../../db'
 import { historyModelTypeMap } from '../../apiUtils'
-import { getStoreyDashboardForUser } from '@/repositories/storey'
+import { getStoreyDashboardForUser } from '~/repositories/PkmStoreyRepository'
+import { db } from '@/utils/db'
 
 export const getTransactionsForDuplicateStorey = async (
   eStoreyId: string,
@@ -14,10 +14,10 @@ export const getTransactionsForDuplicateStorey = async (
   nStoreyId: string,
   userId: string,
 ) => {
-  const transactions: Prisma.PrismaPromise<any>[] = []
+  const transactions: Prisma.PrismaPromise<unknown>[] = []
 
   transactions.push(
-    prisma.storey.create({
+    db.storey.create({
       data: {
         user_id: userId,
         suite_id: nSuiteId,
@@ -29,11 +29,11 @@ export const getTransactionsForDuplicateStorey = async (
     }),
   )
 
-  const storeyDashboard = await getStoreyDashboardForUser(
-    eSuiteId,
-    eStoreyId,
+  const storeyDashboard = await getStoreyDashboardForUser({
+    suiteId: eSuiteId,
+    storeyId: eStoreyId,
     userId,
-  )
+  })
 
   for (const historyItem of storeyDashboard?.pkm_history ?? []) {
     if (
@@ -81,7 +81,7 @@ export const getTransactionsForDuplicateStorey = async (
     }
 
     transactions.push(
-      prisma.pkmHistory.create({
+      db.pkmHistory.create({
         data: {
           model_id: newModelId,
           model_type: historyItem.model_type,
@@ -97,7 +97,7 @@ export const getTransactionsForDuplicateStorey = async (
       }),
     )
 
-    const images = await prisma.pkmImage.findMany({
+    const images = await db.pkmImage.findMany({
       where: {
         model_id: historyItem.model_id,
         user_id: userId,
@@ -114,7 +114,7 @@ export const getTransactionsForDuplicateStorey = async (
 
     images.map((image) => {
       transactions.push(
-        prisma.pkmImage.create({
+        db.pkmImage.create({
           data: {
             model_id: newModelId,
             name: image.name,

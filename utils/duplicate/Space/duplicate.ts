@@ -1,8 +1,8 @@
 import { Prisma } from '@prisma/client'
 import { randomUUID } from 'node:crypto'
-import { prisma } from '../../db'
-import { getSpaceDashboardForUser } from '@/repositories/space'
 import { historyModelTypeMap } from '../../apiUtils'
+import { db } from '@/utils/db'
+import { getSpaceDashboardForUser } from '~/repositories/PkmSpaceRepository'
 
 export const getTransactionsForDuplicateSpace = async (
   eSpaceId: string,
@@ -14,12 +14,12 @@ export const getTransactionsForDuplicateSpace = async (
   userId: string,
   newSpaceId?: string,
 ) => {
-  const transactions: Prisma.PrismaPromise<any>[] = []
+  const transactions: Prisma.PrismaPromise<unknown>[] = []
 
   const nSpaceId = newSpaceId ?? randomUUID()
 
   transactions.push(
-    prisma.space.create({
+    db.space.create({
       data: {
         user_id: userId,
         storey_id: nStoreyId,
@@ -31,11 +31,11 @@ export const getTransactionsForDuplicateSpace = async (
     }),
   )
 
-  const spaceDashboard = await getSpaceDashboardForUser(
-    eStoreyId,
-    eSpaceId,
+  const spaceDashboard = await getSpaceDashboardForUser({
+    storeyId: eStoreyId,
+    spaceId: eSpaceId,
     userId,
-  )
+  })
 
   for (const historyItem of spaceDashboard?.pkm_history ?? []) {
     if (
@@ -83,7 +83,7 @@ export const getTransactionsForDuplicateSpace = async (
     }
 
     transactions.push(
-      prisma.pkmHistory.create({
+      db.pkmHistory.create({
         data: {
           model_id: newModelId,
           model_type: historyItem.model_type,
@@ -99,7 +99,7 @@ export const getTransactionsForDuplicateSpace = async (
       }),
     )
 
-    const images = await prisma.pkmImage.findMany({
+    const images = await db.pkmImage.findMany({
       where: {
         model_id: historyItem.model_id,
         user_id: userId,
@@ -116,7 +116,7 @@ export const getTransactionsForDuplicateSpace = async (
 
     images.map((image) => {
       transactions.push(
-        prisma.pkmImage.create({
+        db.pkmImage.create({
           data: {
             model_id: newModelId,
             name: image.name,

@@ -1,6 +1,6 @@
-import { getStoreyDashboardForUser } from '@/repositories/storey'
 import { feModelTypeMap } from '@/utils/apiUtils'
 import { User } from '@prisma/client'
+import { getStoreyDashboardForUser } from '~/repositories/PkmStoreyRepository'
 
 /*
     TypeScript gymnastics. I have to manually iterate through the item types
@@ -86,11 +86,11 @@ const expandStoreyKanbans = async (
     return returnContent
   }
 
-  const storeyModel = await getStoreyDashboardForUser(
-    storey.suite_id,
-    storey.id,
-    user.id,
-  )
+  const storeyModel = await getStoreyDashboardForUser({
+    suiteId: storey.suite_id,
+    storeyId: storey.id,
+    userId: user.id,
+  })
 
   if (!storeyModel) {
     return returnContent

@@ -378,3 +378,105 @@ export const getStoreyForUser = async ({
 
   return storey
 }
+
+export const getStoreyDashboardForUser = async ({
+  suiteId,
+  storeyId,
+  userId,
+}: {
+  suiteId: string
+  storeyId: string
+  userId: string
+}) => {
+  const storey = await db.storey.findFirst({
+    where: {
+      user_id: userId,
+      suite_id: suiteId,
+      id: storeyId,
+    },
+    select: {
+      name: true,
+      description: true,
+      id: true,
+      suite_id: true,
+      content: true,
+      suite: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+        },
+      },
+      spaces: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          content: true,
+        },
+      },
+      pkm_history: {
+        where: {
+          suite_id: suiteId,
+          storey_id: storeyId,
+          space_id: null,
+          is_current: true,
+        },
+        select: {
+          createdAt: true,
+          history_id: true,
+          model_id: true,
+          model_type: true,
+          epiphany_item: {
+            select: {
+              content: true,
+              name: true,
+              summary: true,
+            },
+          },
+          inbox_item: {
+            select: {
+              content: true,
+              name: true,
+              summary: true,
+            },
+          },
+          passing_thought_item: {
+            select: {
+              content: true,
+              name: true,
+              summary: true,
+            },
+          },
+          todo_item: {
+            select: {
+              content: true,
+              name: true,
+              summary: true,
+            },
+          },
+          trash_item: {
+            select: {
+              content: true,
+              name: true,
+              summary: true,
+            },
+          },
+          void_item: {
+            select: {
+              content: true,
+              name: true,
+              summary: true,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  if (!storey) {
+    return null
+  }
+
+  return storey
+}
