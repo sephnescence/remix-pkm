@@ -5,8 +5,8 @@ import {
   TypedResponse,
   redirect,
 } from '@remix-run/node'
+import { getSpaceItemCounts } from '~/repositories/PkmSpaceRepository'
 import {
-  getStoreyItemCounts,
   getStoreyConfig,
   getStoreyDashboard,
   storeStoreyConfig,
@@ -167,7 +167,7 @@ export const storeyDashboardLoader = async (args: LoaderFunctionArgs) => {
     return redirect('/')
   }
 
-  const storeyItemCounts = await getStoreyItemCounts({
+  const storeyItemCounts = await getSpaceItemCounts({
     storeyId: storey_id,
     userId: user.id,
   })

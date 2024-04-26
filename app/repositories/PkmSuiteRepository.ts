@@ -247,20 +247,23 @@ export const getSuitesForUser = async ({ userId }: { userId: string }) => {
 
 export const getSuiteItemCounts = async ({ userId }: { userId: string }) => {
   // SQL injection should be impossible here
-  const query = Prisma.sql`select
-                  suite_id as id,
-                  (sum(case when model_type = 'PkmEpiphany' then 1 else 0 end))::int as epiphany_count,
-                  (sum(case when model_type = 'PkmInbox' then 1 else 0 end))::int as inbox_count,
-                  (sum(case when model_type = 'PkmPassingThought' then 1 else 0 end))::int as passing_thought_count,
-                  (sum(case when model_type = 'PkmTodo' then 1 else 0 end))::int as todo_count,
-                  (sum(case when model_type = 'PkmTrash' then 1 else 0 end))::int as trash_count,
-                  (sum(case when model_type = 'PkmVoid' then 1 else 0 end))::int as void_count
-                from "PkmHistory"
-                where user_id = ${userId}::uuid
-                and storey_id is null
-                and space_id is null
-                and is_current is true
-                group by suite_id`
+  const query = Prisma.sql`
+    select
+      suite_id as id,
+      (sum(case when model_type = 'PkmEpiphany' then 1 else 0 end))::int as epiphany_count,
+      (sum(case when model_type = 'PkmInbox' then 1 else 0 end))::int as inbox_count,
+      (sum(case when model_type = 'PkmPassingThought' then 1 else 0 end))::int as passing_thought_count,
+      (sum(case when model_type = 'PkmTodo' then 1 else 0 end))::int as todo_count,
+      (sum(case when model_type = 'PkmTrash' then 1 else 0 end))::int as trash_count,
+      (sum(case when model_type = 'PkmVoid' then 1 else 0 end))::int as void_count
+    from "PkmHistory"
+    where user_id = ${userId}::uuid
+      and suite_id is not null
+      and storey_id is null
+      and space_id is null
+      and is_current is true
+    group by suite_id
+  `
 
   const results: [] = await db.$queryRaw(query)
 

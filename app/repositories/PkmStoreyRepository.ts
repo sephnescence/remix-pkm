@@ -230,30 +230,30 @@ export const getStoreyDashboard = async ({
 }
 
 export const getStoreyItemCounts = async ({
-  storeyId,
+  suiteId,
   userId,
 }: {
-  storeyId: string
+  suiteId: string
   userId: string
 }) => {
   // SQL injection should be impossible here
   const query = Prisma.sql`
     select
-        storey_id || '-' || storey_id as id,
-        (sum(case when model_type = 'PkmEpiphany' then 1 else 0 end))::int as epiphany_count,
-        (sum(case when model_type = 'PkmInbox' then 1 else 0 end))::int as inbox_count,
-        (sum(case when model_type = 'PkmPassingThought' then 1 else 0 end))::int as passing_thought_count,
-        (sum(case when model_type = 'PkmTodo' then 1 else 0 end))::int as todo_count,
-        (sum(case when model_type = 'PkmTrash' then 1 else 0 end))::int as trash_count,
-        (sum(case when model_type = 'PkmVoid' then 1 else 0 end))::int as void_count
+      suite_id || '-' || storey_id as id,
+      (sum(case when model_type = 'PkmEpiphany' then 1 else 0 end))::int as epiphany_count,
+      (sum(case when model_type = 'PkmInbox' then 1 else 0 end))::int as inbox_count,
+      (sum(case when model_type = 'PkmPassingThought' then 1 else 0 end))::int as passing_thought_count,
+      (sum(case when model_type = 'PkmTodo' then 1 else 0 end))::int as todo_count,
+      (sum(case when model_type = 'PkmTrash' then 1 else 0 end))::int as trash_count,
+      (sum(case when model_type = 'PkmVoid' then 1 else 0 end))::int as void_count
     from "PkmHistory"
     where user_id = ${userId}::uuid
-        and storey_id = ${storeyId}::uuid
-        and storey_id is not null
-        and space_id is null
-        and is_current is true
-    group by storey_id || '-' || storey_id
-`
+    and suite_id = ${suiteId}::uuid
+    and storey_id is not null
+    and space_id is null
+    and is_current is true
+    group by suite_id || '-' || storey_id
+  `
 
   const results: [] = await db.$queryRaw(query)
 

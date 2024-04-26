@@ -5,10 +5,10 @@ import {
   TypedResponse,
   redirect,
 } from '@remix-run/node'
+import { getStoreyItemCounts } from '~/repositories/PkmStoreyRepository'
 import {
   getSuiteConfig,
   getSuiteDashboard,
-  getSuiteItemCounts,
   storeSuiteConfig,
   updateSuiteConfig,
 } from '~/repositories/PkmSuiteRepository'
@@ -153,7 +153,8 @@ export const suiteDashboardLoader = async (args: LoaderFunctionArgs) => {
     return redirect('/')
   }
 
-  const suiteItemCounts = await getSuiteItemCounts({
+  const suiteItemCounts = await getStoreyItemCounts({
+    suiteId: suite_id,
     userId: user.id,
   })
 
