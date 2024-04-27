@@ -27,6 +27,7 @@ const SuiteForm = ({
       defaultContent ||
       '<div data-children></div>\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n',
   )
+
   const [interactive, setInteractive] = useState(() => false)
   const navigation = useNavigation()
   const submitting = navigation.state === 'submitting'
