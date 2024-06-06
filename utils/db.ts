@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import chalk from 'chalk'
+// import chalk from 'chalk'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
@@ -10,7 +10,7 @@ const getPrisma = () => {
     return globalForPrisma.prisma
   }
 
-  const logThreshold = 50 // ms
+  // const logThreshold = 50 // ms
 
   const prisma = new PrismaClient({
     log: [
@@ -21,17 +21,17 @@ const getPrisma = () => {
     ],
   })
 
-  prisma.$on('query', (event) => {
-    const duration = event.duration
+  // prisma.$on('query', (event) => {
+  //   const duration = event.duration
 
-    let colour: 'red' | 'green' = 'red'
-    if (duration <= logThreshold * 1.5) {
-      colour = 'green'
-    }
+  //   let colour: 'red' | 'green' = 'red'
+  //   if (duration <= logThreshold * 1.5) {
+  //     colour = 'green'
+  //   }
 
-    const queryStatus = chalk[colour](`${duration}ms ${event.query}`)
-    console.log(`${queryStatus}`)
-  })
+  //   const queryStatus = chalk[colour](`${duration}ms ${event.query}`)
+  //   console.log(`${queryStatus}`)
+  // })
 
   return prisma
 }

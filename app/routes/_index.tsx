@@ -14,7 +14,7 @@ export default function Index() {
         </p>
         <div>
           <Link
-            to={sessionId ? 'dashboard' : 'sign-up'}
+            to={sessionId ? 'reception' : 'sign-up'}
             prefetch={sessionId ? 'intent' : 'none'}
           >
             <button

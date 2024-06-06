@@ -8,7 +8,7 @@ import { ItemLoaderResponse, itemLoader } from '~/controllers/ItemController'
 
 export const loader = itemLoader
 
-export default function ItemRoute() {
+export default function ViewItemRoute() {
   const loaderData = useLoaderData<typeof loader>()
 
   const { args, history, images, item } = loaderData as ItemLoaderResponse

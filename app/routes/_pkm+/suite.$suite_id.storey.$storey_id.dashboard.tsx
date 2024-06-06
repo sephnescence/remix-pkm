@@ -125,7 +125,7 @@ export default function StoreyIndexRoute() {
                   <div className="bg-indigo-950 h-8 mr-2 py-1 px-3 rounded-lg hover:bg-violet-900">
                     <Link
                       className="flex rounded-lg focus:outline-offset-1 focus:outline-lime-600"
-                      to={`/item/create/nSuiteId/${storeyDashboard.suite_id}/nStoreyId/${storeyDashboard.id}/nModelType/epiphany`}
+                      to={`/item/create/eSuiteId/${storeyDashboard.suite_id}/eStoreyId/${storeyDashboard.id}/nModelType/epiphany`}
                       prefix="intent"
                     >
                       <LightbulbIcon />
@@ -173,7 +173,7 @@ export default function StoreyIndexRoute() {
                   <div className="bg-indigo-950 h-8 mr-2 py-1 px-3 rounded-lg hover:bg-violet-900">
                     <Link
                       className="flex rounded-lg focus:outline-offset-1 focus:outline-lime-600"
-                      to={`/item/create/nSuiteId/${storeyDashboard.suite_id}/nStoreyId/${storeyDashboard.id}/nModelType/inbox`}
+                      to={`/item/create/eSuiteId/${storeyDashboard.suite_id}/eStoreyId/${storeyDashboard.id}/nModelType/inbox`}
                       prefix="intent"
                     >
                       <InboxStackIcon />
@@ -221,7 +221,7 @@ export default function StoreyIndexRoute() {
                   <div className="bg-indigo-950 h-8 mr-2 py-1 px-3 rounded-lg hover:bg-violet-900">
                     <Link
                       className="flex rounded-lg focus:outline-offset-1 focus:outline-rose-600"
-                      to={`/item/create/nSuiteId/${storeyDashboard.suite_id}/nStoreyId/${storeyDashboard.id}/nModelType/passing-thought`}
+                      to={`/item/create/eSuiteId/${storeyDashboard.suite_id}/eStoreyId/${storeyDashboard.id}/nModelType/passing-thought`}
                       prefix="intent"
                     >
                       <BoltIcon />
@@ -269,7 +269,7 @@ export default function StoreyIndexRoute() {
                   <div className="bg-indigo-950 h-8 mr-2 py-1 px-3 rounded-lg hover:bg-violet-900">
                     <Link
                       className="flex rounded-lg focus:outline-offset-1 focus:outline-cyan-600"
-                      to={`/item/create/nSuiteId/${storeyDashboard.suite_id}/nStoreyId/${storeyDashboard.id}/nModelType/todo`}
+                      to={`/item/create/eSuiteId/${storeyDashboard.suite_id}/eStoreyId/${storeyDashboard.id}/nModelType/todo`}
                       prefix="intent"
                     >
                       <BellAlertIcon />
@@ -317,7 +317,7 @@ export default function StoreyIndexRoute() {
                   <div className="bg-indigo-950 h-8 mr-2 py-1 px-3 rounded-lg hover:bg-violet-900">
                     <Link
                       className="flex rounded-lg focus:outline-offset-1 focus:outline-orange-600"
-                      to={`/item/create/nSuiteId/${storeyDashboard.suite_id}/nStoreyId/${storeyDashboard.id}/nModelType/void`}
+                      to={`/item/create/eSuiteId/${storeyDashboard.suite_id}/eStoreyId/${storeyDashboard.id}/nModelType/void`}
                       prefix="intent"
                     >
                       <ArchiveBoxXMarkIcon />
