@@ -12,6 +12,8 @@
         "Pipeable",
         "Quickstart",
         "tailwindcss",
-        "typecheck"
+        "typecheck",
+        "upsert",
+        "upserting"
     ]
 }
