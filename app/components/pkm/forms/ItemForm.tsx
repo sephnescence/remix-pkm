@@ -5,6 +5,7 @@ import PkmItem from '../PkmItem'
 // import ItemContentCodeMirror from './ItemContentCodeMirror'
 import ItemImageCarousel from './ItemImageCarousel'
 import Dropzone from './Dropzone'
+import ItemContentCodeMirror from './ItemContentCodeMirror'
 
 type ItemFormProps = {
   pageTitle: string
@@ -223,17 +224,7 @@ export default function ItemForm({
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 md:gap-2">
           <div className="mb-2">
-            <label>
-              <div className="mb-4">Content</div>
-              <textarea
-                className="min-w-full min-h-48 bg-slate-700 p-4"
-                name="content"
-                value={content}
-                disabled={!interactive || submitting}
-                onChange={(e) => setContent(e.target.value)}
-              />
-            </label>
-            {/* <ItemContentCodeMirror setContent={setContent} content={content} /> */}
+            <ItemContentCodeMirror setContent={setContent} content={content} />
             <br />
             {actionData?.errors.fieldErrors.content && (
               <div className="text-red-500">
