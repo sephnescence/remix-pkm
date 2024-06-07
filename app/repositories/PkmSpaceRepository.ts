@@ -31,15 +31,11 @@ type UpdateSpaceArgs = {
 }
 
 export type SpaceForMove = {
-  space: {
-    id: string
-    description: string
-    name: string
-    counts: ItemCountRow
-    storey: {
-      id: string
-    }
-  }
+  id: string
+  description: string
+  name: string
+  counts: ItemCountRow
+  storeyId: string
 }
 
 export const storeSpaceConfig = async ({
@@ -496,26 +492,22 @@ export const getSpacesForMove = async ({
     storeyId,
   })
 
-  const enrichedSpaces = spaces.map((space) => {
+  const spacesForMove = spaces.map((space) => {
     return {
-      space: {
-        id: space.id,
-        name: space.name,
-        description: space.description,
-        counts: spaceCounts[space.id] || {
-          epiphany_count: 0,
-          inbox_count: 0,
-          passing_thought_count: 0,
-          todo_count: 0,
-          trash_count: 0,
-          void_count: 0,
-        },
-        storey: {
-          id: space.storey.id,
-        },
+      id: space.id,
+      name: space.name,
+      description: space.description,
+      counts: spaceCounts[`${storeyId}-${space.id}`] || {
+        epiphany_count: 0,
+        inbox_count: 0,
+        passing_thought_count: 0,
+        todo_count: 0,
+        trash_count: 0,
+        void_count: 0,
       },
+      storeyId: space.storey.id,
     }
   })
 
-  return enrichedSpaces
+  return spacesForMove
 }

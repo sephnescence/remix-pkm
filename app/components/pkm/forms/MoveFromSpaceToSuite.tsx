@@ -1,37 +1,27 @@
 'use server'
 
-import {
-  getSuiteItemCounts,
-  getSuitesForUser,
-} from '~/repositories/PkmSuiteRepository'
+import { SuiteForMove } from '~/repositories/PkmSuiteRepository'
 import MoveFromSpaceToSuiteChild from './MoveFromSpaceToSuiteChild'
 
-const MoveFromSpaceToSuite = async ({
-  userId,
+const MoveFromSpaceToSuite = ({
   suiteId,
   storeyId,
   spaceId,
   modelType,
   modelItemId,
   historyItemId,
+  destinationSuites,
 }: {
-  userId: string
   suiteId: string
   storeyId: string
   spaceId: string
   modelType: string
   modelItemId: string
   historyItemId: string
+  destinationSuites: SuiteForMove[]
 }) => {
-  if (!userId) {
-    return null
-  }
-
-  const suiteDashboard = await getSuitesForUser({ userId })
-  const suiteItemCounts = await getSuiteItemCounts({ userId })
-
-  const parentSuite = suiteDashboard.find((suite) => suite.id === suiteId)
-  const otherSuites = suiteDashboard.filter((suite) => suite.id !== suiteId)
+  const parentSuite = destinationSuites.find((suite) => suite.id === suiteId)
+  const otherSuites = destinationSuites.filter((suite) => suite.id !== suiteId)
 
   return (
     <>
@@ -48,8 +38,7 @@ const MoveFromSpaceToSuite = async ({
             modelType={modelType}
             modelItemId={modelItemId}
             historyItemId={historyItemId}
-            suites={[parentSuite]}
-            suiteItemCounts={suiteItemCounts}
+            suite={parentSuite}
           />
         </div>
       )}
@@ -57,16 +46,19 @@ const MoveFromSpaceToSuite = async ({
       {otherSuites && otherSuites.length > 0 && (
         <div className="mb-2">
           <div className="mb-2 leading-3">Move to Another Suite</div>
-          <MoveFromSpaceToSuiteChild
-            suiteId={suiteId}
-            storeyId={storeyId}
-            spaceId={spaceId}
-            modelType={modelType}
-            modelItemId={modelItemId}
-            historyItemId={historyItemId}
-            suites={otherSuites}
-            suiteItemCounts={suiteItemCounts}
-          />
+          {otherSuites.map((otherSuite) => (
+            <div key={otherSuite.id}>
+              <MoveFromSpaceToSuiteChild
+                suiteId={suiteId}
+                storeyId={storeyId}
+                spaceId={spaceId}
+                modelType={modelType}
+                modelItemId={modelItemId}
+                historyItemId={historyItemId}
+                suite={otherSuite}
+              />
+            </div>
+          ))}
         </div>
       )}
     </>

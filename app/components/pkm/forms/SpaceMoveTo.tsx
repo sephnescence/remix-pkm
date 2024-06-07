@@ -4,9 +4,11 @@ import SpaceBreadcrumbs from '~/components/nav/SpaceBreadcrumbs'
 import MoveFromSpaceToAnotherSpace from './MoveFromSpaceToAnotherSpace'
 import MoveFromSpaceToStorey from './MoveFromSpaceToStorey'
 import MoveFromSpaceToSuite from './MoveFromSpaceToSuite'
+import { SpaceForMove } from '~/repositories/PkmSpaceRepository'
+import { StoreyForMove } from '~/repositories/PkmStoreyRepository'
+import { SuiteForMove } from '~/repositories/PkmSuiteRepository'
 
-const SpaceMoveTo = async ({
-  userId,
+const SpaceMoveTo = ({
   suiteId,
   suite: { name: suiteName },
   storeyId,
@@ -16,8 +18,10 @@ const SpaceMoveTo = async ({
   modelId,
   modelType,
   historyId,
+  spacesForMove,
+  storeysForMove,
+  suitesForMove,
 }: {
-  userId: string
   suiteId: string
   suite: {
     name: string
@@ -39,6 +43,9 @@ const SpaceMoveTo = async ({
     | 'trash'
     | 'void'
   historyId: string
+  spacesForMove: SpaceForMove[] | null
+  storeysForMove: StoreyForMove[] | null
+  suitesForMove: SuiteForMove[] | null
 }) => {
   return (
     <div>
@@ -62,33 +69,39 @@ const SpaceMoveTo = async ({
         historyItemId={historyId}
         moveToText={'Move within the Space'}
       />
-      <MoveFromSpaceToAnotherSpace
-        userId={userId}
-        suiteId={suiteId}
-        storeyId={storeyId}
-        spaceId={spaceId}
-        modelType={modelType}
-        modelItemId={modelId}
-        historyItemId={historyId}
-      />
-      <MoveFromSpaceToStorey
-        userId={userId}
-        suiteId={suiteId}
-        storeyId={storeyId}
-        spaceId={spaceId}
-        modelType={modelType}
-        modelItemId={modelId}
-        historyItemId={historyId}
-      />
-      <MoveFromSpaceToSuite
-        userId={userId}
-        suiteId={suiteId}
-        storeyId={storeyId}
-        spaceId={spaceId}
-        modelType={modelType}
-        modelItemId={modelId}
-        historyItemId={historyId}
-      />
+      {spacesForMove && (
+        <MoveFromSpaceToAnotherSpace
+          suiteId={suiteId}
+          storeyId={storeyId}
+          spaceId={spaceId}
+          modelType={modelType}
+          modelItemId={modelId}
+          historyItemId={historyId}
+          destinationSpaces={spacesForMove}
+        />
+      )}
+      {storeysForMove && (
+        <MoveFromSpaceToStorey
+          suiteId={suiteId}
+          storeyId={storeyId}
+          spaceId={spaceId}
+          modelType={modelType}
+          modelItemId={modelId}
+          historyItemId={historyId}
+          destinationStorey={storeysForMove}
+        />
+      )}
+      {suitesForMove && (
+        <MoveFromSpaceToSuite
+          suiteId={suiteId}
+          storeyId={storeyId}
+          spaceId={spaceId}
+          modelType={modelType}
+          modelItemId={modelId}
+          historyItemId={historyId}
+          destinationSuites={suitesForMove}
+        />
+      )}
     </div>
   )
 }

@@ -1,39 +1,29 @@
 'use server'
 
-import {
-  getStoreyItemCounts,
-  getStoreysForUser,
-} from '~/repositories/PkmStoreyRepository'
+import { StoreyForMove } from '~/repositories/PkmStoreyRepository'
 import MoveFromSpaceToStoreyChild from './MoveFromSpaceToStoreyChild'
 
-const MoveFromSpaceToStorey = async ({
-  userId,
+const MoveFromSpaceToStorey = ({
   suiteId,
   storeyId,
   spaceId,
   modelType,
   modelItemId,
   historyItemId,
+  destinationStorey,
 }: {
-  userId: string
   suiteId: string
   storeyId: string
   spaceId: string
   modelType: string
   modelItemId: string
   historyItemId: string
+  destinationStorey: StoreyForMove[]
 }) => {
-  const storeyDashboard = await getStoreysForUser({
-    userId,
-  })
-
-  const storeyItemCounts = await getStoreyItemCounts({
-    userId,
-    suiteId,
-  })
-
-  const parentStorey = storeyDashboard.find((storey) => storey.id === storeyId)
-  const otherStoreys = storeyDashboard.filter(
+  const parentStorey = destinationStorey.find(
+    (storey) => storey.id === storeyId,
+  )
+  const otherStoreys = destinationStorey.filter(
     (storey) => storey.id !== storeyId,
   )
 
@@ -52,8 +42,7 @@ const MoveFromSpaceToStorey = async ({
             modelType={modelType}
             modelItemId={modelItemId}
             historyItemId={historyItemId}
-            storeys={[parentStorey]}
-            storeyItemCounts={storeyItemCounts}
+            destinationStorey={parentStorey}
           />
         </div>
       )}
@@ -61,16 +50,19 @@ const MoveFromSpaceToStorey = async ({
       {otherStoreys && otherStoreys.length > 0 && (
         <div className="mb-2">
           <div className="mb-1">Move to Another Storey</div>
-          <MoveFromSpaceToStoreyChild
-            suiteId={suiteId}
-            storeyId={storeyId}
-            spaceId={spaceId}
-            modelType={modelType}
-            modelItemId={modelItemId}
-            historyItemId={historyItemId}
-            storeys={otherStoreys}
-            storeyItemCounts={storeyItemCounts}
-          />
+          {otherStoreys.map((otherStorey) => (
+            <div key={otherStorey.id}>
+              <MoveFromSpaceToStoreyChild
+                suiteId={suiteId}
+                storeyId={storeyId}
+                spaceId={spaceId}
+                modelType={modelType}
+                modelItemId={modelItemId}
+                historyItemId={historyItemId}
+                destinationStorey={otherStorey}
+              />
+            </div>
+          ))}
         </div>
       )}
     </>

@@ -31,16 +31,12 @@ type UpdateStoreyArgs = {
 }
 
 export type StoreyForMove = {
-  storey: {
-    id: string
-    description: string
-    name: string
-    counts: ItemCountRow
-    spaces: number
-    suite: {
-      id: string
-    }
-  }
+  id: string
+  description: string
+  name: string
+  counts: ItemCountRow
+  spaces: number
+  suiteId: string
 }
 
 export const storeStoreyConfig = async ({
@@ -598,23 +594,19 @@ export const getStoreysForMove = async ({
 
   const enrichedStoreys = storeys.map((storey) => {
     return {
-      storey: {
-        id: storey.id,
-        name: storey.name,
-        description: storey.description,
-        counts: storeyCounts[storey.id] || {
-          epiphany_count: 0,
-          inbox_count: 0,
-          passing_thought_count: 0,
-          todo_count: 0,
-          trash_count: 0,
-          void_count: 0,
-        },
-        spaces: storey._count.spaces,
-        suite: {
-          id: storey.suite_id,
-        },
+      id: storey.id,
+      name: storey.name,
+      description: storey.description,
+      counts: storeyCounts[`${suiteId}-${storey.id}`] || {
+        epiphany_count: 0,
+        inbox_count: 0,
+        passing_thought_count: 0,
+        todo_count: 0,
+        trash_count: 0,
+        void_count: 0,
       },
+      spaces: storey._count.spaces,
+      suiteId: storey.suite_id,
     }
   })
 
@@ -660,23 +652,19 @@ export const getStoreyForMove = async ({
   })
 
   const enrichedStorey = {
-    storey: {
-      id: storey.id,
-      name: storey.name,
-      description: storey.description,
-      counts: storeyCounts[storey.id] || {
-        epiphany_count: 0,
-        inbox_count: 0,
-        passing_thought_count: 0,
-        todo_count: 0,
-        trash_count: 0,
-        void_count: 0,
-      },
-      spaces: storey._count.spaces,
-      suite: {
-        id: storey.suite.id,
-      },
+    id: storey.id,
+    name: storey.name,
+    description: storey.description,
+    counts: storeyCounts[`${storey.suite.id}-${storey.id}`] || {
+      epiphany_count: 0,
+      inbox_count: 0,
+      passing_thought_count: 0,
+      todo_count: 0,
+      trash_count: 0,
+      void_count: 0,
     },
+    spaces: storey._count.spaces,
+    suiteId: storey.suite.id,
   }
 
   return enrichedStorey

@@ -30,13 +30,11 @@ type UpdateSuiteArgs = {
 }
 
 export type SuiteForMove = {
-  suite: {
-    id: string
-    description: string
-    name: string
-    counts: ItemCountRow
-    storeys: number
-  }
+  id: string
+  description: string
+  name: string
+  counts: ItemCountRow
+  storeys: number
 }
 
 export const storeSuiteConfig = async ({
@@ -547,20 +545,18 @@ export const getSuitesForMove = async ({
 
   const enrichedSuites = suites.map((suite) => {
     return {
-      suite: {
-        id: suite.id,
-        name: suite.name,
-        description: suite.description,
-        counts: suiteCounts[suite.id] || {
-          epiphany_count: 0,
-          inbox_count: 0,
-          passing_thought_count: 0,
-          todo_count: 0,
-          trash_count: 0,
-          void_count: 0,
-        },
-        storeys: suite._count.storeys,
+      id: suite.id,
+      name: suite.name,
+      description: suite.description,
+      counts: suiteCounts[suite.id] || {
+        epiphany_count: 0,
+        inbox_count: 0,
+        passing_thought_count: 0,
+        todo_count: 0,
+        trash_count: 0,
+        void_count: 0,
       },
+      storeys: suite._count.storeys,
     }
   })
 
@@ -601,20 +597,18 @@ export const getSuiteForMove = async ({
   })
 
   const enrichedSuite = {
-    suite: {
-      id: suite.id,
-      name: suite.name,
-      description: suite.description,
-      counts: suiteCounts[suite.id] || {
-        epiphany_count: 0,
-        inbox_count: 0,
-        passing_thought_count: 0,
-        todo_count: 0,
-        trash_count: 0,
-        void_count: 0,
-      },
-      storeys: suite._count.storeys,
+    id: suite.id,
+    name: suite.name,
+    description: suite.description,
+    counts: suiteCounts[suite.id] || {
+      epiphany_count: 0,
+      inbox_count: 0,
+      passing_thought_count: 0,
+      todo_count: 0,
+      trash_count: 0,
+      void_count: 0,
     },
+    storeys: suite._count.storeys,
   }
 
   return enrichedSuite
