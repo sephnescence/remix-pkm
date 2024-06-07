@@ -22,6 +22,20 @@ import { randomUUID } from 'crypto'
 import { getCurrentHistoryItemForUser } from '~/repositories/PkmHistoryRepository'
 import { getImagesForItem } from '~/repositories/PkmImageRepository'
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import {
+  SpaceForMove,
+  getSpacesForMove,
+} from '~/repositories/PkmSpaceRepository'
+import {
+  StoreyForMove,
+  getStoreyForMove,
+  getStoreysForMove,
+} from '~/repositories/PkmStoreyRepository'
+import {
+  SuiteForMove,
+  getSuiteForMove,
+  getSuitesForMove,
+} from '~/repositories/PkmSuiteRepository'
 
 export type ItemUpdateConfigActionResponse = {
   errors: {
@@ -49,6 +63,20 @@ export type ItemLoaderResponse = {
     content: string
     summary: string
   }
+}
+
+export type ItemMoveLoaderResponse = {
+  args: ConformArrayArgsToObjectResponse
+  history: Awaited<ReturnType<typeof getCurrentHistoryItemForUser>>
+  item: {
+    name: string
+    content: string
+    summary: string
+  }
+  itemLocation: string
+  suitesForMove: SuiteForMove[] | null
+  storeysForMove: StoreyForMove[] | null
+  spacesForMove: SpaceForMove[] | null
 }
 
 export type CreateItemLoaderResponse = {
@@ -765,5 +793,135 @@ export const itemLoader = async (
     history,
     images,
     item,
+  }
+}
+
+export const itemMoveLoader = async (
+  loaderArgs: LoaderFunctionArgs,
+): Promise<ItemMoveLoaderResponse | TypedResponse<never>> => {
+  const user = await getUserAuth(loaderArgs)
+  if (!user) {
+    return redirect('/')
+  }
+
+  const params = loaderArgs.params['*']
+  if (!params) {
+    return redirect('/')
+  }
+
+  const args = await conformArrayArgsToObject(params.split('/'))
+  if (!args) return redirect('/')
+
+  if (args.exception) {
+    return redirect('/')
+  }
+
+  if (
+    !args.apiDuplicateUrl ||
+    !args.apiEditUrl ||
+    !args.conformedArgs ||
+    !args.feAlwaysLatestUrl ||
+    !args.feEditUrl ||
+    !args.feMoveUrl ||
+    !args.feParentUrl ||
+    !args.fePermalinkUrl ||
+    !args.feViewUrl ||
+    !args.itemLocation ||
+    !args.itemLocationName
+  ) {
+    return redirect('/')
+  }
+
+  const { suiteId, storeyId, spaceId } = args.itemLocation
+
+  const history = await getCurrentHistoryItemForUser({
+    suiteId: suiteId,
+    storeyId: storeyId,
+    spaceId: spaceId,
+    modelId: args.conformedArgs.eModelId,
+    historyId: args.conformedArgs.eHistoryId,
+    userId: user.id,
+  })
+
+  if (
+    !history ||
+    !history.historyItem ||
+    !history.historyItem.history_id ||
+    history.historyItem.model_type !==
+      'Pkm' + modelTypeMap[args.conformedArgs.eModelType]
+  ) {
+    return redirect('/')
+  }
+
+  const item =
+    history.historyItem.epiphany_item ??
+    history.historyItem.inbox_item ??
+    history.historyItem.passing_thought_item ??
+    history.historyItem.todo_item ??
+    history.historyItem.trash_item ??
+    history.historyItem.void_item
+
+  if (!item) {
+    return redirect('/')
+  }
+
+  let suitesForMove = null
+  let storeysForMove = null
+  let spacesForMove = null
+
+  const itemLocation =
+    storeyId === null ? 'suite' : spaceId === null ? 'storey' : 'space'
+
+  // We can only move an Item from a Suite into a sibling Suite
+  if (itemLocation === 'suite') {
+    suitesForMove = await getSuitesForMove({
+      userId: user.id,
+    })
+  } else if (itemLocation === 'storey') {
+    // Storey Items can only move to the parent Suite, not a sibling
+    suitesForMove = [
+      (await getSuiteForMove({
+        userId: user.id,
+        suiteId,
+      })) as SuiteForMove,
+    ]
+  }
+
+  // We can move an Item from a Storey into the parent Suite, not a sibling
+  // We can move an Item from a Storey into another Storey
+  if (itemLocation === 'storey') {
+    storeysForMove = await getStoreysForMove({
+      userId: user.id,
+      suiteId,
+    })
+  } else if (itemLocation === 'space') {
+    // Space Items can only move to the parent Storey, not a sibling
+    storeysForMove = [
+      (await getStoreyForMove({
+        userId: user.id,
+        storeyId,
+      })) as StoreyForMove,
+    ]
+  }
+
+  // We only need to know all Spaces within the current Storey if the Item is in a Storey
+  // We can move an Item from a Space into a sibling Space
+  // We can move an Item from a Space into the parent Storey, not a sibling
+  // We can move an Item from a Space into the parent Suite, not a sibling
+  if (itemLocation === 'space') {
+    spacesForMove = await getSpacesForMove({
+      userId: user.id,
+      storeyId,
+    })
+  }
+
+  return {
+    args,
+    history,
+    item,
+    itemLocation,
+    suitesForMove,
+    storeysForMove,
+    spacesForMove,
   }
 }

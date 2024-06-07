@@ -29,6 +29,16 @@ type UpdateSuiteArgs = {
   name: string
 }
 
+export type SuiteForMove = {
+  suite: {
+    id: string
+    description: string
+    name: string
+    counts: ItemCountRow
+    storeys: number
+  }
+}
+
 export const storeSuiteConfig = async ({
   userId,
   content,
@@ -243,6 +253,60 @@ export const getSuitesForUser = async ({ userId }: { userId: string }) => {
       },
     })
     .then((suites) => suites)
+}
+
+// This shares a large amount of code with getSuiteItemCounts
+// There's only one line that's different
+// and suite_id = ${suiteId}::uuid
+export const getItemCountForSuite = async ({
+  suiteId,
+  userId,
+}: {
+  suiteId: string
+  userId: string
+}) => {
+  // SQL injection should be impossible here
+  const query = Prisma.sql`
+    select
+      suite_id as id,
+      (sum(case when model_type = 'PkmEpiphany' then 1 else 0 end))::int as epiphany_count,
+      (sum(case when model_type = 'PkmInbox' then 1 else 0 end))::int as inbox_count,
+      (sum(case when model_type = 'PkmPassingThought' then 1 else 0 end))::int as passing_thought_count,
+      (sum(case when model_type = 'PkmTodo' then 1 else 0 end))::int as todo_count,
+      (sum(case when model_type = 'PkmTrash' then 1 else 0 end))::int as trash_count,
+      (sum(case when model_type = 'PkmVoid' then 1 else 0 end))::int as void_count
+    from "PkmHistory"
+    where user_id = ${userId}::uuid
+      and suite_id = ${suiteId}::uuid
+      and storey_id is null
+      and space_id is null
+      and is_current is true
+    group by suite_id
+  `
+
+  const results: [] = await db.$queryRaw(query)
+
+  if (!results) {
+    return {}
+  }
+
+  const suites: {
+    [key: string]: ItemCountRow
+  } = {}
+
+  results.map(
+    (row: SuiteItemCountsResults) =>
+      (suites[row.id] = {
+        epiphany_count: row.epiphany_count,
+        inbox_count: row.inbox_count,
+        passing_thought_count: row.passing_thought_count,
+        todo_count: row.todo_count,
+        trash_count: row.trash_count,
+        void_count: row.void_count,
+      }),
+  )
+
+  return suites
 }
 
 export const getSuiteItemCounts = async ({ userId }: { userId: string }) => {
@@ -466,4 +530,92 @@ export const getSuiteDashboardForUser = async ({
   }
 
   return suite
+}
+
+export const getSuitesForMove = async ({
+  userId,
+}: {
+  userId: string
+}): Promise<SuiteForMove[]> => {
+  const suites = await getSuitesForUser({
+    userId,
+  })
+
+  const suiteCounts = await getSuiteItemCounts({
+    userId: userId,
+  })
+
+  const enrichedSuites = suites.map((suite) => {
+    return {
+      suite: {
+        id: suite.id,
+        name: suite.name,
+        description: suite.description,
+        counts: suiteCounts[suite.id] || {
+          epiphany_count: 0,
+          inbox_count: 0,
+          passing_thought_count: 0,
+          todo_count: 0,
+          trash_count: 0,
+          void_count: 0,
+        },
+        storeys: suite._count.storeys,
+      },
+    }
+  })
+
+  return enrichedSuites
+}
+
+export const getSuiteForMove = async ({
+  suiteId,
+  userId,
+}: {
+  suiteId: string
+  userId: string
+}): Promise<SuiteForMove | null> => {
+  const suite = await db.suite.findFirst({
+    where: {
+      user_id: userId,
+      id: suiteId,
+    },
+    select: {
+      _count: {
+        select: {
+          storeys: true,
+        },
+      },
+      name: true,
+      description: true,
+      id: true,
+    },
+  })
+
+  if (!suite) {
+    return null
+  }
+
+  const suiteCounts = await getItemCountForSuite({
+    userId: userId,
+    suiteId,
+  })
+
+  const enrichedSuite = {
+    suite: {
+      id: suite.id,
+      name: suite.name,
+      description: suite.description,
+      counts: suiteCounts[suite.id] || {
+        epiphany_count: 0,
+        inbox_count: 0,
+        passing_thought_count: 0,
+        todo_count: 0,
+        trash_count: 0,
+        void_count: 0,
+      },
+      storeys: suite._count.storeys,
+    },
+  }
+
+  return enrichedSuite
 }
