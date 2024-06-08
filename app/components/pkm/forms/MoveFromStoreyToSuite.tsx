@@ -28,7 +28,7 @@ const MoveFromStoreyToSuite = ({
       )}
       {parentSuite && (
         <div className="mb-2">
-          <div className="mb-2 leading-3">Move to Parent Suite</div>
+          <div className="mb-2 leading-3">Move to parent Suite</div>
           <MoveFromStoreyToSuiteChild
             suiteId={suiteId}
             storeyId={storeyId}
@@ -42,7 +42,7 @@ const MoveFromStoreyToSuite = ({
 
       {otherSuites && otherSuites.length > 0 && (
         <div className="mb-2">
-          <div className="mb-2 leading-3">Move to Another Suite</div>
+          <div className="mb-2 leading-3">Move to another Suite</div>
           {otherSuites.map((otherSuite) => (
             <div key={otherSuite.id}>
               <MoveFromStoreyToSuiteChild

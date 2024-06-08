@@ -34,7 +34,7 @@ const MoveFromSpaceToStorey = ({
       )}
       {parentStorey && (
         <div className="mb-2">
-          <div className="mb-2 leading-3">Move to Parent Storey</div>
+          <div className="mb-2 leading-3">Move to parent Storey</div>
           <MoveFromSpaceToStoreyChild
             suiteId={suiteId}
             storeyId={storeyId}
@@ -49,7 +49,7 @@ const MoveFromSpaceToStorey = ({
 
       {otherStoreys && otherStoreys.length > 0 && (
         <div className="mb-2">
-          <div className="mb-1">Move to Another Storey</div>
+          <div className="mb-1">Move to another Storey</div>
           {otherStoreys.map((otherStorey) => (
             <div key={otherStorey.id}>
               <MoveFromSpaceToStoreyChild

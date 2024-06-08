@@ -32,7 +32,7 @@ const MoveFromStoreyToAnotherStorey = ({
     <>
       <div className="border-b-[0.5px] border-blue-900 my-3"></div>
       <div className="mb-2">
-        <div className="mb-2 leading-3">Move to Another Storey</div>
+        <div className="mb-2 leading-3">Move to another Storey</div>
         <div className="flex overflow-x-scroll">
           {otherStoreys.map((storey) => {
             if (

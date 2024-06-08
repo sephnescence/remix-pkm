@@ -3,7 +3,7 @@ import MoveTo from './MoveTo'
 import { feModelTypeMap } from '@/utils/apiUtils'
 import MoveFromStoreyToAnotherStorey from './MoveFromStoreyToAnotherStorey'
 import MoveFromStoreyToSuite from './MoveFromStoreyToSuite'
-// import MoveFromStoreyToSpace from './MoveFromStoreyToSpace'
+import MoveFromStoreyToSpace from './MoveFromStoreyToSpace'
 import { SpaceForMove } from '~/repositories/PkmSpaceRepository'
 import { StoreyForMove } from '~/repositories/PkmStoreyRepository'
 import { SuiteForMove } from '~/repositories/PkmSuiteRepository'
@@ -16,7 +16,7 @@ const StoreyMoveTo = ({
   modelId,
   modelType,
   historyId,
-  // spacesForMove,
+  spacesForMove,
   storeysForMove,
   suitesForMove,
 }: {
@@ -80,13 +80,16 @@ const StoreyMoveTo = ({
           destinationSuites={suitesForMove}
         />
       )}
-      {/* <MoveFromStoreyToSpace
-        suiteId={suiteId}
-        storeyId={storeyId}
-        modelType={modelType}
-        modelItemId={modelId}
-        historyItemId={historyId}
-      /> */}
+      {spacesForMove && (
+        <MoveFromStoreyToSpace
+          suiteId={suiteId}
+          storeyId={storeyId}
+          modelType={modelType}
+          modelItemId={modelId}
+          historyItemId={historyId}
+          destinationSpaces={spacesForMove}
+        />
+      )}
     </div>
   )
 }

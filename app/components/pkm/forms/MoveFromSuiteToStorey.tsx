@@ -1,52 +1,36 @@
 'use server'
 
 import StoreyTilePreview from '~/components/Suites/forms/StoreyTilePreview'
-import {
-  getStoreyItemCounts,
-  getStoreysForUser,
-} from '~/repositories/PkmStoreyRepository'
+import { StoreyForMove } from '~/repositories/PkmStoreyRepository'
 
-const MoveFromSuiteToStorey = async ({
-  userId,
+const MoveFromSuiteToStorey = ({
   suiteId,
   modelType,
   modelItemId,
   historyItemId,
+  destinationStoreys,
 }: {
-  userId: string
   suiteId: string
   modelType: string
   modelItemId: string
   historyItemId: string
+  destinationStoreys: StoreyForMove[]
 }) => {
-  const storeys = await getStoreysForUser({
-    userId,
-  })
-
-  const storeyItemCounts = await getStoreyItemCounts({
-    userId,
-    suiteId,
-  })
-
-  if (storeys.length === 0) {
-    return null
-  }
-
   const eHistoryItemUrlPart = `/api/history/move/eSuiteId/${suiteId}/eModelType/${modelType}/eModelId/${modelItemId}/eHistoryId/${historyItemId}`
 
   return (
     <>
       <div className="border-b-[0.5px] border-blue-900 my-3"></div>
       <div className="">
-        <div className="mb-2 leading-3">Move to Storey</div>
+        <div className="mb-2 leading-3">Move to child Storey</div>
         <div className="flex overflow-x-scroll">
-          {storeys.map((storey) => {
+          {destinationStoreys.map((storey) => {
             if (
               !storey ||
               !storey.id ||
               !storey.name ||
               !storey.description ||
-              !storey.suite_id
+              !storey.suiteId
             ) {
               return null
             }
@@ -54,7 +38,7 @@ const MoveFromSuiteToStorey = async ({
             return (
               <div key={storey.id} className="flex-shrink-0">
                 <form
-                  action={`${eHistoryItemUrlPart}/nSuiteId/${storey.suite_id}/nStoreyId/${storey.id}`}
+                  action={`${eHistoryItemUrlPart}/nSuiteId/${storey.suiteId}/nStoreyId/${storey.id}`}
                   method="POST"
                 >
                   <button
@@ -68,8 +52,8 @@ const MoveFromSuiteToStorey = async ({
                         storeyId={storey.id}
                         name={storey.name}
                         description={storey.description}
-                        spaceCount={storey._count.spaces || 0}
-                        storeyItemCount={storeyItemCounts[storey.id] || null}
+                        spaceCount={storey.spaces}
+                        storeyItemCount={storey.counts}
                       />
                     </div>
                   </button>

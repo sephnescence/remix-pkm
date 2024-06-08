@@ -28,7 +28,7 @@ const MoveFromSuiteToAnotherSuite = ({
     <>
       <div className="border-b-[0.5px] border-blue-900 my-3"></div>
       <div className="">
-        <div className="mb-2 leading-3">Move to Another Suite</div>
+        <div className="mb-2 leading-3">Move to another Suite</div>
         <div className="flex overflow-x-scroll">
           {otherSuites.map((suite) => {
             if (!suite || !suite.id || !suite.name || !suite.description) {

@@ -872,13 +872,14 @@ export const itemMoveLoader = async (
   const itemLocation =
     storeyId === null ? 'suite' : spaceId === null ? 'storey' : 'space'
 
-  // We can only move an Item from a Suite into a sibling Suite
+  // Suite Items can move into a sibling Suite
   if (itemLocation === 'suite') {
     suitesForMove = await getSuitesForMove({
       userId: user.id,
     })
   } else if (itemLocation === 'storey') {
-    // Storey Items can only move to the parent Suite, not a sibling
+    // Storey Items can move to the parent Suite
+    // Space Items can move to the parent Suite
     suitesForMove = [
       (await getSuiteForMove({
         userId: user.id,
@@ -887,15 +888,15 @@ export const itemMoveLoader = async (
     ]
   }
 
-  // We can move an Item from a Storey into the parent Suite, not a sibling
-  // We can move an Item from a Storey into another Storey
-  if (itemLocation === 'storey') {
+  // Storey Items can move to a sibling Storey
+  // Suite Items can move to a child Storey
+  if (itemLocation === 'storey' || itemLocation === 'suite') {
     storeysForMove = await getStoreysForMove({
       userId: user.id,
       suiteId,
     })
-  } else if (itemLocation === 'space') {
-    // Space Items can only move to the parent Storey, not a sibling
+  } else {
+    // Space Items can move to the parent Storey
     storeysForMove = [
       (await getStoreyForMove({
         userId: user.id,
@@ -904,11 +905,10 @@ export const itemMoveLoader = async (
     ]
   }
 
-  // We only need to know all Spaces within the current Storey if the Item is in a Storey
-  // We can move an Item from a Space into a sibling Space
-  // We can move an Item from a Space into the parent Storey, not a sibling
-  // We can move an Item from a Space into the parent Suite, not a sibling
-  if (itemLocation === 'space') {
+  // Space Items can move to a sibling Space
+  // Space Items can move to the parent Storey
+  // Storey Items can move to a child Space
+  if (itemLocation === 'space' || itemLocation === 'storey') {
     spacesForMove = await getSpacesForMove({
       userId: user.id,
       storeyId,
