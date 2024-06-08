@@ -1,33 +1,22 @@
 'use server'
 
 import SuiteTilePreview from '~/components/Suites/forms/SuiteTilePreview'
-import {
-  getSuiteItemCounts,
-  getSuitesForUser,
-} from '~/repositories/PkmSuiteRepository'
+import { SuiteForMove } from '~/repositories/PkmSuiteRepository'
 
-const MoveFromSuiteToAnotherSuite = async ({
-  userId,
+const MoveFromSuiteToAnotherSuite = ({
   suiteId,
   modelType,
   modelItemId,
   historyItemId,
+  destinationSuites,
 }: {
-  userId: string
   suiteId: string
   modelType: string
   modelItemId: string
   historyItemId: string
+  destinationSuites: SuiteForMove[]
 }) => {
-  const suiteDashboard = await getSuitesForUser({
-    userId,
-  })
-
-  const suiteItemCounts = await getSuiteItemCounts({
-    userId,
-  })
-
-  const otherSuites = suiteDashboard.filter((suite) => suite.id !== suiteId)
+  const otherSuites = destinationSuites.filter((suite) => suite.id !== suiteId)
 
   if (otherSuites.length === 0) {
     return null
@@ -62,8 +51,8 @@ const MoveFromSuiteToAnotherSuite = async ({
                         suiteId={suiteId}
                         name={suite.name}
                         description={suite.description}
-                        storeyCount={suite._count.storeys || 0}
-                        suiteItemCount={suiteItemCounts[suite.id] || null}
+                        storeyCount={suite.storeys || 0}
+                        suiteItemCount={suite.counts}
                       />
                     </div>
                   </button>

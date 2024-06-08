@@ -2,17 +2,19 @@ import { feModelTypeMap } from '@/utils/apiUtils'
 import MoveTo from './MoveTo'
 import SuiteBreadcrumbs from '~/components/nav/SuiteBreadcrumbs'
 import MoveFromSuiteToAnotherSuite from './MoveFromSuiteToAnotherSuite'
-import MoveFromSuiteToStorey from './MoveFromSuiteToStorey'
+// import MoveFromSuiteToStorey from './MoveFromSuiteToStorey'
+import { SpaceForMove } from '~/repositories/PkmSpaceRepository'
+import { StoreyForMove } from '~/repositories/PkmStoreyRepository'
+import { SuiteForMove } from '~/repositories/PkmSuiteRepository'
 
-const SuiteMoveTo = async ({
-  userId,
+const SuiteMoveTo = ({
   suiteId,
   suite: { name: suiteName },
   modelId,
   modelType,
   historyId,
+  suitesForMove,
 }: {
-  userId: string
   suiteId: string
   suite: {
     name: string
@@ -26,6 +28,9 @@ const SuiteMoveTo = async ({
     | 'trash'
     | 'void'
   historyId: string
+  spacesForMove: SpaceForMove[] | null
+  storeysForMove: StoreyForMove[] | null
+  suitesForMove: SuiteForMove[] | null
 }) => {
   return (
     <div>
@@ -40,20 +45,21 @@ const SuiteMoveTo = async ({
         historyItemId={historyId}
         moveToText={'Move within the Suite'}
       />
-      <MoveFromSuiteToAnotherSuite
-        userId={userId}
+      {suitesForMove && (
+        <MoveFromSuiteToAnotherSuite
+          suiteId={suiteId}
+          modelType={modelType}
+          modelItemId={modelId}
+          historyItemId={historyId}
+          destinationSuites={suitesForMove}
+        />
+      )}
+      {/* <MoveFromSuiteToStorey
         suiteId={suiteId}
         modelType={modelType}
         modelItemId={modelId}
         historyItemId={historyId}
-      />
-      <MoveFromSuiteToStorey
-        userId={userId}
-        suiteId={suiteId}
-        modelType={modelType}
-        modelItemId={modelId}
-        historyItemId={historyId}
-      />
+      /> */}
     </div>
   )
 }

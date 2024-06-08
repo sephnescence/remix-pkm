@@ -1,36 +1,25 @@
 'use server'
 
-import {
-  getSuiteItemCounts,
-  getSuitesForUser,
-} from '~/repositories/PkmSuiteRepository'
+import { SuiteForMove } from '~/repositories/PkmSuiteRepository'
 import MoveFromStoreyToSuiteChild from './MoveFromStoreyToSuiteChild'
 
-const MoveFromStoreyToSuite = async ({
-  userId,
+const MoveFromStoreyToSuite = ({
   suiteId,
   storeyId,
   modelType,
   modelItemId,
   historyItemId,
+  destinationSuites,
 }: {
-  userId: string
   suiteId: string
   storeyId: string
   modelType: string
   modelItemId: string
   historyItemId: string
+  destinationSuites: SuiteForMove[]
 }) => {
-  const suiteDashboard = await getSuitesForUser({
-    userId,
-  })
-
-  const suiteItemCounts = await getSuiteItemCounts({
-    userId,
-  })
-
-  const parentSuite = suiteDashboard.find((suite) => suite.id === suiteId)
-  const otherSuites = suiteDashboard.filter((suite) => suite.id !== suiteId)
+  const parentSuite = destinationSuites.find((suite) => suite.id === suiteId)
+  const otherSuites = destinationSuites.filter((suite) => suite.id !== suiteId)
 
   return (
     <>
@@ -46,8 +35,7 @@ const MoveFromStoreyToSuite = async ({
             modelType={modelType}
             modelItemId={modelItemId}
             historyItemId={historyItemId}
-            suites={[parentSuite]}
-            suiteItemCounts={suiteItemCounts}
+            suite={parentSuite}
           />
         </div>
       )}
@@ -55,15 +43,18 @@ const MoveFromStoreyToSuite = async ({
       {otherSuites && otherSuites.length > 0 && (
         <div className="mb-2">
           <div className="mb-2 leading-3">Move to Another Suite</div>
-          <MoveFromStoreyToSuiteChild
-            suiteId={suiteId}
-            storeyId={storeyId}
-            modelType={modelType}
-            modelItemId={modelItemId}
-            historyItemId={historyItemId}
-            suites={otherSuites}
-            suiteItemCounts={suiteItemCounts}
-          />
+          {otherSuites.map((otherSuite) => (
+            <div key={otherSuite.id}>
+              <MoveFromStoreyToSuiteChild
+                suiteId={suiteId}
+                storeyId={storeyId}
+                modelType={modelType}
+                modelItemId={modelItemId}
+                historyItemId={historyItemId}
+                suite={otherSuite}
+              />
+            </div>
+          ))}
         </div>
       )}
     </>

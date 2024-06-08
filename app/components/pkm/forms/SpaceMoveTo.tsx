@@ -88,7 +88,7 @@ const SpaceMoveTo = ({
           modelType={modelType}
           modelItemId={modelId}
           historyItemId={historyId}
-          destinationStorey={storeysForMove}
+          destinationStoreys={storeysForMove}
         />
       )}
       {suitesForMove && (

@@ -3,10 +3,12 @@ import MoveTo from './MoveTo'
 import { feModelTypeMap } from '@/utils/apiUtils'
 import MoveFromStoreyToAnotherStorey from './MoveFromStoreyToAnotherStorey'
 import MoveFromStoreyToSuite from './MoveFromStoreyToSuite'
-import MoveFromStoreyToSpace from './MoveFromStoreyToSpace'
+// import MoveFromStoreyToSpace from './MoveFromStoreyToSpace'
+import { SpaceForMove } from '~/repositories/PkmSpaceRepository'
+import { StoreyForMove } from '~/repositories/PkmStoreyRepository'
+import { SuiteForMove } from '~/repositories/PkmSuiteRepository'
 
-const StoreyMoveTo = async ({
-  userId,
+const StoreyMoveTo = ({
   suiteId,
   suite: { name: suiteName },
   storeyId,
@@ -14,8 +16,10 @@ const StoreyMoveTo = async ({
   modelId,
   modelType,
   historyId,
+  // spacesForMove,
+  storeysForMove,
+  suitesForMove,
 }: {
-  userId: string
   suiteId: string
   suite: {
     name: string
@@ -33,6 +37,9 @@ const StoreyMoveTo = async ({
     | 'trash'
     | 'void'
   historyId: string
+  spacesForMove: SpaceForMove[] | null
+  storeysForMove: StoreyForMove[] | null
+  suitesForMove: SuiteForMove[] | null
 }) => {
   return (
     <div>
@@ -53,30 +60,33 @@ const StoreyMoveTo = async ({
         historyItemId={historyId}
         moveToText={'Move within the Storey'}
       />
-      <MoveFromStoreyToAnotherStorey
-        userId={userId}
+      {storeysForMove && (
+        <MoveFromStoreyToAnotherStorey
+          suiteId={suiteId}
+          storeyId={storeyId}
+          modelType={modelType}
+          modelItemId={modelId}
+          historyItemId={historyId}
+          destinationStoreys={storeysForMove}
+        />
+      )}
+      {suitesForMove && (
+        <MoveFromStoreyToSuite
+          suiteId={suiteId}
+          storeyId={storeyId}
+          modelType={modelType}
+          modelItemId={modelId}
+          historyItemId={historyId}
+          destinationSuites={suitesForMove}
+        />
+      )}
+      {/* <MoveFromStoreyToSpace
         suiteId={suiteId}
         storeyId={storeyId}
         modelType={modelType}
         modelItemId={modelId}
         historyItemId={historyId}
-      />
-      <MoveFromStoreyToSuite
-        userId={userId}
-        suiteId={suiteId}
-        storeyId={storeyId}
-        modelType={modelType}
-        modelItemId={modelId}
-        historyItemId={historyId}
-      />
-      <MoveFromStoreyToSpace
-        userId={userId}
-        suiteId={suiteId}
-        storeyId={storeyId}
-        modelType={modelType}
-        modelItemId={modelId}
-        historyItemId={historyId}
-      />
+      /> */}
     </div>
   )
 }

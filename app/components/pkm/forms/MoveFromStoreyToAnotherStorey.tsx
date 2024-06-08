@@ -1,36 +1,24 @@
 'use server'
 
 import StoreyTilePreview from '~/components/Suites/forms/StoreyTilePreview'
-import {
-  getStoreyItemCounts,
-  getStoreysForUser,
-} from '~/repositories/PkmStoreyRepository'
+import { StoreyForMove } from '~/repositories/PkmStoreyRepository'
 
-const MoveFromStoreyToAnotherStorey = async ({
-  userId,
+const MoveFromStoreyToAnotherStorey = ({
   suiteId,
   storeyId,
   modelType,
   modelItemId,
   historyItemId,
+  destinationStoreys,
 }: {
-  userId: string
   suiteId: string
   storeyId: string
   modelType: string
   modelItemId: string
   historyItemId: string
+  destinationStoreys: StoreyForMove[]
 }) => {
-  const storeyDashboard = await getStoreysForUser({
-    userId,
-  })
-
-  const storeyItemCounts = await getStoreyItemCounts({
-    userId,
-    suiteId,
-  })
-
-  const otherStoreys = storeyDashboard.filter(
+  const otherStoreys = destinationStoreys.filter(
     (storey) => storey.id !== storeyId,
   )
 
@@ -52,7 +40,7 @@ const MoveFromStoreyToAnotherStorey = async ({
               !storey.id ||
               !storey.name ||
               !storey.description ||
-              !storey.suite_id
+              !storey.suiteId
             ) {
               return null
             }
@@ -60,7 +48,7 @@ const MoveFromStoreyToAnotherStorey = async ({
             return (
               <div key={storey.id} className="flex-shrink-0">
                 <form
-                  action={`${eHistoryItemUrlPart}/nSuiteId/${storey.suite_id}/nStoreyId/${storey.id}`}
+                  action={`${eHistoryItemUrlPart}/nSuiteId/${storey.suiteId}/nStoreyId/${storey.id}`}
                   method="POST"
                 >
                   <button
@@ -74,8 +62,8 @@ const MoveFromStoreyToAnotherStorey = async ({
                         storeyId={storeyId}
                         name={storey.name}
                         description={storey.description}
-                        spaceCount={storey._count.spaces || 0}
-                        storeyItemCount={storeyItemCounts[storey.id] || null}
+                        spaceCount={storey.spaces}
+                        storeyItemCount={storey.counts}
                       />
                     </div>
                   </button>

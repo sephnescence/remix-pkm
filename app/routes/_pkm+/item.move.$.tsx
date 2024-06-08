@@ -3,6 +3,8 @@
 
 import { useLoaderData } from '@remix-run/react'
 import SpaceMoveTo from '~/components/pkm/forms/SpaceMoveTo'
+import StoreyMoveTo from '~/components/pkm/forms/StoreyMoveTo'
+import SuiteMoveTo from '~/components/pkm/forms/SuiteMoveTo'
 import {
   ItemMoveLoaderResponse,
   itemMoveLoader,
@@ -19,12 +21,37 @@ export default function MoveItemRoute() {
   return (
     <>
       {args.itemLocationName === 'Suite' && history.historyItem!.suite && (
-        <div>Suite TODO</div>
-        // <SuiteMoveTo />
+        <SuiteMoveTo
+          suiteId={args.conformedArgs.eSuiteId ?? 'SUITE ID UNKNOWN'}
+          suite={{
+            name: history.historyItem?.suite.name ?? 'SUITE NAME UNKNOWN',
+          }}
+          modelId={args.conformedArgs.eModelId}
+          modelType={args.conformedArgs.eModelType}
+          historyId={args.conformedArgs.eHistoryId}
+          spacesForMove={spacesForMove}
+          storeysForMove={storeysForMove}
+          suitesForMove={suitesForMove}
+        />
       )}
       {args.itemLocationName === 'Storey' && history.historyItem!.storey && (
-        <div>Storey TODO</div>
-        // <StoreyMoveTo />
+        <StoreyMoveTo
+          suiteId={args.conformedArgs.eSuiteId ?? 'SUITE ID UNKNOWN'}
+          suite={{
+            name:
+              history.historyItem?.storey.suite.name ?? 'SUITE NAME UNKNOWN',
+          }}
+          storeyId={args.conformedArgs.eStoreyId ?? 'STOREY ID UNKNOWN'}
+          storey={{
+            name: history.historyItem?.storey.name ?? 'STOREY NAME UNKNOWN',
+          }}
+          modelId={args.conformedArgs.eModelId}
+          modelType={args.conformedArgs.eModelType}
+          historyId={args.conformedArgs.eHistoryId}
+          spacesForMove={spacesForMove}
+          storeysForMove={storeysForMove}
+          suitesForMove={suitesForMove}
+        />
       )}
       {args.itemLocationName === 'Space' && history.historyItem!.space && (
         <SpaceMoveTo

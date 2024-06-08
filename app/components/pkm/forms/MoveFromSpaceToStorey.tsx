@@ -10,7 +10,7 @@ const MoveFromSpaceToStorey = ({
   modelType,
   modelItemId,
   historyItemId,
-  destinationStorey,
+  destinationStoreys,
 }: {
   suiteId: string
   storeyId: string
@@ -18,12 +18,12 @@ const MoveFromSpaceToStorey = ({
   modelType: string
   modelItemId: string
   historyItemId: string
-  destinationStorey: StoreyForMove[]
+  destinationStoreys: StoreyForMove[]
 }) => {
-  const parentStorey = destinationStorey.find(
+  const parentStorey = destinationStoreys.find(
     (storey) => storey.id === storeyId,
   )
-  const otherStoreys = destinationStorey.filter(
+  const otherStoreys = destinationStoreys.filter(
     (storey) => storey.id !== storeyId,
   )
 
