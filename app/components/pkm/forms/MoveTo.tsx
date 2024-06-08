@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import ArchiveBoxXMarkIcon from '~/components/icons/ArchiveBoxXMarkIcon'
 import BellAlertIcon from '~/components/icons/BellAlertIcon'
 import BoltIcon from '~/components/icons/BoltIcon'
@@ -25,19 +25,84 @@ export default function MoveTo({
   storeyId?: string
   spaceId?: string
 }) {
+  const [interactive, setInteractive] = useState(() => false)
   const [submitting, setSubmitting] = useState(() => false)
 
-  let eHistoryItemUrlPart = '/api/history/move/'
-  if (suiteId && !spaceId) {
-    eHistoryItemUrlPart += `eSuiteId/${suiteId}/`
+  // Prevent form interaction while submitting and while the page is rendering
+  useEffect(() => {
+    setInteractive(true)
+  }, [interactive])
+
+  const handleSubmit = async ({
+    id,
+    moveTo,
+    nSuiteId,
+    nStoreyId,
+    nSpaceId,
+  }: {
+    id: string
+    moveTo: string
+    nSuiteId: string | null
+    nStoreyId: string | null
+    nSpaceId: string | null
+  }) => {
+    setSubmitting(true)
+
+    let apiEndpoint = '/api/history/item/move/'
+    if (suiteId && !spaceId) {
+      apiEndpoint += `eSuiteId/${suiteId}/`
+    }
+    if (storeyId) {
+      apiEndpoint += `eStoreyId/${storeyId}/`
+    }
+    if (spaceId) {
+      apiEndpoint += `eSpaceId/${spaceId}/`
+    }
+
+    apiEndpoint += `eModelType/${modelType}/eModelId/${modelItemId}/eHistoryId/${historyItemId}`
+
+    // Not that this component will facilitate changing Suite, Storey, and Space just yet...
+    if (nSuiteId && !nSpaceId) {
+      apiEndpoint += `nSuiteId/${nSuiteId}/`
+    }
+    if (nStoreyId) {
+      apiEndpoint += `nStoreyId/${nStoreyId}/`
+    }
+    if (nSpaceId) {
+      apiEndpoint += `nSpaceId/${nSpaceId}/`
+    }
+
+    apiEndpoint += `/nModelType/${moveTo}`
+
+    const thisForm = document.getElementById(id) as HTMLFormElement
+    if (!thisForm) {
+      return false
+    }
+
+    const formData = new FormData(thisForm)
+    formData.append('apiEndpoint', apiEndpoint)
+
+    const res = await fetch(
+      new Request(apiEndpoint, {
+        method: 'POST',
+        body: formData,
+      }),
+    )
+
+    const resJson = await JSON.parse(await res.text())
+
+    if (!resJson.redirect) {
+      setSubmitting(false)
+    }
+
+    if (resJson.success === false && resJson.redirect) {
+      window.location.replace(resJson.redirect)
+    }
+
+    if (resJson.success === true && resJson.redirect) {
+      window.location.href = resJson.redirect
+    }
   }
-  if (storeyId) {
-    eHistoryItemUrlPart += `eStoreyId/${storeyId}/`
-  }
-  if (spaceId) {
-    eHistoryItemUrlPart += `eSpaceId/${spaceId}/`
-  }
-  eHistoryItemUrlPart += `eModelType/${modelType}/eModelId/${modelItemId}/eHistoryId/${historyItemId}`
 
   return (
     <>
@@ -64,21 +129,23 @@ export default function MoveTo({
         ].map(({ display, moveTo, btnTitle }) => {
           return (
             <div key={moveTo}>
-              <form
-                action={`${eHistoryItemUrlPart}/nModelType/${moveTo}`}
-                method="POST"
-              >
+              <form id={`move-to-${moveTo}`} onSubmit={() => false}>
                 <button
                   className={`bg-violet-600 hover:bg-violet-500 ${submitting ? 'bg-gray-400 hover:bg-gray-400' : ''} px-4 py-2 rounded-lg`}
-                  type="submit"
+                  type="button"
                   title={`Move to ${btnTitle}`}
                   onClick={() => {
                     setTimeout(() => {
-                      setSubmitting(true)
+                      void handleSubmit({
+                        id: `move-to-${moveTo}`,
+                        moveTo,
+                        nSuiteId: null,
+                        nStoreyId: null,
+                        nSpaceId: null,
+                      })
                     }, 10)
-                    return true
                   }}
-                  disabled={submitting}
+                  disabled={!interactive || submitting}
                 >
                   {display}
                 </button>
@@ -87,25 +154,26 @@ export default function MoveTo({
           )
         })}
         <div key={'trash'}>
-          <form
-            action={`${eHistoryItemUrlPart}/nModelType/trash`}
-            method="POST"
-          >
+          <form id={`move-to-trash`} onSubmit={() => false}>
             <button
               className={`bg-red-600 hover:bg-red-500 ${submitting ? 'bg-gray-400 hover:bg-gray-400' : ''} px-4 py-2 rounded-lg`}
-              type="submit"
+              type="button"
               onClick={() => {
                 if (
                   confirm('Are you sure you want to move this to the trash?')
                 ) {
                   setTimeout(() => {
-                    setSubmitting(true)
+                    void handleSubmit({
+                      id: 'move-to-trash',
+                      moveTo: 'trash',
+                      nSuiteId: null,
+                      nStoreyId: null,
+                      nSpaceId: null,
+                    })
                   }, 10)
-                  return true
                 }
-                return false
               }}
-              disabled={submitting}
+              disabled={!interactive || submitting}
               title="Move to Trash"
             >
               <TrashIcon />

@@ -36,6 +36,7 @@ import {
   getSuiteForMove,
   getSuitesForMove,
 } from '~/repositories/PkmSuiteRepository'
+import { getNewSuiteStoreyAndSpaceIds } from '@/utils/move'
 
 export type ItemUpdateConfigActionResponse = {
   errors: {
@@ -923,5 +924,283 @@ export const itemMoveLoader = async (
     suitesForMove,
     storeysForMove,
     spacesForMove,
+  }
+}
+
+export const itemMoveAction = async (
+  actionArgs: ActionFunctionArgs,
+): Promise<ItemUpdateConfigActionResponse | TypedResponse<never>> => {
+  const user = await getUserAuth(actionArgs)
+  if (!user) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'User not found. Please log in again',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const { request } = actionArgs
+
+  const formData = await request.formData()
+  if (!formData) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'System Error. Please file a bug report',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const apiEndpoint = formData.get('apiEndpoint')?.toString().substring(23)
+
+  if (!apiEndpoint || apiEndpoint === '') {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'System Error. Please file a bug report',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const args = (await conformArrayArgsToObject(
+    apiEndpoint.split('/'),
+  )) as ConformArrayArgsToObjectResponse
+
+  if (!args) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'System Error. Please file a bug report',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  if (args.exception) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: args.exception,
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  if (
+    !args.apiDuplicateUrl ||
+    !args.apiEditUrl ||
+    !args.conformedArgs ||
+    !args.feAlwaysLatestUrl ||
+    !args.feEditUrl ||
+    !args.feMoveUrl ||
+    !args.feParentUrl ||
+    !args.fePermalinkUrl ||
+    !args.feViewUrl ||
+    !args.itemLocation ||
+    !args.itemLocationName
+  ) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'System Error. Please file a bug report',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const { suiteId, storeyId, spaceId } = args.itemLocation
+
+  const history = await getCurrentHistoryItemForUser({
+    suiteId: suiteId,
+    storeyId: storeyId,
+    spaceId: spaceId,
+    modelId: args.conformedArgs.eModelId,
+    historyId: args.conformedArgs.eHistoryId,
+    userId: user.id,
+  })
+
+  if (
+    !history ||
+    !history.historyItem ||
+    !history.historyItem.history_id ||
+    history.historyItem.model_type !==
+      'Pkm' + modelTypeMap[args.conformedArgs.eModelType]
+  ) {
+    return {
+      errors: {
+        fieldErrors: {
+          general:
+            'Item not found. You might be trying to update an older version of the Item',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const item =
+    history.historyItem.epiphany_item ??
+    history.historyItem.inbox_item ??
+    history.historyItem.passing_thought_item ??
+    history.historyItem.todo_item ??
+    history.historyItem.trash_item ??
+    history.historyItem.void_item
+
+  if (!item) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'System Error. Please file a bug report',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const newHistoryId = randomUUID().toString()
+
+  const itemArgs: {
+    content: string
+    name: string
+    summary: string
+    model_id: string
+    user_id: string
+    void_at?: Date
+  } = {
+    content: item.content,
+    name: item.name,
+    summary: item.summary,
+    model_id: args.conformedArgs.eModelId,
+    user_id: user.id,
+  }
+
+  if (args.conformedArgs.nModelType === 'passing-thought') {
+    itemArgs.void_at = new Date('9000-01-01 00:00:00')
+  }
+
+  let redirectUrlPart = '/'
+
+  try {
+    const {
+      suiteId: newSuiteId,
+      storeyId: newStoreyId,
+      spaceId: newSpaceId,
+    } = getNewSuiteStoreyAndSpaceIds({
+      eSuiteId: args.conformedArgs.eSuiteId ?? null,
+      eStoreyId: args.conformedArgs.eStoreyId ?? null,
+      eSpaceId: args.conformedArgs.eSpaceId ?? null,
+      nSuiteId: args.conformedArgs.nSuiteId ?? null,
+      nStoreyId: args.conformedArgs.nStoreyId ?? null,
+      nSpaceId: args.conformedArgs.nSpaceId ?? null,
+    })
+
+    const results = await db.$transaction([
+      db.pkmHistory.update({
+        where: {
+          history_id: history.historyItem.history_id,
+          is_current: true,
+        },
+        data: {
+          is_current: false,
+        },
+      }),
+      db.pkmHistory.create({
+        data: {
+          history_id: newHistoryId,
+          model_id: args.conformedArgs.eModelId,
+          model_type: args.conformedArgs.nModelType
+            ? modelTypeSlugToHistoryModelType[args.conformedArgs.nModelType]
+            : history.historyItem.model_type,
+          is_current: true,
+          user_id: user.id,
+          suite_id: newSuiteId,
+          storey_id: newStoreyId,
+          space_id: newSpaceId,
+          [`${modelTypeToHistoryModelNameMap[args.conformedArgs.nModelType ?? args.conformedArgs.eModelType]}_item`]:
+            {
+              create: itemArgs,
+            },
+        },
+      }),
+    ])
+
+    if (!results) {
+      return {
+        errors: {
+          fieldErrors: {
+            general: 'Move - Item was not moved',
+          },
+        },
+        success: false,
+        redirect: null,
+      }
+    }
+
+    redirectUrlPart = '/item/view/'
+
+    if (newSuiteId) {
+      redirectUrlPart += `eSuiteId/${newSuiteId}/`
+    } else {
+      if (history.historyItem.suite?.id) {
+        redirectUrlPart += `eSuiteId/${history.historyItem.suite?.id}/`
+      } else if (history.historyItem.storey?.suite?.id) {
+        redirectUrlPart += `eSuiteId/${history.historyItem.storey?.suite?.id}/`
+      }
+    }
+
+    if (newStoreyId) {
+      redirectUrlPart += `eStoreyId/${newStoreyId}/`
+    }
+
+    if (newSpaceId) {
+      redirectUrlPart += `eSpaceId/${newSpaceId}/`
+    }
+
+    redirectUrlPart += `eModelType/${args.conformedArgs.nModelType ?? args.conformedArgs.eModelType}/eModelId/${args.conformedArgs.eModelId}/eHistoryId/${results[1].history_id}`
+
+    return {
+      errors: null,
+      success: true,
+      redirect: redirectUrlPart,
+    }
+  } catch (e) {
+    if (e instanceof Error) {
+      return {
+        errors: {
+          fieldErrors: {
+            general: `Move - ${e.message}`,
+          },
+        },
+        success: false,
+        redirect: null,
+      }
+    }
+
+    return {
+      errors: {
+        fieldErrors: {
+          general: `Move - Unknown exception`,
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 }
