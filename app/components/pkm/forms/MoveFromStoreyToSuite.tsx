@@ -4,22 +4,28 @@ import { SuiteForMove } from '~/repositories/PkmSuiteRepository'
 import MoveFromStoreyToSuiteChild from './MoveFromStoreyToSuiteChild'
 
 const MoveFromStoreyToSuite = ({
-  suiteId,
-  storeyId,
-  modelType,
-  modelItemId,
-  historyItemId,
+  interactive,
+  submitting,
+  setSubmitting,
+  eSuiteId,
+  eStoreyId,
+  eModelType,
+  eModelId,
+  eHistoryId,
   destinationSuites,
 }: {
-  suiteId: string
-  storeyId: string
-  modelType: string
-  modelItemId: string
-  historyItemId: string
+  interactive: boolean
+  submitting: boolean
+  setSubmitting: (submitting: boolean) => void
+  eSuiteId: string
+  eStoreyId: string
+  eModelType: string
+  eModelId: string
+  eHistoryId: string
   destinationSuites: SuiteForMove[]
 }) => {
-  const parentSuite = destinationSuites.find((suite) => suite.id === suiteId)
-  const otherSuites = destinationSuites.filter((suite) => suite.id !== suiteId)
+  const parentSuite = destinationSuites.find((suite) => suite.id === eSuiteId)
+  const otherSuites = destinationSuites.filter((suite) => suite.id !== eSuiteId)
 
   return (
     <>
@@ -30,12 +36,15 @@ const MoveFromStoreyToSuite = ({
         <div className="mb-2">
           <div className="mb-2 leading-3">Move to parent Suite</div>
           <MoveFromStoreyToSuiteChild
-            suiteId={suiteId}
-            storeyId={storeyId}
-            modelType={modelType}
-            modelItemId={modelItemId}
-            historyItemId={historyItemId}
-            suite={parentSuite}
+            interactive={interactive}
+            submitting={submitting}
+            setSubmitting={setSubmitting}
+            eSuiteId={eSuiteId}
+            eStoreyId={eStoreyId}
+            eModelType={eModelType}
+            eModelId={eModelId}
+            eHistoryId={eHistoryId}
+            destinationSuite={parentSuite}
           />
         </div>
       )}
@@ -46,12 +55,15 @@ const MoveFromStoreyToSuite = ({
           {otherSuites.map((otherSuite) => (
             <div key={otherSuite.id}>
               <MoveFromStoreyToSuiteChild
-                suiteId={suiteId}
-                storeyId={storeyId}
-                modelType={modelType}
-                modelItemId={modelItemId}
-                historyItemId={historyItemId}
-                suite={otherSuite}
+                interactive={interactive}
+                submitting={submitting}
+                setSubmitting={setSubmitting}
+                eSuiteId={eSuiteId}
+                eStoreyId={eStoreyId}
+                eModelType={eModelType}
+                eModelId={eModelId}
+                eHistoryId={eHistoryId}
+                destinationSuite={otherSuite}
               />
             </div>
           ))}

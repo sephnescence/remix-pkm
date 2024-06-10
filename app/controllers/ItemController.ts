@@ -989,9 +989,6 @@ export const itemMoveAction = async (
   }
 
   if (args.exception) {
-    console.log('exception')
-    console.log(JSON.stringify(args.exception))
-    console.log('exception')
     return {
       errors: {
         fieldErrors: {

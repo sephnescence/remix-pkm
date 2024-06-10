@@ -78,7 +78,9 @@ export const conformArrayArgsToObject = async (
       exception = e.message || 'No message provided'
     }
     if (e instanceof ZodError) {
-      exception = e.format().toString() // BTTODO - Not 100% sure this will be a well formatted string
+      exception = e.issues
+        .map((issue) => `${issue.path} - ${issue.message}`)
+        .join(', ')
     }
 
     return {

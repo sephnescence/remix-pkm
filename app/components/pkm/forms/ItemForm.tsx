@@ -91,14 +91,7 @@ export const handleMoveToSubmit = async ({
   )
 
   const resText = await res.text()
-  console.log(resText)
-  console.log(resText)
-  console.log(resText)
-
   const resJson = await JSON.parse(resText)
-  console.log(resJson)
-  console.log(resJson)
-  console.log(resJson)
 
   if (!resJson.redirect) {
     setSubmitting(false)

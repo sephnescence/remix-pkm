@@ -2,31 +2,36 @@
 
 import StoreyTilePreview from '~/components/Suites/forms/StoreyTilePreview'
 import { StoreyForMove } from '~/repositories/PkmStoreyRepository'
+import { handleMoveToSubmit } from './ItemForm'
 
 const MoveFromStoreyToAnotherStorey = ({
-  suiteId,
-  storeyId,
-  modelType,
-  modelItemId,
-  historyItemId,
+  interactive,
+  submitting,
+  setSubmitting,
+  eSuiteId,
+  eStoreyId,
+  eModelType,
+  eModelId,
+  eHistoryId,
   destinationStoreys,
 }: {
-  suiteId: string
-  storeyId: string
-  modelType: string
-  modelItemId: string
-  historyItemId: string
+  interactive: boolean
+  submitting: boolean
+  setSubmitting: (submitting: boolean) => void
+  eSuiteId: string
+  eStoreyId: string
+  eModelType: string
+  eModelId: string
+  eHistoryId: string
   destinationStoreys: StoreyForMove[]
 }) => {
   const otherStoreys = destinationStoreys.filter(
-    (storey) => storey.id !== storeyId,
+    (storey) => storey.id !== eStoreyId,
   )
 
   if (otherStoreys.length === 0) {
     return null
   }
-
-  const eHistoryItemUrlPart = `/api/history/item/move/eSuiteId/${suiteId}/eStoreyId/${storeyId}/eModelType/${modelType}/eModelId/${modelItemId}/eHistoryId/${historyItemId}`
 
   return (
     <>
@@ -34,37 +39,43 @@ const MoveFromStoreyToAnotherStorey = ({
       <div className="mb-2">
         <div className="mb-2 leading-3">Move to another Storey</div>
         <div className="flex overflow-x-scroll">
-          {otherStoreys.map((storey) => {
-            if (
-              !storey ||
-              !storey.id ||
-              !storey.name ||
-              !storey.description ||
-              !storey.suiteId
-            ) {
-              return null
-            }
-
+          {otherStoreys.map((destinationStorey) => {
             return (
-              <div key={storey.id} className="flex-shrink-0">
+              <div key={destinationStorey.id} className="flex-shrink-0">
                 <form
-                  // action={`${eHistoryItemUrlPart}/nSuiteId/${storey.suiteId}/nStoreyId/${storey.id}`}
-                  id={`move-to-storey-${storey.id}`}
+                  id={`move-to-storey-${destinationStorey.id}`}
                   onSubmit={() => false}
                 >
                   <button
                     type="button"
                     className="text-left"
-                    title={`Move to ${storey.name}`}
+                    title={`Move to ${destinationStorey.name}`}
+                    onClick={() => {
+                      handleMoveToSubmit({
+                        formId: `move-to-storey-${destinationStorey.id}`,
+                        eHistoryId,
+                        eModelType,
+                        eModelId,
+                        nModelType: eModelType, // Utilise the icons to drop straight into the desired Model Type
+                        setSubmitting,
+                        eSuiteId,
+                        eStoreyId,
+                        eSpaceId: null,
+                        nSuiteId: destinationStorey.suiteId,
+                        nStoreyId: destinationStorey.id,
+                        nSpaceId: null,
+                      })
+                    }}
+                    disabled={!interactive || submitting}
                   >
                     <div className="opacity-80 hover:opacity-100 cursor-pointer">
                       <StoreyTilePreview
-                        suiteId={suiteId}
-                        storeyId={storeyId}
-                        name={storey.name}
-                        description={storey.description}
-                        spaceCount={storey.spaces}
-                        storeyItemCount={storey.counts}
+                        suiteId={eSuiteId}
+                        storeyId={eStoreyId}
+                        name={destinationStorey.name}
+                        description={destinationStorey.description}
+                        spaceCount={destinationStorey.spaces}
+                        storeyItemCount={destinationStorey.counts}
                       />
                     </div>
                   </button>

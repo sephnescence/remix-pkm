@@ -36,18 +36,18 @@ export default function MoveItemRoute() {
       )}
       {args.itemLocationName === 'Storey' && history.historyItem!.storey && (
         <StoreyMoveTo
-          suiteId={args.conformedArgs.eSuiteId ?? 'SUITE ID UNKNOWN'}
+          eSuiteId={args.conformedArgs.eSuiteId ?? 'SUITE ID UNKNOWN'}
           suite={{
             name:
               history.historyItem?.storey.suite.name ?? 'SUITE NAME UNKNOWN',
           }}
-          storeyId={args.conformedArgs.eStoreyId ?? 'STOREY ID UNKNOWN'}
+          eStoreyId={args.conformedArgs.eStoreyId ?? 'STOREY ID UNKNOWN'}
           storey={{
             name: history.historyItem?.storey.name ?? 'STOREY NAME UNKNOWN',
           }}
-          modelId={args.conformedArgs.eModelId}
-          modelType={args.conformedArgs.eModelType}
-          historyId={args.conformedArgs.eHistoryId}
+          eModelId={args.conformedArgs.eModelId}
+          eModelType={args.conformedArgs.eModelType}
+          eHistoryId={args.conformedArgs.eHistoryId}
           spacesForMove={spacesForMove}
           storeysForMove={storeysForMove}
           suitesForMove={suitesForMove}

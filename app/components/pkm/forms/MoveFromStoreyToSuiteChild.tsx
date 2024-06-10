@@ -2,45 +2,66 @@
 
 import SuiteTilePreview from '~/components/Suites/forms/SuiteTilePreview'
 import { SuiteForMove } from '~/repositories/PkmSuiteRepository'
+import { handleMoveToSubmit } from './ItemForm'
 
 const MoveFromStoreyToSuiteChild = ({
-  suiteId,
-  storeyId,
-  modelType,
-  modelItemId,
-  historyItemId,
-  suite,
+  interactive,
+  submitting,
+  setSubmitting,
+  eSuiteId,
+  eStoreyId,
+  eModelType,
+  eModelId,
+  eHistoryId,
+  destinationSuite,
 }: {
-  suiteId: string
-  storeyId: string
-  modelType: string
-  modelItemId: string
-  historyItemId: string
-  suite: SuiteForMove
+  interactive: boolean
+  submitting: boolean
+  setSubmitting: (submitting: boolean) => void
+  eSuiteId: string
+  eStoreyId: string
+  eModelType: string
+  eModelId: string
+  eHistoryId: string
+  destinationSuite: SuiteForMove
 }) => {
-  const eHistoryItemUrlPart = `/api/history/item/move/eSuiteId/${suiteId}/eStoreyId/${storeyId}/eModelType/${modelType}/eModelId/${modelItemId}/eHistoryId/${historyItemId}`
-
   return (
     <>
       <div className="flex overflow-x-scroll">
-        <div key={suite.id} className="flex-shrink-0">
+        <div key={destinationSuite.id} className="flex-shrink-0">
           <form
-            // action={`${eHistoryItemUrlPart}/nSuiteId/${suite.id}`}
-            id={`move-to-suite-${suite.id}`}
+            id={`move-to-suite-${destinationSuite.id}`}
             onSubmit={() => false}
           >
             <button
               type="button"
               className="text-left"
-              title={`Move to ${suite.name}`}
+              title={`Move to ${destinationSuite.name}`}
+              onClick={() => {
+                handleMoveToSubmit({
+                  formId: `move-to-suite-${destinationSuite.id}`,
+                  eHistoryId,
+                  eModelType,
+                  eModelId,
+                  nModelType: eModelType, // Utilise the icons to drop straight into the desired Model Type
+                  setSubmitting,
+                  eSuiteId,
+                  eStoreyId,
+                  eSpaceId: null,
+                  nSuiteId: destinationSuite.id,
+                  nStoreyId: null,
+                  nSpaceId: null,
+                })
+              }}
+              disabled={!interactive || submitting}
             >
               <div className="opacity-80 hover:opacity-100 cursor-pointer">
                 <SuiteTilePreview
-                  suiteId={suite.id}
-                  name={suite.name}
-                  description={suite.description}
-                  storeyCount={suite.storeys}
-                  suiteItemCount={suite.counts}
+                  suiteId={destinationSuite.id}
+                  name={destinationSuite.name}
+                  description={destinationSuite.description}
+                  storeyCount={destinationSuite.storeys}
+                  suiteItemCount={destinationSuite.counts}
                 />
               </div>
             </button>

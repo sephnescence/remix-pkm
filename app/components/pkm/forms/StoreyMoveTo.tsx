@@ -7,87 +7,110 @@ import MoveFromStoreyToSpace from './MoveFromStoreyToSpace'
 import { SpaceForMove } from '~/repositories/PkmSpaceRepository'
 import { StoreyForMove } from '~/repositories/PkmStoreyRepository'
 import { SuiteForMove } from '~/repositories/PkmSuiteRepository'
+import { useEffect, useState } from 'react'
 
 const StoreyMoveTo = ({
-  suiteId,
+  eSuiteId,
   suite: { name: suiteName },
-  storeyId,
+  eStoreyId,
   storey: { name: storeyName },
-  modelId,
-  modelType,
-  historyId,
+  eModelId,
+  eModelType,
+  eHistoryId,
   spacesForMove,
   storeysForMove,
   suitesForMove,
 }: {
-  suiteId: string
+  eSuiteId: string
   suite: {
     name: string
   }
-  storeyId: string
+  eStoreyId: string
   storey: {
     name: string
   }
-  modelId: string
-  modelType:
+  eModelId: string
+  eModelType:
     | 'inbox'
     | 'epiphany'
     | 'passing-thought'
     | 'todo'
     | 'trash'
     | 'void'
-  historyId: string
+  eHistoryId: string
   spacesForMove: SpaceForMove[] | null
   storeysForMove: StoreyForMove[] | null
   suitesForMove: SuiteForMove[] | null
 }) => {
+  const [interactive, setInteractive] = useState(() => false)
+  const [submitting, setSubmitting] = useState(() => false)
+
+  // Prevent form interaction while submitting and while the page is rendering
+  useEffect(() => {
+    setInteractive(true)
+  }, [interactive])
+
+  console.log(spacesForMove)
+
   return (
     <div>
       <StoreyBreadcrumbs
-        suiteId={suiteId}
+        suiteId={eSuiteId}
         suiteName={suiteName}
-        storeyId={storeyId}
+        storeyId={eStoreyId}
         storeyName={storeyName}
       />
       <div className="text-4xl mb-2">
-        Move Storey {feModelTypeMap[modelType]} Item
+        Move Storey {feModelTypeMap[eModelType]} Item
       </div>
       <MoveTo
-        modelItemId={modelId}
-        modelType={modelType}
-        historyItemId={historyId}
-        suiteId={suiteId}
-        storeyId={storeyId}
-        spaceId={null}
+        interactive={interactive}
+        submitting={submitting}
+        setSubmitting={setSubmitting}
+        eSuiteId={eSuiteId}
+        eStoreyId={eStoreyId}
+        eSpaceId={null}
+        eModelType={eModelType}
+        eModelId={eModelId}
+        eHistoryId={eHistoryId}
         moveToText={'Move within the Storey'}
       />
-      {storeysForMove && (
+      {storeysForMove && storeysForMove.length > 0 && (
         <MoveFromStoreyToAnotherStorey
-          suiteId={suiteId}
-          storeyId={storeyId}
-          modelType={modelType}
-          modelItemId={modelId}
-          historyItemId={historyId}
+          interactive={interactive}
+          submitting={submitting}
+          setSubmitting={setSubmitting}
+          eSuiteId={eSuiteId}
+          eStoreyId={eStoreyId}
+          eModelType={eModelType}
+          eModelId={eModelId}
+          eHistoryId={eHistoryId}
           destinationStoreys={storeysForMove}
         />
       )}
-      {suitesForMove && (
+      {suitesForMove && suitesForMove.length > 0 && (
         <MoveFromStoreyToSuite
-          suiteId={suiteId}
-          storeyId={storeyId}
-          modelType={modelType}
-          modelItemId={modelId}
-          historyItemId={historyId}
+          interactive={interactive}
+          submitting={submitting}
+          setSubmitting={setSubmitting}
+          eSuiteId={eSuiteId}
+          eStoreyId={eStoreyId}
+          eModelType={eModelType}
+          eModelId={eModelId}
+          eHistoryId={eHistoryId}
           destinationSuites={suitesForMove}
         />
       )}
-      {spacesForMove && (
+      {spacesForMove && spacesForMove.length > 0 && (
         <MoveFromStoreyToSpace
-          suiteId={suiteId}
-          storeyId={storeyId}
-          modelType={modelType}
-          modelItemId={modelId}
-          historyItemId={historyId}
+          interactive={interactive}
+          submitting={submitting}
+          setSubmitting={setSubmitting}
+          eSuiteId={eSuiteId}
+          eStoreyId={eStoreyId}
+          eModelType={eModelType}
+          eModelId={eModelId}
+          eHistoryId={eHistoryId}
           destinationSpaces={spacesForMove}
         />
       )}

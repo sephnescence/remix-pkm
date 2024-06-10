@@ -70,6 +70,9 @@ const SpaceMoveTo = ({
         Move Space {feModelTypeMap[modelType]} Item
       </div>
       <MoveTo
+        interactive={interactive}
+        submitting={submitting}
+        setSubmitting={setSubmitting}
         eModelId={modelId}
         eModelType={modelType}
         eHistoryId={historyId}
@@ -77,11 +80,8 @@ const SpaceMoveTo = ({
         eStoreyId={storeyId}
         eSpaceId={spaceId}
         moveToText={'Move within the Space'}
-        interactive={interactive}
-        submitting={submitting}
-        setSubmitting={setSubmitting}
       />
-      {spacesForMove && (
+      {spacesForMove && spacesForMove.length > 0 && (
         <MoveFromSpaceToAnotherSpace
           interactive={interactive}
           submitting={submitting}
@@ -95,7 +95,7 @@ const SpaceMoveTo = ({
           destinationSpaces={spacesForMove}
         />
       )}
-      {storeysForMove && (
+      {storeysForMove && storeysForMove.length > 0 && (
         <MoveFromSpaceToStorey
           interactive={interactive}
           submitting={submitting}
@@ -109,7 +109,7 @@ const SpaceMoveTo = ({
           destinationStoreys={storeysForMove}
         />
       )}
-      {suitesForMove && (
+      {suitesForMove && suitesForMove.length > 0 && (
         <MoveFromSpaceToSuite
           interactive={interactive}
           submitting={submitting}
