@@ -4,24 +4,30 @@ import { SuiteForMove } from '~/repositories/PkmSuiteRepository'
 import MoveFromSpaceToSuiteChild from './MoveFromSpaceToSuiteChild'
 
 const MoveFromSpaceToSuite = ({
-  suiteId,
-  storeyId,
-  spaceId,
-  modelType,
-  modelItemId,
-  historyItemId,
+  interactive,
+  submitting,
+  setSubmitting,
+  eSuiteId,
+  eStoreyId,
+  eSpaceId,
+  eModelType,
+  eModelId,
+  eHistoryId,
   destinationSuites,
 }: {
-  suiteId: string
-  storeyId: string
-  spaceId: string
-  modelType: string
-  modelItemId: string
-  historyItemId: string
+  interactive: boolean
+  submitting: boolean
+  setSubmitting: (submitting: boolean) => void
+  eSuiteId: string
+  eStoreyId: string
+  eSpaceId: string
+  eModelType: string
+  eModelId: string
+  eHistoryId: string
   destinationSuites: SuiteForMove[]
 }) => {
-  const parentSuite = destinationSuites.find((suite) => suite.id === suiteId)
-  const otherSuites = destinationSuites.filter((suite) => suite.id !== suiteId)
+  const parentSuite = destinationSuites.find((suite) => suite.id === eSuiteId)
+  const otherSuites = destinationSuites.filter((suite) => suite.id !== eSuiteId)
 
   return (
     <>
@@ -32,13 +38,16 @@ const MoveFromSpaceToSuite = ({
         <div className="mb-2">
           <div className="mb-2 leading-3">Move to parent Suite</div>
           <MoveFromSpaceToSuiteChild
-            suiteId={suiteId}
-            storeyId={storeyId}
-            spaceId={spaceId}
-            modelType={modelType}
-            modelItemId={modelItemId}
-            historyItemId={historyItemId}
-            suite={parentSuite}
+            interactive={interactive}
+            submitting={submitting}
+            setSubmitting={setSubmitting}
+            eSuiteId={eSuiteId}
+            eStoreyId={eStoreyId}
+            eSpaceId={eSpaceId}
+            eModelType={eModelType}
+            eModelId={eModelId}
+            eHistoryId={eHistoryId}
+            destinationSuite={parentSuite}
           />
         </div>
       )}
@@ -49,13 +58,16 @@ const MoveFromSpaceToSuite = ({
           {otherSuites.map((otherSuite) => (
             <div key={otherSuite.id}>
               <MoveFromSpaceToSuiteChild
-                suiteId={suiteId}
-                storeyId={storeyId}
-                spaceId={spaceId}
-                modelType={modelType}
-                modelItemId={modelItemId}
-                historyItemId={historyItemId}
-                suite={otherSuite}
+                interactive={interactive}
+                submitting={submitting}
+                setSubmitting={setSubmitting}
+                eSuiteId={eSuiteId}
+                eStoreyId={eStoreyId}
+                eSpaceId={eSpaceId}
+                eModelType={eModelType}
+                eModelId={eModelId}
+                eHistoryId={eHistoryId}
+                destinationSuite={otherSuite}
               />
             </div>
           ))}

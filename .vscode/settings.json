@@ -15,6 +15,7 @@
         "tailwindcss",
         "typecheck",
         "upsert",
-        "upserting"
+        "upserting",
+        "Utilise"
     ]
 }

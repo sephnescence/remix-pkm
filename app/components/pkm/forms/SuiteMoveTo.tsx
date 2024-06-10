@@ -40,10 +40,12 @@ const SuiteMoveTo = ({
         Move Suite {feModelTypeMap[modelType]} Item
       </div>
       <MoveTo
-        suiteId={suiteId}
         modelItemId={modelId}
         modelType={modelType}
         historyItemId={historyId}
+        suiteId={suiteId}
+        storeyId={null}
+        spaceId={null}
         moveToText={'Move within the Suite'}
       />
       {suitesForMove && (

@@ -22,7 +22,7 @@ const MoveFromSuiteToAnotherSuite = ({
     return null
   }
 
-  const eHistoryItemUrlPart = `/api/history/move/eSuiteId/${suiteId}/eModelType/${modelType}/eModelId/${modelItemId}/eHistoryId/${historyItemId}`
+  const eHistoryItemUrlPart = `/api/history/item/move/eSuiteId/${suiteId}/eModelType/${modelType}/eModelId/${modelItemId}/eHistoryId/${historyItemId}`
 
   return (
     <>
@@ -38,11 +38,12 @@ const MoveFromSuiteToAnotherSuite = ({
             return (
               <div key={suite.id} className="flex-shrink-0">
                 <form
-                  action={`${eHistoryItemUrlPart}/nSuiteId/${suite.id}`}
-                  method="POST"
+                  // action={`${eHistoryItemUrlPart}/nSuiteId/${suite.id}`}
+                  id={`move-to-suite-${suite.id}`}
+                  onSubmit={() => false}
                 >
                   <button
-                    type="submit"
+                    type="button"
                     className="text-left"
                     title={`Move to ${suite.name}`}
                   >

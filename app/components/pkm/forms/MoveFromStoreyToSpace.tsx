@@ -18,7 +18,7 @@ const MoveFromStoreyToSpace = ({
   historyItemId: string
   destinationSpaces: SpaceForMove[]
 }) => {
-  const eHistoryItemUrlPart = `/api/history/move/eSuiteId/${suiteId}/eStoreyId/${storeyId}/eModelType/${modelType}/eModelId/${modelItemId}/eHistoryId/${historyItemId}`
+  const eHistoryItemUrlPart = `/api/history/item/move/eSuiteId/${suiteId}/eStoreyId/${storeyId}/eModelType/${modelType}/eModelId/${modelItemId}/eHistoryId/${historyItemId}`
 
   return (
     <>
@@ -40,11 +40,12 @@ const MoveFromStoreyToSpace = ({
             return (
               <div key={destinationSpace.id} className="flex-shrink-0">
                 <form
-                  action={`${eHistoryItemUrlPart}/nStoreyId/${destinationSpace.storeyId}/nSpaceId/${destinationSpace.id}`}
-                  method="POST"
+                  // action={`${eHistoryItemUrlPart}/nStoreyId/${destinationSpace.storeyId}/nSpaceId/${destinationSpace.id}`}
+                  id={`move-to-space-${destinationSpace.id}`}
+                  onSubmit={() => false}
                 >
                   <button
-                    type="submit"
+                    type="button"
                     className="text-left"
                     title={`Move to ${destinationSpace.name}`}
                   >

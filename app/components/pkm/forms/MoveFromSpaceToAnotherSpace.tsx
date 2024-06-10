@@ -2,26 +2,31 @@
 
 import SpaceTilePreview from '~/components/Suites/forms/SpaceTilePreview'
 import { SpaceForMove } from '~/repositories/PkmSpaceRepository'
+import { handleMoveToSubmit } from './ItemForm'
 
 const MoveFromSpaceToAnotherSpace = ({
-  suiteId,
-  storeyId,
-  spaceId,
-  modelType,
-  modelItemId,
-  historyItemId,
+  interactive,
+  submitting,
+  setSubmitting,
+  eSuiteId,
+  eStoreyId,
+  eSpaceId,
+  eModelType,
+  eModelId,
+  eHistoryId,
   destinationSpaces,
 }: {
-  suiteId: string
-  storeyId: string
-  spaceId: string
-  modelType: string
-  modelItemId: string
-  historyItemId: string
+  interactive: boolean
+  submitting: boolean
+  setSubmitting: (submitting: boolean) => void
+  eSuiteId: string
+  eStoreyId: string
+  eSpaceId: string
+  eModelType: string
+  eModelId: string
+  eHistoryId: string
   destinationSpaces: SpaceForMove[]
 }) => {
-  const eHistoryItemUrlPart = `/api/history/move/eStoreyId/${storeyId}/eSpaceId/${spaceId}/eModelType/${modelType}/eModelId/${modelItemId}/eHistoryId/${historyItemId}`
-
   return (
     <>
       <div className="border-b-[0.5px] border-blue-900 my-3"></div>
@@ -29,22 +34,39 @@ const MoveFromSpaceToAnotherSpace = ({
         <div className="mb-2 leading-3">Move to another Space</div>
         <div className="flex overflow-x-scroll">
           {destinationSpaces
-            .filter((destinationSpace) => destinationSpace.id !== spaceId)
+            .filter((destinationSpace) => destinationSpace.id !== eSpaceId)
             .map((destinationSpace) => (
               <div key={destinationSpace.id} className="flex-shrink-0">
                 <form
-                  action={`${eHistoryItemUrlPart}/nStoreyId/${destinationSpace.storeyId}/nSpaceId/${destinationSpace.id}`}
-                  method="POST"
+                  id={`move-to-space-${destinationSpace.id}`}
+                  onSubmit={() => false}
                 >
                   <button
-                    type="submit"
+                    type="button"
                     className="text-left"
                     title={`Move to ${destinationSpace.name}`}
+                    onClick={() => {
+                      handleMoveToSubmit({
+                        formId: `move-to-space-${destinationSpace.id}`,
+                        eHistoryId,
+                        eModelType,
+                        eModelId,
+                        nModelType: eModelType, // Utilise the icons to drop straight into the desired Model Type
+                        setSubmitting,
+                        eSuiteId,
+                        eStoreyId,
+                        eSpaceId,
+                        nSuiteId: null,
+                        nStoreyId: destinationSpace.storeyId,
+                        nSpaceId: destinationSpace.id,
+                      })
+                    }}
+                    disabled={!interactive || submitting}
                   >
                     <div className="opacity-80 hover:opacity-100 cursor-pointer">
                       <SpaceTilePreview
-                        suiteId={suiteId}
-                        storeyId={storeyId}
+                        suiteId={eSuiteId}
+                        storeyId={eStoreyId}
                         name={destinationSpace.name}
                         description={destinationSpace.description}
                         spaceItemCount={destinationSpace.counts}

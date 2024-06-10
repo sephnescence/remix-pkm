@@ -2,10 +2,9 @@
 
 import { useEffect, useReducer, useState } from 'react'
 import PkmItem from '../PkmItem'
-// import ItemContentCodeMirror from './ItemContentCodeMirror'
+import ItemContentCodeMirror from './ItemContentCodeMirror'
 import ItemImageCarousel from './ItemImageCarousel'
 import Dropzone from './Dropzone'
-import ItemContentCodeMirror from './ItemContentCodeMirror'
 
 type ItemFormProps = {
   pageTitle: string
@@ -20,6 +19,98 @@ type ItemFormProps = {
     image_id: string
     s3_url: string
   }[]
+}
+
+export const handleMoveToSubmit = async ({
+  formId,
+  eHistoryId,
+  eModelType,
+  eModelId,
+  nModelType,
+  setSubmitting,
+  eSuiteId,
+  eStoreyId,
+  eSpaceId,
+  nSuiteId,
+  nStoreyId,
+  nSpaceId,
+}: {
+  formId: string
+  eHistoryId: string
+  eModelType: string
+  eModelId: string
+  nModelType: string
+  setSubmitting: (submitting: boolean) => void
+  eSuiteId: string | null
+  eStoreyId: string | null
+  eSpaceId: string | null
+  nSuiteId: string | null
+  nStoreyId: string | null
+  nSpaceId: string | null
+}) => {
+  setSubmitting(true)
+
+  let apiEndpoint = '/api/history/item/move/'
+  if (eSuiteId && !eSpaceId) {
+    apiEndpoint += `eSuiteId/${eSuiteId}/`
+  }
+  if (eStoreyId) {
+    apiEndpoint += `eStoreyId/${eStoreyId}/`
+  }
+  if (eSpaceId) {
+    apiEndpoint += `eSpaceId/${eSpaceId}/`
+  }
+
+  apiEndpoint += `eModelType/${eModelType}/eModelId/${eModelId}/eHistoryId/${eHistoryId}/`
+
+  if (nSuiteId && !nSpaceId) {
+    apiEndpoint += `nSuiteId/${nSuiteId}/`
+  }
+  if (nStoreyId) {
+    apiEndpoint += `nStoreyId/${nStoreyId}/`
+  }
+  if (nSpaceId) {
+    apiEndpoint += `nSpaceId/${nSpaceId}/`
+  }
+
+  apiEndpoint += `nModelType/${nModelType}`
+
+  const thisForm = document.getElementById(formId) as HTMLFormElement
+  if (!thisForm) {
+    return false
+  }
+
+  const formData = new FormData(thisForm)
+  formData.append('apiEndpoint', apiEndpoint)
+
+  const res = await fetch(
+    new Request(apiEndpoint, {
+      method: 'POST',
+      body: formData,
+    }),
+  )
+
+  const resText = await res.text()
+  console.log(resText)
+  console.log(resText)
+  console.log(resText)
+
+  const resJson = await JSON.parse(resText)
+  console.log(resJson)
+  console.log(resJson)
+  console.log(resJson)
+
+  if (!resJson.redirect) {
+    setSubmitting(false)
+  }
+
+  if (resJson.success === false && resJson.redirect) {
+    window.location.replace(resJson.redirect)
+  }
+
+  if (resJson.success === true && resJson.redirect) {
+    window.location.href = resJson.redirect
+  }
 }
 
 export default function ItemForm({

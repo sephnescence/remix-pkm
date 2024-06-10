@@ -26,7 +26,7 @@ const MoveFromStoreyToAnotherStorey = ({
     return null
   }
 
-  const eHistoryItemUrlPart = `/api/history/move/eSuiteId/${suiteId}/eStoreyId/${storeyId}/eModelType/${modelType}/eModelId/${modelItemId}/eHistoryId/${historyItemId}`
+  const eHistoryItemUrlPart = `/api/history/item/move/eSuiteId/${suiteId}/eStoreyId/${storeyId}/eModelType/${modelType}/eModelId/${modelItemId}/eHistoryId/${historyItemId}`
 
   return (
     <>
@@ -48,11 +48,12 @@ const MoveFromStoreyToAnotherStorey = ({
             return (
               <div key={storey.id} className="flex-shrink-0">
                 <form
-                  action={`${eHistoryItemUrlPart}/nSuiteId/${storey.suiteId}/nStoreyId/${storey.id}`}
-                  method="POST"
+                  // action={`${eHistoryItemUrlPart}/nSuiteId/${storey.suiteId}/nStoreyId/${storey.id}`}
+                  id={`move-to-storey-${storey.id}`}
+                  onSubmit={() => false}
                 >
                   <button
-                    type="submit"
+                    type="button"
                     className="text-left"
                     title={`Move to ${storey.name}`}
                   >

@@ -53,11 +53,12 @@ const StoreyMoveTo = ({
         Move Storey {feModelTypeMap[modelType]} Item
       </div>
       <MoveTo
-        suiteId={suiteId}
-        storeyId={storeyId}
         modelItemId={modelId}
         modelType={modelType}
         historyItemId={historyId}
+        suiteId={suiteId}
+        storeyId={storeyId}
+        spaceId={null}
         moveToText={'Move within the Storey'}
       />
       {storeysForMove && (

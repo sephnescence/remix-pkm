@@ -7,6 +7,7 @@ import MoveFromSpaceToSuite from './MoveFromSpaceToSuite'
 import { SpaceForMove } from '~/repositories/PkmSpaceRepository'
 import { StoreyForMove } from '~/repositories/PkmStoreyRepository'
 import { SuiteForMove } from '~/repositories/PkmSuiteRepository'
+import { useEffect, useState } from 'react'
 
 const SpaceMoveTo = ({
   suiteId,
@@ -47,6 +48,14 @@ const SpaceMoveTo = ({
   storeysForMove: StoreyForMove[] | null
   suitesForMove: SuiteForMove[] | null
 }) => {
+  const [interactive, setInteractive] = useState(() => false)
+  const [submitting, setSubmitting] = useState(() => false)
+
+  // Prevent form interaction while submitting and while the page is rendering
+  useEffect(() => {
+    setInteractive(true)
+  }, [interactive])
+
   return (
     <div>
       <SpaceBreadcrumbs
@@ -61,44 +70,56 @@ const SpaceMoveTo = ({
         Move Space {feModelTypeMap[modelType]} Item
       </div>
       <MoveTo
-        suiteId={suiteId}
-        storeyId={storeyId}
-        spaceId={spaceId}
-        modelItemId={modelId}
-        modelType={modelType}
-        historyItemId={historyId}
+        eModelId={modelId}
+        eModelType={modelType}
+        eHistoryId={historyId}
+        eSuiteId={suiteId}
+        eStoreyId={storeyId}
+        eSpaceId={spaceId}
         moveToText={'Move within the Space'}
+        interactive={interactive}
+        submitting={submitting}
+        setSubmitting={setSubmitting}
       />
       {spacesForMove && (
         <MoveFromSpaceToAnotherSpace
-          suiteId={suiteId}
-          storeyId={storeyId}
-          spaceId={spaceId}
-          modelType={modelType}
-          modelItemId={modelId}
-          historyItemId={historyId}
+          interactive={interactive}
+          submitting={submitting}
+          setSubmitting={setSubmitting}
+          eSuiteId={suiteId}
+          eStoreyId={storeyId}
+          eSpaceId={spaceId}
+          eModelType={modelType}
+          eModelId={modelId}
+          eHistoryId={historyId}
           destinationSpaces={spacesForMove}
         />
       )}
       {storeysForMove && (
         <MoveFromSpaceToStorey
-          suiteId={suiteId}
-          storeyId={storeyId}
-          spaceId={spaceId}
-          modelType={modelType}
-          modelItemId={modelId}
-          historyItemId={historyId}
+          interactive={interactive}
+          submitting={submitting}
+          setSubmitting={setSubmitting}
+          eSuiteId={suiteId}
+          eStoreyId={storeyId}
+          eSpaceId={spaceId}
+          eModelType={modelType}
+          eModelId={modelId}
+          eHistoryId={historyId}
           destinationStoreys={storeysForMove}
         />
       )}
       {suitesForMove && (
         <MoveFromSpaceToSuite
-          suiteId={suiteId}
-          storeyId={storeyId}
-          spaceId={spaceId}
-          modelType={modelType}
-          modelItemId={modelId}
-          historyItemId={historyId}
+          interactive={interactive}
+          submitting={submitting}
+          setSubmitting={setSubmitting}
+          eSuiteId={suiteId}
+          eStoreyId={storeyId}
+          eSpaceId={spaceId}
+          eModelType={modelType}
+          eModelId={modelId}
+          eHistoryId={historyId}
           destinationSuites={suitesForMove}
         />
       )}

@@ -18,18 +18,19 @@ const MoveFromStoreyToSuiteChild = ({
   historyItemId: string
   suite: SuiteForMove
 }) => {
-  const eHistoryItemUrlPart = `/api/history/move/eSuiteId/${suiteId}/eStoreyId/${storeyId}/eModelType/${modelType}/eModelId/${modelItemId}/eHistoryId/${historyItemId}`
+  const eHistoryItemUrlPart = `/api/history/item/move/eSuiteId/${suiteId}/eStoreyId/${storeyId}/eModelType/${modelType}/eModelId/${modelItemId}/eHistoryId/${historyItemId}`
 
   return (
     <>
       <div className="flex overflow-x-scroll">
         <div key={suite.id} className="flex-shrink-0">
           <form
-            action={`${eHistoryItemUrlPart}/nSuiteId/${suite.id}`}
-            method="POST"
+            // action={`${eHistoryItemUrlPart}/nSuiteId/${suite.id}`}
+            id={`move-to-suite-${suite.id}`}
+            onSubmit={() => false}
           >
             <button
-              type="submit"
+              type="button"
               className="text-left"
               title={`Move to ${suite.name}`}
             >

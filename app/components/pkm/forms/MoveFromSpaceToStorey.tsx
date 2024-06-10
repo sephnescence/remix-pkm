@@ -4,27 +4,33 @@ import { StoreyForMove } from '~/repositories/PkmStoreyRepository'
 import MoveFromSpaceToStoreyChild from './MoveFromSpaceToStoreyChild'
 
 const MoveFromSpaceToStorey = ({
-  suiteId,
-  storeyId,
-  spaceId,
-  modelType,
-  modelItemId,
-  historyItemId,
+  interactive,
+  submitting,
+  setSubmitting,
+  eSuiteId,
+  eStoreyId,
+  eSpaceId,
+  eModelType,
+  eModelId,
+  eHistoryId,
   destinationStoreys,
 }: {
-  suiteId: string
-  storeyId: string
-  spaceId: string
-  modelType: string
-  modelItemId: string
-  historyItemId: string
+  interactive: boolean
+  submitting: boolean
+  setSubmitting: (submitting: boolean) => void
+  eSuiteId: string
+  eStoreyId: string
+  eSpaceId: string
+  eModelType: string
+  eModelId: string
+  eHistoryId: string
   destinationStoreys: StoreyForMove[]
 }) => {
   const parentStorey = destinationStoreys.find(
-    (storey) => storey.id === storeyId,
+    (storey) => storey.id === eStoreyId,
   )
   const otherStoreys = destinationStoreys.filter(
-    (storey) => storey.id !== storeyId,
+    (storey) => storey.id !== eStoreyId,
   )
 
   return (
@@ -36,12 +42,15 @@ const MoveFromSpaceToStorey = ({
         <div className="mb-2">
           <div className="mb-2 leading-3">Move to parent Storey</div>
           <MoveFromSpaceToStoreyChild
-            suiteId={suiteId}
-            storeyId={storeyId}
-            spaceId={spaceId}
-            modelType={modelType}
-            modelItemId={modelItemId}
-            historyItemId={historyItemId}
+            interactive={interactive}
+            submitting={submitting}
+            setSubmitting={setSubmitting}
+            eSuiteId={eSuiteId}
+            eStoreyId={eStoreyId}
+            eSpaceId={eSpaceId}
+            eModelType={eModelType}
+            eModelId={eModelId}
+            eHistoryId={eHistoryId}
             destinationStorey={parentStorey}
           />
         </div>
@@ -53,12 +62,15 @@ const MoveFromSpaceToStorey = ({
           {otherStoreys.map((otherStorey) => (
             <div key={otherStorey.id}>
               <MoveFromSpaceToStoreyChild
-                suiteId={suiteId}
-                storeyId={storeyId}
-                spaceId={spaceId}
-                modelType={modelType}
-                modelItemId={modelItemId}
-                historyItemId={historyItemId}
+                interactive={interactive}
+                submitting={submitting}
+                setSubmitting={setSubmitting}
+                eSuiteId={eSuiteId}
+                eStoreyId={eStoreyId}
+                eSpaceId={eSpaceId}
+                eModelType={eModelType}
+                eModelId={eModelId}
+                eHistoryId={eHistoryId}
                 destinationStorey={otherStorey}
               />
             </div>
