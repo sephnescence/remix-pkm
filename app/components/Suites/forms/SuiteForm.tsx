@@ -2,6 +2,7 @@ import { Form, Link, useNavigation } from '@remix-run/react'
 import { useEffect, useState } from 'react'
 import SuiteTile from './SuiteTile'
 import { SuiteUpdateConfigActionResponse } from '~/controllers/SuiteController'
+import ItemContentCodeMirror from '~/components/pkm/forms/ItemContentCodeMirror'
 
 type SuiteFormProps = {
   pageTitle: string
@@ -109,17 +110,7 @@ const SuiteForm = ({
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 md:gap-2">
           <div className="mb-4">
-            <label>
-              <div className="mb-4">Content</div>
-              <textarea
-                className="min-w-full min-h-48 bg-slate-700 p-4"
-                name="content"
-                value={content}
-                disabled={!interactive || submitting}
-                onChange={(e) => setContent(e.target.value)}
-              />
-            </label>
-            {/* <ItemContentCodeMirror content={content} setContent={setContent} /> */}
+            <ItemContentCodeMirror content={content} setContent={setContent} />
             <br />
             {actionData?.errors.fieldErrors.content && (
               <div className="text-red-500">
