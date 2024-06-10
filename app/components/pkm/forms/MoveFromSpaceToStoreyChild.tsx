@@ -41,7 +41,7 @@ const MoveFromSpaceToStoreyChild = ({
               title={`Move to ${destinationStorey.name}`}
               onClick={() => {
                 handleMoveToSubmit({
-                  formId: `move-to-space-${destinationStorey.id}`,
+                  formId: `move-to-storey-${destinationStorey.id}`,
                   eHistoryId,
                   eModelType,
                   eModelId,
