@@ -50,8 +50,6 @@ const StoreyMoveTo = ({
     setInteractive(true)
   }, [interactive])
 
-  console.log(spacesForMove)
-
   return (
     <div>
       <StoreyBreadcrumbs

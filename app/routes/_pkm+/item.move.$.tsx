@@ -22,13 +22,13 @@ export default function MoveItemRoute() {
     <>
       {args.itemLocationName === 'Suite' && history.historyItem!.suite && (
         <SuiteMoveTo
-          suiteId={args.conformedArgs.eSuiteId ?? 'SUITE ID UNKNOWN'}
+          eSuiteId={args.conformedArgs.eSuiteId ?? 'SUITE ID UNKNOWN'}
           suite={{
             name: history.historyItem?.suite.name ?? 'SUITE NAME UNKNOWN',
           }}
-          modelId={args.conformedArgs.eModelId}
-          modelType={args.conformedArgs.eModelType}
-          historyId={args.conformedArgs.eHistoryId}
+          eModelId={args.conformedArgs.eModelId}
+          eModelType={args.conformedArgs.eModelType}
+          eHistoryId={args.conformedArgs.eHistoryId}
           spacesForMove={spacesForMove}
           storeysForMove={storeysForMove}
           suitesForMove={suitesForMove}

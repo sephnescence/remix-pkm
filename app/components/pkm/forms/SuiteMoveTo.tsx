@@ -6,63 +6,81 @@ import MoveFromSuiteToStorey from './MoveFromSuiteToStorey'
 import { SpaceForMove } from '~/repositories/PkmSpaceRepository'
 import { StoreyForMove } from '~/repositories/PkmStoreyRepository'
 import { SuiteForMove } from '~/repositories/PkmSuiteRepository'
+import { useEffect, useState } from 'react'
 
 const SuiteMoveTo = ({
-  suiteId,
+  eSuiteId,
   suite: { name: suiteName },
-  modelId,
-  modelType,
-  historyId,
+  eModelId,
+  eModelType,
+  eHistoryId,
   suitesForMove,
   storeysForMove,
 }: {
-  suiteId: string
+  eSuiteId: string
   suite: {
     name: string
   }
-  modelId: string
-  modelType:
+  eModelId: string
+  eModelType:
     | 'inbox'
     | 'epiphany'
     | 'passing-thought'
     | 'todo'
     | 'trash'
     | 'void'
-  historyId: string
+  eHistoryId: string
   spacesForMove: SpaceForMove[] | null
   storeysForMove: StoreyForMove[] | null
   suitesForMove: SuiteForMove[] | null
 }) => {
+  const [interactive, setInteractive] = useState(() => false)
+  const [submitting, setSubmitting] = useState(() => false)
+
+  // Prevent form interaction while submitting and while the page is rendering
+  useEffect(() => {
+    setInteractive(true)
+  }, [interactive])
+
   return (
     <div>
-      <SuiteBreadcrumbs suiteId={suiteId} suiteName={suiteName} />
+      <SuiteBreadcrumbs suiteId={eSuiteId} suiteName={suiteName} />
       <div className="text-4xl mb-2">
-        Move Suite {feModelTypeMap[modelType]} Item
+        Move Suite {feModelTypeMap[eModelType]} Item
       </div>
       <MoveTo
-        modelItemId={modelId}
-        modelType={modelType}
-        historyItemId={historyId}
-        suiteId={suiteId}
-        storeyId={null}
-        spaceId={null}
+        interactive={interactive}
+        submitting={submitting}
+        setSubmitting={setSubmitting}
+        eModelId={eModelId}
+        eModelType={eModelType}
+        eHistoryId={eHistoryId}
+        eSuiteId={eSuiteId}
+        eStoreyId={null}
+        eSpaceId={null}
         moveToText={'Move within the Suite'}
       />
-      {suitesForMove && (
+      {suitesForMove && suitesForMove.length > 0 && (
         <MoveFromSuiteToAnotherSuite
-          suiteId={suiteId}
-          modelType={modelType}
-          modelItemId={modelId}
-          historyItemId={historyId}
+          interactive={interactive}
+          submitting={submitting}
+          setSubmitting={setSubmitting}
+          eSuiteId={eSuiteId}
+          eModelType={eModelType}
+          eModelId={eModelId}
+          eHistoryId={eHistoryId}
           destinationSuites={suitesForMove}
         />
       )}
-      {storeysForMove && (
+      {storeysForMove && storeysForMove.length > 0 && (
         <MoveFromSuiteToStorey
-          suiteId={suiteId}
-          modelType={modelType}
-          modelItemId={modelId}
-          historyItemId={historyId}
+          interactive={interactive}
+          submitting={submitting}
+          setSubmitting={setSubmitting}
+          eSuiteId={eSuiteId}
+          eModelType={eModelType}
+          eModelId={eModelId}
+          eHistoryId={eHistoryId}
           destinationStoreys={storeysForMove}
         />
       )}
