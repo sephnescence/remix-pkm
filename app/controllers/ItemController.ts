@@ -20,7 +20,10 @@ import {
 } from '@remix-run/node'
 import { randomUUID } from 'crypto'
 import { getCurrentHistoryItemForUser } from '~/repositories/PkmHistoryRepository'
-import { getImagesForItem } from '~/repositories/PkmImageRepository'
+import {
+  cloneModelImages,
+  getImagesForItem,
+} from '~/repositories/PkmImageRepository'
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import {
   SpaceForMove,
@@ -1203,4 +1206,231 @@ export const itemMoveAction = async (
       redirect: null,
     }
   }
+}
+
+export const itemDuplicateAction = async (
+  actionArgs: ActionFunctionArgs,
+): Promise<ItemUpdateConfigActionResponse | TypedResponse<never>> => {
+  const user = await getUserAuth(actionArgs)
+  if (!user) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'User not found. Please log in again [1]',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const { request } = actionArgs
+
+  const formData = await request.formData()
+  if (!formData) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'System Error. Please file a bug report [2]',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const apiEndpoint = formData.get('apiEndpoint')?.toString().substring(28)
+
+  if (!apiEndpoint || apiEndpoint === '') {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'System Error. Please file a bug report [3]',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const args = (await conformArrayArgsToObject(
+    apiEndpoint.split('/'),
+  )) as ConformArrayArgsToObjectResponse
+
+  if (!args) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'System Error. Please file a bug report [4]',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  if (args.exception) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: args.exception,
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  if (
+    !args.apiDuplicateUrl ||
+    !args.apiEditUrl ||
+    !args.conformedArgs ||
+    !args.feAlwaysLatestUrl ||
+    !args.feEditUrl ||
+    !args.feMoveUrl ||
+    !args.feParentUrl ||
+    !args.fePermalinkUrl ||
+    !args.feViewUrl ||
+    !args.itemLocation ||
+    !args.itemLocationName
+  ) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'System Error. Please file a bug report [5]',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const { suiteId, storeyId, spaceId } = args.itemLocation
+
+  const history = await getCurrentHistoryItemForUser({
+    suiteId: suiteId,
+    storeyId: storeyId,
+    spaceId: spaceId,
+    modelId: args.conformedArgs.eModelId,
+    historyId: args.conformedArgs.eHistoryId,
+    userId: user.id,
+  })
+
+  if (
+    !history ||
+    !history.historyItem ||
+    !history.historyItem.history_id ||
+    history.historyItem.model_type !==
+      'Pkm' + modelTypeMap[args.conformedArgs.eModelType]
+  ) {
+    return {
+      errors: {
+        fieldErrors: {
+          general:
+            'Item not found. You might be trying to update an older version of the Item',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const item =
+    history.historyItem.epiphany_item ??
+    history.historyItem.inbox_item ??
+    history.historyItem.passing_thought_item ??
+    history.historyItem.todo_item ??
+    history.historyItem.trash_item ??
+    history.historyItem.void_item
+
+  if (!item) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'System Error. Please file a bug report [6]',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const newModelId = randomUUID().toString()
+  const newHistoryId = randomUUID().toString()
+
+  const itemArgs: {
+    content: string
+    name: string
+    summary: string
+    model_id: string
+    user_id: string
+    void_at?: Date
+  } = {
+    content: item.content,
+    name: item.name,
+    summary: item.summary,
+    model_id: newModelId,
+    user_id: user.id,
+  }
+
+  if (args.conformedArgs.nModelType === 'passing-thought') {
+    itemArgs.void_at = new Date('9000-01-01 00:00:00')
+  }
+
+  const results = await db.pkmHistory.create({
+    data: {
+      history_id: newHistoryId,
+      model_id: newModelId,
+      model_type: history.historyItem.model_type,
+      is_current: true,
+      user_id: user.id,
+      suite_id: args.conformedArgs.nSuiteId ?? null,
+      storey_id: args.conformedArgs.nStoreyId ?? null,
+      space_id: args.conformedArgs.nSpaceId ?? null,
+      [`${modelTypeToHistoryModelNameMap[args.conformedArgs.eModelType]}_item`]:
+        {
+          create: itemArgs,
+        },
+    },
+  })
+
+  if (!results) {
+    return {
+      errors: {
+        fieldErrors: {
+          general:
+            'System Error. Please file a bug report. Duplicate - Item was not created',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  await cloneModelImages({
+    modelId: newModelId,
+    newModelId: newModelId,
+    userId: user.id,
+  })
+
+  let redirectUrlPart = '/item/view/'
+  if (args.conformedArgs.eSuiteId) {
+    redirectUrlPart += `eSuiteId/${args.conformedArgs.eSuiteId}/`
+  } else {
+    if (history.historyItem.suite?.id) {
+      redirectUrlPart += `eSuiteId/${history.historyItem.suite?.id}/`
+    } else if (history.historyItem.storey?.suite?.id) {
+      redirectUrlPart += `eSuiteId/${history.historyItem.storey?.suite?.id}/`
+    }
+  }
+
+  if (args.conformedArgs.eStoreyId) {
+    redirectUrlPart += `eStoreyId/${args.conformedArgs.eStoreyId}/`
+  }
+  if (args.conformedArgs.eSpaceId) {
+    redirectUrlPart += `eSpaceId/${args.conformedArgs.eSpaceId}/`
+  }
+  redirectUrlPart += `eModelType/${modelTypeToHistoryModelNameMap[args.conformedArgs.eModelType]}/eModelId/${newModelId}/eHistoryId/${newHistoryId}`
+
+  return redirect(redirectUrlPart)
 }

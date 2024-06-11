@@ -118,10 +118,10 @@ export const conformArrayArgsToObject = async (
   return {
     apiDuplicateUrl:
       searchStoreyId === null
-        ? `/api/history/duplicate/eSuiteId/${conformedArgs.eSuiteId}/eModelType/${conformedArgs.eModelType}/eModelId/${conformedArgs.eModelId}/eHistoryId/${conformedArgs.eHistoryId}`
+        ? `/api/history/item/duplicate/eSuiteId/${conformedArgs.eSuiteId}/eModelType/${conformedArgs.eModelType}/eModelId/${conformedArgs.eModelId}/eHistoryId/${conformedArgs.eHistoryId}/nSuiteId/${conformedArgs.eSuiteId}`
         : searchSpaceId === null
-          ? `/api/history/duplicate/eSuiteId/${conformedArgs.eSuiteId}/eStoreyId/${conformedArgs.eStoreyId}/eModelType/${conformedArgs.eModelType}/eModelId/${conformedArgs.eModelId}/eHistoryId/${conformedArgs.eHistoryId}`
-          : `/api/history/duplicate/eSuiteId/${conformedArgs.eSuiteId}/eStoreyId/${conformedArgs.eStoreyId}/eSpaceId/${conformedArgs.eSpaceId}/eModelType/${conformedArgs.eModelType}/eModelId/${conformedArgs.eModelId}/eHistoryId/${conformedArgs.eHistoryId}`,
+          ? `/api/history/item/duplicate/eSuiteId/${conformedArgs.eSuiteId}/eStoreyId/${conformedArgs.eStoreyId}/eModelType/${conformedArgs.eModelType}/eModelId/${conformedArgs.eModelId}/eHistoryId/${conformedArgs.eHistoryId}/nSuiteId/${conformedArgs.eSuiteId}/nStoreyId/${conformedArgs.eStoreyId}`
+          : `/api/history/item/duplicate/eSuiteId/${conformedArgs.eSuiteId}/eStoreyId/${conformedArgs.eStoreyId}/eSpaceId/${conformedArgs.eSpaceId}/eModelType/${conformedArgs.eModelType}/eModelId/${conformedArgs.eModelId}/eHistoryId/${conformedArgs.eHistoryId}/nStoreyId/${conformedArgs.eStoreyId}/nSpaceId/${conformedArgs.eSpaceId}`,
     apiEditUrl:
       searchStoreyId === null
         ? `/api/history/item/edit/eSuiteId/${conformedArgs.eSuiteId}/eModelType/${conformedArgs.eModelType}/eModelId/${conformedArgs.eModelId}/eHistoryId/${conformedArgs.eHistoryId}`
