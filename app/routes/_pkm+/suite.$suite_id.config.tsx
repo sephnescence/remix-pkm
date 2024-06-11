@@ -37,15 +37,12 @@ export default function SuiteConfigRoute() {
             </label>
           </div>
           <div className="mb-4">
-            <label>
-              <div className="mb-4">Content</div>
-              <div>BTTODO</div>
-              {/* <div
+            <div className="mb-4">Content</div>
+            <div
               dangerouslySetInnerHTML={{
-                __html: await displayContent(suite.content, user),
+                __html: suite.resolvedContent,
               }}
-            /> */}
-            </label>
+            />
           </div>
           <div className="flex gap-2">
             <Link to={`/suite/${suite.id}/config/edit`} prefetch="intent">

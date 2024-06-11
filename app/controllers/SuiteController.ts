@@ -1,4 +1,5 @@
 import { getUserAuth } from '@/utils/auth'
+import { displayContent } from '@/utils/content'
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -128,6 +129,7 @@ export const suiteConfigLoader = async (args: LoaderFunctionArgs) => {
   return {
     id: suite.id,
     content: suite.content,
+    resolvedContent: displayContent(suite.content, user),
     description: suite.description,
     name: suite.name,
   }

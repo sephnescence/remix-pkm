@@ -1,5 +1,5 @@
 import { Prisma, User } from '@prisma/client'
-import { prisma } from '../../db'
+import { db } from '../../db'
 
 const expandSuiteStoreyKanbans = async (
   returnContent: string,
@@ -72,7 +72,7 @@ const expandSuiteStoreyKanbans = async (
         model_id: string
         name: string
         summary: string
-      }[] = await prisma.$queryRaw(query)
+      }[] = await db.$queryRaw(query)
 
       if (results.length === 0) {
         continue

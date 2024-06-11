@@ -1,4 +1,4 @@
-import { prisma } from '@/utils/db'
+import { db } from '@/utils/db'
 import { Prisma, User } from '@prisma/client'
 
 type Space = {
@@ -91,7 +91,7 @@ const expandSpaceKanbans = async (
       model_id: string
       name: string
       summary: string
-    }[] = await prisma.$queryRaw(query)
+    }[] = await db.$queryRaw(query)
 
     if (results.length === 0) {
       continue

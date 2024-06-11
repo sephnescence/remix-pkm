@@ -1,4 +1,5 @@
 import { getUserAuth } from '@/utils/auth'
+import { displayContent } from '@/utils/content'
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -142,6 +143,7 @@ export const spaceConfigLoader = async (args: LoaderFunctionArgs) => {
   return {
     id: space.id,
     content: space.content,
+    resolvedContent: await displayContent(space.content, user),
     description: space.description,
     name: space.name,
     suiteId: space.storey.suite.id,
