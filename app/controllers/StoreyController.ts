@@ -1,5 +1,5 @@
 import { getUserAuth } from '@/utils/auth'
-import { displayContent } from '@/utils/content'
+import { displayContent, displayStoreyContent } from '@/utils/content'
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -177,7 +177,28 @@ export const storeyDashboardLoader = async (args: LoaderFunctionArgs) => {
   const url = new URL(args.request.url)
   const tab = url.searchParams.get('tab')
 
+  const resolvedContent = await displayStoreyContent(
+    {
+      id: storeyDashboard.id,
+      name: storeyDashboard.name,
+      description: storeyDashboard.description,
+      content: storeyDashboard.content,
+      suite_id: storeyDashboard.suite_id,
+      spaces: storeyDashboard.spaces.map((space) => {
+        return {
+          id: space.id,
+          name: space.name,
+          description: space.description,
+          content: space.content,
+          storey_id: storeyDashboard.id,
+        }
+      }),
+    },
+    user,
+  )
+
   return {
+    resolvedContent,
     storeyDashboard,
     storeyItemCounts,
     tab: tab ?? 'content',

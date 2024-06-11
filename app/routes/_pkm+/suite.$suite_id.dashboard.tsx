@@ -22,7 +22,7 @@ import { suiteDashboardLoader } from '~/controllers/SuiteController'
 export const loader = suiteDashboardLoader
 
 export default function SuiteIndexRoute() {
-  const { suiteDashboard, suiteItemCounts, tab } =
+  const { suiteDashboard, resolvedContent, suiteItemCounts, tab } =
     useLoaderData<typeof loader>()
 
   const suiteInformationPacketTabGroupProps = {
@@ -33,38 +33,11 @@ export default function SuiteIndexRoute() {
         tabName: 'content',
         tabHeader: <ListBulletIcon />,
         tabContent: (
-          <div>BTTODO</div>
-          // <div
-          //   dangerouslySetInnerHTML={{
-          //     __html: await displaySuiteContent(
-          //       {
-          //         id: suite.id,
-          //         name: suite.name,
-          //         description: suite.description,
-          //         content: suite.content,
-          //         storeys: suite.storeys.map((storey) => {
-          //           return {
-          //             id: storey.id,
-          //             name: storey.name,
-          //             description: storey.description,
-          //             content: storey.content,
-          //             suite_id: suite.id,
-          //             spaces: storey.spaces.map((space) => {
-          //               return {
-          //                 id: space.id,
-          //                 name: space.name,
-          //                 description: space.description,
-          //                 content: space.content,
-          //                 storey_id: storey.id,
-          //               }
-          //             }),
-          //           }
-          //         }),
-          //       },
-          //       user,
-          //     ),
-          //   }}
-          // ></div>
+          <div
+            dangerouslySetInnerHTML={{
+              __html: resolvedContent,
+            }}
+          ></div>
         ),
         tabContentClassName:
           'group-has-[.innsight-tab-group#suite--tab--content:checked]:block',

@@ -1,5 +1,5 @@
 import { getUserAuth } from '@/utils/auth'
-import { displayContent } from '@/utils/content'
+import { displayContent, displaySpaceContent } from '@/utils/content'
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -187,7 +187,28 @@ export const spaceDashboardLoader = async (args: LoaderFunctionArgs) => {
   const url = new URL(args.request.url)
   const tab = url.searchParams.get('tab')
 
+  const resolvedContent = await displaySpaceContent(
+    {
+      id: spaceDashboard.id,
+      name: spaceDashboard.name,
+      description: spaceDashboard.description,
+      content: spaceDashboard.content,
+      storey: {
+        id: spaceDashboard.storey_id,
+        name: spaceDashboard.storey.name,
+        description: spaceDashboard.storey.description,
+        suite: {
+          id: spaceDashboard.storey.suite.id,
+          name: spaceDashboard.storey.suite.id,
+          description: spaceDashboard.storey.suite.description,
+        },
+      },
+    },
+    user,
+  )
+
   return {
+    resolvedContent,
     spaceDashboard,
     spaceItemCounts,
     tab: tab ?? 'content',

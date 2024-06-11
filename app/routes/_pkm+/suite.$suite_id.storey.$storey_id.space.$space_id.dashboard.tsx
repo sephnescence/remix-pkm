@@ -20,7 +20,8 @@ import { spaceDashboardLoader } from '~/controllers/SpaceController'
 export const loader = spaceDashboardLoader
 
 export default function StoreyIndexRoute() {
-  const { spaceDashboard, tab } = useLoaderData<typeof loader>()
+  const { resolvedContent, spaceDashboard, tab } =
+    useLoaderData<typeof loader>()
 
   const spaceInformationPacketTabGroupProps = {
     tabGroupInputName: 'space',
@@ -30,38 +31,11 @@ export default function StoreyIndexRoute() {
         tabName: 'content',
         tabHeader: <ListBulletIcon />,
         tabContent: (
-          <div>BTTODO</div>
-          // <div
-          //   dangerouslySetInnerHTML={{
-          //     __html: await displayStoreyContent(
-          //       {
-          //         id: storey.id,
-          //         name: storey.name,
-          //         description: storey.description,
-          //         content: storey.content,
-          //         storeys: storey.storeys.map((storey) => {
-          //           return {
-          //             id: storey.id,
-          //             name: storey.name,
-          //             description: storey.description,
-          //             content: storey.content,
-          //             storey_id: storey.id,
-          //             spaces: storey.spaces.map((space) => {
-          //               return {
-          //                 id: space.id,
-          //                 name: space.name,
-          //                 description: space.description,
-          //                 content: space.content,
-          //                 storey_id: storey.id,
-          //               }
-          //             }),
-          //           }
-          //         }),
-          //       },
-          //       user,
-          //     ),
-          //   }}
-          // ></div>
+          <div
+            dangerouslySetInnerHTML={{
+              __html: resolvedContent,
+            }}
+          ></div>
         ),
         tabContentClassName:
           'group-has-[.innsight-tab-group#space--tab--content:checked]:block',
