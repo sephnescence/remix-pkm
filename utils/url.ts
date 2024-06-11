@@ -150,7 +150,7 @@ export const conformArrayArgsToObject = async (
           : `/item/move/eSuiteId/${conformedArgs.eSuiteId}/eStoreyId/${conformedArgs.eStoreyId}/eSpaceId/${conformedArgs.eSpaceId}/eModelType/${conformedArgs.eModelType}/eModelId/${conformedArgs.eModelId}/eHistoryId/${conformedArgs.eHistoryId}`,
     feParentUrl:
       searchStoreyId === null
-        ? `/suite/${conformedArgs.nSuiteId}/dashboard?tab=${conformedArgs.nModelType}`
+        ? `/suite/${conformedArgs.eSuiteId}/dashboard?tab=${conformedArgs.eModelType}`
         : searchSpaceId === null
           ? `/suite/${conformedArgs.eSuiteId}/storey/${conformedArgs.eStoreyId}/dashboard?tab=${conformedArgs.eModelType}`
           : `/suite/${conformedArgs.eSuiteId}/storey/${conformedArgs.eStoreyId}/space/${conformedArgs.eSpaceId}/dashboard?tab=${conformedArgs.eModelType}`,
