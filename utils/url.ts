@@ -156,10 +156,10 @@ export const conformArrayArgsToObject = async (
           : `/suite/${conformedArgs.eSuiteId}/storey/${conformedArgs.eStoreyId}/space/${conformedArgs.eSpaceId}/dashboard?tab=${conformedArgs.eModelType}`,
     fePermalinkUrl:
       searchStoreyId === null
-        ? `/content/suite/${conformedArgs.eSuiteId}/modelId/${conformedArgs.eModelId}/historyId/${conformedArgs.eHistoryId}`
+        ? `/content/view/suiteId/${conformedArgs.eSuiteId}/modelId/${conformedArgs.eModelId}/historyId/${conformedArgs.eHistoryId}`
         : searchSpaceId === null
-          ? `/content/suite/${conformedArgs.eSuiteId}/storey/${conformedArgs.eStoreyId}/modelId/${conformedArgs.eModelId}/historyId/${conformedArgs.eHistoryId}`
-          : `/content/suite/${conformedArgs.eSuiteId}/storey/${conformedArgs.eStoreyId}/space/${conformedArgs.eSpaceId}/modelId/${conformedArgs.eModelId}/historyId/${conformedArgs.eHistoryId}`,
+          ? `/content/view/suiteId/${conformedArgs.eSuiteId}/storeyId/${conformedArgs.eStoreyId}/modelId/${conformedArgs.eModelId}/historyId/${conformedArgs.eHistoryId}`
+          : `/content/view/storeyId/${conformedArgs.eStoreyId}/spaceId/${conformedArgs.eSpaceId}/modelId/${conformedArgs.eModelId}/historyId/${conformedArgs.eHistoryId}`,
     feViewUrl:
       searchStoreyId === null
         ? `/item/view/eSuiteId/${conformedArgs.eSuiteId}/eModelType/${conformedArgs.eModelType}/eModelId/${conformedArgs.eModelId}/eHistoryId/${conformedArgs.eHistoryId}`
