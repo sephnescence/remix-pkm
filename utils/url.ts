@@ -132,10 +132,10 @@ export const conformArrayArgsToObject = async (
     exception: null,
     feAlwaysLatestUrl:
       searchStoreyId === null
-        ? `/content/suite/${conformedArgs.eSuiteId}/modelId/${conformedArgs.eModelId}`
+        ? `/content/view/suiteId/${conformedArgs.eSuiteId}/modelId/${conformedArgs.eModelId}`
         : searchSpaceId === null
-          ? `/content/suite/${conformedArgs.eSuiteId}/storey/${conformedArgs.eStoreyId}/modelId/${conformedArgs.eModelId}`
-          : `/content/suite/${conformedArgs.eSuiteId}/storey/${conformedArgs.eStoreyId}/space/${conformedArgs.eSpaceId}/modelId/${conformedArgs.eModelId}`,
+          ? `/content/view/suiteId/${conformedArgs.eSuiteId}/storeyId/${conformedArgs.eStoreyId}/modelId/${conformedArgs.eModelId}`
+          : `/content/view/storeyId/${conformedArgs.eStoreyId}/spaceId/${conformedArgs.eSpaceId}/modelId/${conformedArgs.eModelId}`,
     feEditUrl:
       searchStoreyId === null
         ? `/item/edit/eSuiteId/${conformedArgs.eSuiteId}/eModelType/${conformedArgs.eModelType}/eModelId/${conformedArgs.eModelId}/eHistoryId/${conformedArgs.eHistoryId}`

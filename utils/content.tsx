@@ -183,7 +183,7 @@ export const viewSpaceContent = async (
     }
 
     return await displaySpaceContent(space, user)
-  } catch {
+  } catch (e) {
     return null
   }
 }
@@ -512,7 +512,7 @@ const parseParams = (params: string[] | string) => {
   return parsedParams
 }
 
-const looselyCheckArrayParamsAreValid = (params: string[]) => {
+export const looselyCheckArrayParamsAreValid = (params: string[]) => {
   try {
     const parsedParams = parseParams(params)
 
