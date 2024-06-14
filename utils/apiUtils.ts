@@ -1,5 +1,3 @@
-// import { NextResponse } from 'next/server'
-
 export const feModelTypeMap = {
   epiphany: 'Epiphany',
   inbox: 'Inbox',
@@ -56,11 +54,3 @@ export const parseParams = (params: string[]) => {
 
   return tempArgs
 }
-
-// BTTODO - Not how to sure port this part. Hopefully I don't need to
-// export const invalidOperationResponse = (message: string) => {
-//   return NextResponse.json({
-//     success: false,
-//     message: `Invalid operation: ${message}`,
-//   })
-// }

@@ -40,6 +40,7 @@ import {
   getSuitesForMove,
 } from '~/repositories/PkmSuiteRepository'
 import { getNewSuiteStoreyAndSpaceIds } from '@/utils/move'
+import { getDetailsForBreadcrumbs } from '@/utils/content/suiteStoreySpace'
 
 export type ItemUpdateConfigActionResponse = {
   errors: {
@@ -87,6 +88,19 @@ export type CreateItemLoaderResponse = {
   pageTitle: string
   cancelUrl: string
   apiEndpoint: string
+  locationName: string
+  suite: {
+    id: string
+    name: string
+  }
+  storey: {
+    id: string
+    name: string
+  }
+  space: {
+    id: string
+    name: string
+  }
 }
 
 export type ItemCreateConfigActionResponse = {
@@ -709,12 +723,36 @@ export const createItemLoader = async (
     params.split('/'),
   )) as ConformArrayArgsToObjectForItemCreateResponse
 
-  if (!args) return redirect('/')
+  if (!args || args.exception) return redirect('/')
+
+  const detailsForBreadcrumbs = await getDetailsForBreadcrumbs({
+    userId: user.id,
+    suiteId: args.conformedArgs.eSuiteId ?? null,
+    storeyId: args.conformedArgs.eStoreyId ?? null,
+    spaceId: args.conformedArgs.eSpaceId ?? null,
+  })
+
+  if (!detailsForBreadcrumbs) {
+    return redirect('/')
+  }
 
   return {
     pageTitle: args.pageTitle,
     cancelUrl: args.feParentUrl,
     apiEndpoint: args.apiCreateUrl,
+    locationName: args.itemLocationName,
+    suite: {
+      id: detailsForBreadcrumbs.suiteId,
+      name: detailsForBreadcrumbs.suiteName,
+    },
+    storey: {
+      id: detailsForBreadcrumbs.storeyId,
+      name: detailsForBreadcrumbs.storeyName,
+    },
+    space: {
+      id: detailsForBreadcrumbs.spaceId,
+      name: detailsForBreadcrumbs.spaceName,
+    },
   }
 }
 

@@ -222,9 +222,9 @@ const conformItemArgsForItemCreate = ({
 }) => {
   return z
     .object({
-      eSuiteId: z.string().optional(),
-      eStoreyId: z.string().optional(),
-      eSpaceId: z.string().optional(),
+      eSuiteId: z.string().uuid().optional(),
+      eStoreyId: z.string().uuid().optional(),
+      eSpaceId: z.string().uuid().optional(),
       nModelType: z.enum([
         'epiphany',
         'inbox',

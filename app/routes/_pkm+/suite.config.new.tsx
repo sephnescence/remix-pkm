@@ -1,5 +1,6 @@
 import { useActionData } from '@remix-run/react'
 import SuiteForm from '~/components/Suites/forms/SuiteForm'
+import SuiteTopLevelBreadcrumbs from '~/components/nav/SuiteTopLevelBreadcrumbs'
 import {
   SuiteUpdateConfigActionResponse,
   suiteConfigNewAction,
@@ -11,10 +12,13 @@ export default function SuiteConfigNewRoute() {
   const actionData = useActionData<typeof action>()
 
   return (
-    <SuiteForm
-      actionData={actionData as SuiteUpdateConfigActionResponse}
-      pageTitle="Configure New Suite"
-      cancelUrl="/suites"
-    />
+    <>
+      <SuiteTopLevelBreadcrumbs />
+      <SuiteForm
+        actionData={actionData as SuiteUpdateConfigActionResponse}
+        pageTitle="Configure New Suite"
+        cancelUrl="/suites"
+      />
+    </>
   )
 }

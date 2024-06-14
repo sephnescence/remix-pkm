@@ -12,6 +12,7 @@
         "Permalinked",
         "Pipeable",
         "Quickstart",
+        "spaceid",
         "tailwindcss",
         "typecheck",
         "upsert",
