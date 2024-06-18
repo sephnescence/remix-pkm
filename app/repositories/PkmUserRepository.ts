@@ -47,6 +47,7 @@ export const getUserDashboardByClerkId = async (clerkId: string) => {
       clerkId,
     },
     select: {
+      id: true,
       pkm_history: {
         where: {
           is_current: true,

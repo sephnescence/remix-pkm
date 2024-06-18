@@ -1,6 +1,7 @@
 import { db } from '@/utils/db'
 import { getAuth } from '@clerk/remix/ssr.server'
 import { LoaderFunction, redirect } from '@remix-run/node'
+import { randomUUID } from 'node:crypto'
 import { sessionStorage } from '~/session/session.server'
 
 export const loader: LoaderFunction = async (args) => {
@@ -18,43 +19,91 @@ export const loader: LoaderFunction = async (args) => {
     },
   })
 
-  const cookieSession = await sessionStorage.getSession(
-    args.request.headers.get('cookie'),
-  )
+  const userId = user?.id ?? randomUUID()
 
-  cookieSession.set('userId', user?.id)
-  const headers = new Headers()
-  headers.append(
-    'set-cookie',
-    await sessionStorage.commitSession(cookieSession),
-  )
+  const transactions = []
 
   if (!user) {
-    try {
-      await db.user.create({
+    transactions.push(
+      db.user.create({
         data: {
+          id: userId,
           clerkId: clerkUserId,
-          email: 'ignore@example.com',
-          username: 'ignore@example.com',
+          email: `${clerkUserId}@example.com`,
+          username: `${clerkUserId}@example.com`,
         },
-      })
-
-      return redirect('/dashboard', {
-        headers,
-      })
-    } catch {
-      // Swallow. The user has probably hit refresh or something that tried creating the same user twice
-      // Email address is also a unique constraint, but I would expect clerk to take care of that
-      return redirect('/dashboard', {
-        headers,
-      })
-    }
+      }),
+    )
   }
 
-  // User account already exists
-  return redirect('/dashboard', {
-    headers,
-  })
+  // Even if the user already exist, ensure "auto healing" by upserting the default Suite, Storey, and Space
+  transactions.push(
+    db.suite.upsert({
+      where: {
+        id: userId,
+      },
+      update: {},
+      create: {
+        id: userId,
+        user_id: userId,
+        name: 'Welcome Center',
+        description: 'Enjoy your stay at Innsight',
+      },
+    }),
+  )
+  transactions.push(
+    db.storey.upsert({
+      where: {
+        id: userId,
+      },
+      update: {},
+      create: {
+        id: userId,
+        user_id: userId,
+        suite_id: userId,
+        name: 'Foyer',
+        description: 'Please head to reception',
+      },
+    }),
+  )
+  transactions.push(
+    db.space.upsert({
+      where: {
+        id: userId,
+      },
+      update: {},
+      create: {
+        id: userId,
+        user_id: userId,
+        storey_id: userId,
+        name: 'Reception',
+        description: 'Check in',
+      },
+    }),
+  )
+
+  try {
+    await db.$transaction(transactions)
+
+    const cookieSession = await sessionStorage.getSession(
+      args.request.headers.get('cookie'),
+    )
+
+    const headers = new Headers()
+
+    cookieSession.set('userId', userId)
+
+    headers.append(
+      'set-cookie',
+      await sessionStorage.commitSession(cookieSession),
+    )
+
+    return redirect('/reception', {
+      headers,
+    })
+  } catch {
+    return redirect('/')
+  }
 }
 
 export default function NewUserRouter() {

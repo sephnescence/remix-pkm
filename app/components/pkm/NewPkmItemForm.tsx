@@ -1,5 +1,4 @@
-import { Form } from '@remix-run/react'
-import { Link } from 'react-router-dom'
+import { Form, Link } from '@remix-run/react'
 import { EpiphanyCreateResponses } from '~/routes/_dashboard+/dashboard+/epiphanies_+/create'
 
 /**

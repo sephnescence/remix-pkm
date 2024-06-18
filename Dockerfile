@@ -12,6 +12,13 @@ WORKDIR /app
 
 RUN cp -a /tmp/node_modules /app/node_modules
 
-COPY prisma/schema.prisma /app/prisma/schema.prisma
+COPY . .
+# COPY prisma/schema.prisma /app/prisma/schema.prisma
 
-RUN npx prisma generate
+RUN npx prisma generate && npm run build
+
+EXPOSE 80
+
+ENV NODE_ENV production
+
+CMD [ "npm", "start" ]
