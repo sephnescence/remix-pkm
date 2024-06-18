@@ -1,4 +1,5 @@
 import { Link, useLoaderData } from '@remix-run/react'
+import { useEffect, useState } from 'react'
 import SpaceBreadcrumbs from '~/components/nav/SpaceBreadcrumbs'
 import { spaceConfigLoader } from '~/controllers/SpaceController'
 
@@ -6,6 +7,51 @@ export const loader = spaceConfigLoader
 
 export default function StoreyConfigRoute() {
   const space = useLoaderData<typeof loader>()
+
+  const [interactive, setInteractive] = useState(() => false)
+  const [submitting, setSubmitting] = useState(() => false)
+
+  const handleDuplicate = async () => {
+    setSubmitting(true)
+
+    const thisForm = document.getElementById(
+      'duplicate-space',
+    ) as HTMLFormElement
+    if (!thisForm) {
+      return false
+    }
+
+    const formData = new FormData(thisForm)
+    formData.append('storeyId', space.storeyId)
+    formData.append('spaceId', space.id)
+
+    const res = await fetch(
+      new Request('/api/duplicate', {
+        method: 'POST',
+        body: formData,
+      }),
+    )
+
+    const resText = await res.text()
+    const resJson = await JSON.parse(resText)
+
+    if (!resJson.redirect) {
+      setSubmitting(false)
+    }
+
+    if (resJson.success === false && resJson.redirect) {
+      window.location.replace(resJson.redirect)
+    }
+
+    if (resJson.success === true && resJson.redirect) {
+      window.location.href = resJson.redirect
+    }
+  }
+
+  // Prevent form interaction while submitting and while the page is rendering
+  useEffect(() => {
+    setInteractive(true)
+  }, [interactive])
 
   return (
     <>
@@ -74,16 +120,15 @@ export default function StoreyConfigRoute() {
                 View Content
               </button>
             </Link>
-            <form
-              action={`/api/storey/${space.storeyId}/config/duplicate`}
-              method="POST"
-            >
+            <form id="duplicate-space" onSubmit={() => false}>
               <button
                 className={`bg-violet-600 hover:bg-violet-500 px-4 py-2 rounded-lg`}
-                type="submit"
+                type="button"
                 title="Duplicate"
+                onClick={() => void handleDuplicate()}
+                disabled={!interactive || submitting}
               >
-                Duplicate (BTTODO)
+                Duplicate
               </button>
             </form>
             <Link
