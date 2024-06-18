@@ -19,8 +19,8 @@ export default function SpaceConfigEditRoute() {
       <SpaceBreadcrumbs
         suiteId={space.suiteId}
         suiteName={space.suiteName}
-        storeyId={space.id}
-        storeyName={space.name}
+        storeyId={space.storeyId}
+        storeyName={space.storeyName}
         spaceId={space.id}
         spaceName={space.name}
       />

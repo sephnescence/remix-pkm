@@ -53,12 +53,12 @@ export default function SuiteConfigRoute() {
                 Edit
               </button>
             </Link>
-            <Link to={`/content/suiteId/${suite.id}`} prefetch="intent">
+            <Link to={`/content/view/suiteId/${suite.id}`} prefetch="intent">
               <button
                 className="bg-blue-600 hover:bg-blue-600 px-4 py-2 rounded-lg"
                 type="button"
               >
-                View Content (BTTODO)
+                View Content
               </button>
             </Link>
             <form

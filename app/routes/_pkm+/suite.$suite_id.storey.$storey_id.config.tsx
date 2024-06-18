@@ -61,12 +61,15 @@ export default function StoreyConfigRoute() {
                 Edit
               </button>
             </Link>
-            <Link to={`/content/storeyId/${storey.id}`} prefetch="intent">
+            <Link
+              to={`/content/view/suiteId/${storey.suiteId}/storeyId/${storey.id}`}
+              prefetch="intent"
+            >
               <button
                 className="bg-blue-600 hover:bg-blue-600 px-4 py-2 rounded-lg"
                 type="button"
               >
-                View Content (BTTODO)
+                View Content
               </button>
             </Link>
             <form

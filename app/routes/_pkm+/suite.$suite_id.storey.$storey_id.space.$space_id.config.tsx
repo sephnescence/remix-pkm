@@ -12,8 +12,8 @@ export default function StoreyConfigRoute() {
       <SpaceBreadcrumbs
         suiteId={space.suiteId}
         suiteName={space.suiteName}
-        storeyId={space.id}
-        storeyName={space.name}
+        storeyId={space.storeyId}
+        storeyName={space.storeyName}
         spaceId={space.id}
         spaceName={space.name}
       />
@@ -63,12 +63,15 @@ export default function StoreyConfigRoute() {
                 Edit
               </button>
             </Link>
-            <Link to={`/content/spaceId/${space.id}`} prefetch="intent">
+            <Link
+              to={`/content/view/storeyId/${space.storeyId}/spaceId/${space.id}`}
+              prefetch="intent"
+            >
               <button
                 className="bg-blue-600 hover:bg-blue-600 px-4 py-2 rounded-lg"
                 type="button"
               >
-                View Content (BTTODO)
+                View Content
               </button>
             </Link>
             <form

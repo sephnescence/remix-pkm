@@ -129,7 +129,7 @@ export const suiteConfigLoader = async (args: LoaderFunctionArgs) => {
   return {
     id: suite.id,
     content: suite.content,
-    resolvedContent: displayContent(suite.content, user),
+    resolvedContent: await displayContent(suite.content, user),
     description: suite.description,
     name: suite.name,
   }

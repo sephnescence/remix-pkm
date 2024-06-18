@@ -137,7 +137,7 @@ export const storeyConfigLoader = async (args: LoaderFunctionArgs) => {
     suiteId: storey.suite_id,
     suiteName: storey.suite.name,
     content: storey.content,
-    resolvedContent: displayContent(storey.content, user),
+    resolvedContent: await displayContent(storey.content, user),
     description: storey.description,
     name: storey.name,
   }
