@@ -23,7 +23,7 @@ export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: styles },
 ]
 export const meta: MetaFunction = () => [
-  { title: 'New Remix App' },
+  { title: 'Rethought' },
   { charset: 'utf-8' },
   { viewport: 'width=device-width,initial-scale=1' },
 ]
