@@ -43,6 +43,15 @@ export const modelTypeSlugToHistoryModelType = {
   void: 'PkmVoid',
 }
 
+export const historyModelTypeToModelTypeSlug = {
+  PkmEpiphany: 'epiphany',
+  PkmInbox: 'inbox',
+  PkmPassingThought: 'passing-thought',
+  PkmTodo: 'todo',
+  PkmTrash: 'trash',
+  PkmVoid: 'void',
+}
+
 export const parseParams = (params: string[]) => {
   const tempArgs: {
     [key: string]: string

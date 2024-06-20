@@ -41,6 +41,10 @@ function App() {
         {/* This is how I'm able to dynamically write content and have it render in previews.
           Tailwind optimises the css, only including classes that are used in build time */}
         <script src="https://cdn.tailwindcss.com"></script>
+        <script
+          src="https://kit.fontawesome.com/b0498c8950.js"
+          crossOrigin="anonymous"
+        ></script>
         <Meta />
         <Links />
       </head>
