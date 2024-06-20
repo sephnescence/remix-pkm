@@ -1,10 +1,17 @@
 import { getUserAuth } from '@/utils/auth'
-import { ActionFunctionArgs, redirect } from '@remix-run/node'
+import {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  redirect,
+} from '@remix-run/node'
 import {
   UpdateEpiphanyArgs,
   updateEpiphanyItem,
 } from '~/repositories/PkmEpiphanyRepository'
-import { getHistoryItem } from '~/repositories/PkmHistoryRepository'
+import {
+  getCurrentHistoryItemsForUser,
+  getHistoryItem,
+} from '~/repositories/PkmHistoryRepository'
 import {
   UpdateInboxArgs,
   updateInboxItem,
@@ -25,6 +32,19 @@ import {
   UpdateVoidArgs,
   updateVoidItem,
 } from '~/repositories/PkmVoidRepository'
+
+export const historyLoader = async (args: LoaderFunctionArgs) => {
+  const user = await getUserAuth(args)
+  if (!user) {
+    return redirect('/')
+  }
+
+  const historyItems = await getCurrentHistoryItemsForUser({
+    userId: user.id,
+  })
+
+  return { historyItems }
+}
 
 const _historyActionMove = async (
   args: ActionFunctionArgs,

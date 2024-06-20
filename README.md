@@ -1,3 +1,7 @@
+# fontawesome / webawesome
+
+This project will be using paid features from fontawesome and webawesome. You will have to configure your `.env`'s `FONTAWESOME_PACKAGE_TOKEN` value accordingly
+
 # Notes
 
 Refer to https://github.com/kiliman/remix-flat-routes?tab=readme-ov-file#conventions for how to name route files

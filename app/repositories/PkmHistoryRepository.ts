@@ -28,6 +28,124 @@ type GetHistoryItemArgs = {
   userId: string
 }
 
+export const getCurrentHistoryItemsForUser = async ({
+  userId,
+  page = 1,
+  perPage = 1000,
+}: {
+  userId: string
+  page?: number
+  perPage?: number
+}) => {
+  return await db.pkmHistory
+    .findMany({
+      take: perPage,
+      skip: (page - 1) * perPage,
+      where: {
+        user_id: userId,
+        is_current: true,
+      },
+      select: {
+        history_id: true,
+        model_id: true,
+        model_type: true,
+        suite: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
+        storey: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            suite: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        space: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            storey: {
+              select: {
+                id: true,
+                name: true,
+                suite: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        epiphany_item: {
+          select: {
+            content: true,
+            name: true,
+            summary: true,
+          },
+        },
+        inbox_item: {
+          select: {
+            content: true,
+            name: true,
+            summary: true,
+          },
+        },
+        passing_thought_item: {
+          select: {
+            content: true,
+            name: true,
+            summary: true,
+          },
+        },
+        todo_item: {
+          select: {
+            content: true,
+            name: true,
+            summary: true,
+          },
+        },
+        trash_item: {
+          select: {
+            content: true,
+            name: true,
+            summary: true,
+          },
+        },
+        void_item: {
+          select: {
+            content: true,
+            name: true,
+            summary: true,
+          },
+        },
+      },
+    })
+    .then((historyItem) => {
+      return {
+        success: true,
+        historyItem,
+      }
+    })
+    .catch(() => {
+      return {
+        success: false,
+        historyItem: null,
+      }
+    })
+}
+
 export const getCurrentHistoryItemForUser = async ({
   suiteId,
   storeyId,
