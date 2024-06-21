@@ -39,6 +39,9 @@ export const getCurrentHistoryItemsForUser = async ({
 }) => {
   return await db.pkmHistory
     .findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
       take: perPage,
       skip: (page - 1) * perPage,
       where: {
@@ -49,6 +52,7 @@ export const getCurrentHistoryItemsForUser = async ({
         history_id: true,
         model_id: true,
         model_type: true,
+        createdAt: true,
         suite: {
           select: {
             id: true,
