@@ -54,6 +54,7 @@ const HistoryItemDashboard = ({
                   <div className="line-clamp-1 overflow-x-scroll">
                     Space: {historyItem.space.name}
                   </div>
+                  <div>When: {historyItem.createdAt.toString()}</div>
                 </div>
                 <PkmItemWithLink
                   location={location}
@@ -77,6 +78,7 @@ const HistoryItemDashboard = ({
                   <div className="line-clamp-1 overflow-x-scroll">
                     Storey: {historyItem.storey.name}
                   </div>
+                  <div>When: {historyItem.createdAt.toString()}</div>
                 </div>
                 <PkmItemWithLink
                   location={location}
@@ -98,6 +100,7 @@ const HistoryItemDashboard = ({
                   <div className="line-clamp-1 overflow-x-scroll">
                     Suite: {historyItem.suite.name}
                   </div>
+                  <div>When: {historyItem.createdAt.toString()}</div>
                 </div>
                 <PkmItemWithLink
                   location={location}
