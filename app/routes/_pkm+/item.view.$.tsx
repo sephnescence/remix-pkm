@@ -62,25 +62,25 @@ export default function ViewItemRoute() {
     <>
       {args.itemLocationName === 'Suite' && history.historyItem!.suite && (
         <SuiteBreadcrumbs
-          suiteId={args.conformedArgs.eSuiteId ?? ''}
+          suiteId={history.historyItem!.suite.id}
           suiteName={history.historyItem!.suite.name}
         />
       )}
       {args.itemLocationName === 'Storey' && history.historyItem!.storey && (
         <StoreyBreadcrumbs
-          suiteId={args.conformedArgs.eSuiteId ?? ''}
+          suiteId={history.historyItem!.storey.suite.id}
           suiteName={history.historyItem!.storey.suite.name}
-          storeyId={args.conformedArgs.eStoreyId ?? ''}
+          storeyId={history.historyItem!.storey.id}
           storeyName={history.historyItem!.storey.name}
         />
       )}
       {args.itemLocationName === 'Space' && history.historyItem!.space && (
         <SpaceBreadcrumbs
-          suiteId={args.conformedArgs.eSuiteId ?? ''}
+          suiteId={`${history.historyItem!.space.storey.suite.id}`}
           suiteName={`${history.historyItem!.space.storey.suite.name}`}
-          storeyId={args.conformedArgs.eStoreyId ?? ''}
+          storeyId={history.historyItem!.space.storey.id}
           storeyName={history.historyItem!.space.storey.name}
-          spaceId={args.conformedArgs.eSpaceId ?? ''}
+          spaceId={history.historyItem!.space.id}
           spaceName={history.historyItem!.space.name}
         />
       )}
