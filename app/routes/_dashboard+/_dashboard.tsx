@@ -6,6 +6,7 @@ export default function DashboardBase() {
     <>
       <TopNav />
       <Outlet />
+      <div className="bg-blue-700"></div>
     </>
   )
 }
