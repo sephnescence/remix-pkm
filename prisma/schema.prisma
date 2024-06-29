@@ -66,6 +66,10 @@ model PkmHistory {
   // Add an index for non unique foreign keys
   @@index([user_id])
   @@index([suite_id])
+  @@index([storey_id])
+  @@index([space_id])
+  @@index([suite_id, storey_id])
+  @@index([storey_id, space_id])
 }
 
 model PkmEpiphany {
@@ -263,4 +267,27 @@ model PkmImage {
   // Add an index for non unique foreign keys
   @@index([user_id])
   @@index([model_id])
+}
+
+// Always-Latest linking requires model_id and content_id
+//  - Load by finding the PkmHistory where model_id is the parent Suite/Storey/Space/Item, and is_current is true,
+//    which gets the latest history_id, which is all three keys required
+// Permalink requires content_id, model_id, and history_id
+
+// Deleting the "parent" of the content will not cascade delete here (Though ideally it will if it was never referenced)
+//  This is so that links will still work forever, they'll just be orphaned if need be
+//  Better yet, don't allow deletion for contents that have links (Status - Referenced)
+model PkmContents {
+  content_id String @id @default(uuid()) @db.Uuid
+  model_id String @db.Uuid
+  history_id String @db.Uuid
+  createdAt DateTime @default(now())
+
+  sort_order Int
+
+  content String
+
+  // Add an index for non unique foreign keys
+  @@index([model_id])
+  @@index([model_id, history_id])
 }

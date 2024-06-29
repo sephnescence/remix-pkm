@@ -14,13 +14,6 @@ export type SuiteItemCountsResults = ItemCountRow & {
   id: string
 }
 
-type StoreSuiteArgs = {
-  userId: string
-  content: string
-  description: string
-  name: string
-}
-
 type UpdateSuiteArgs = {
   suiteId: string
   userId: string
@@ -35,35 +28,6 @@ export type SuiteForMove = {
   name: string
   counts: ItemCountRow
   storeys: number
-}
-
-export const storeSuiteConfig = async ({
-  userId,
-  content,
-  description,
-  name,
-}: StoreSuiteArgs) => {
-  return await db.suite
-    .create({
-      data: {
-        user_id: userId,
-        name,
-        description,
-        content,
-      },
-    })
-    .then((suite) => {
-      return {
-        success: true,
-        suite,
-      }
-    })
-    .catch(() => {
-      return {
-        success: false,
-        suite: null,
-      }
-    })
 }
 
 export const updateSuiteConfig = async ({

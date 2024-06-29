@@ -14,7 +14,6 @@ import {
   ScrollRestoration,
 } from '@remix-run/react'
 import faviconAssetUrl from './assets/favicon.svg'
-
 import { rootAuthLoader } from '@clerk/remix/ssr.server'
 import { ClerkApp, ClerkErrorBoundary } from '@clerk/remix'
 
@@ -38,16 +37,10 @@ function App() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {/* This is how I'm able to dynamically write content and have it render in previews.
-          Tailwind optimises the css, only including classes that are used in build time */}
-        <script
-          src="https://cdn.tailwindcss.com"
-          crossOrigin="anonymous"
-        ></script>
-        <script
+        {/* <script
           src="https://kit.fontawesome.com/b0498c8950.js"
           crossOrigin="anonymous"
-        ></script>
+        ></script> */}
         <Meta />
         <Links />
       </head>
@@ -57,6 +50,9 @@ function App() {
             <Outlet />
             <ScrollRestoration />
             <Scripts />
+            {/* This is how I'm able to dynamically write content and have it render in previews.
+              Tailwind optimises the css, only including classes that are used in build time */}
+            <script src={'/tailwind-full-3.4.4.js'}></script>
             <LiveReload />
           </div>
         </div>
