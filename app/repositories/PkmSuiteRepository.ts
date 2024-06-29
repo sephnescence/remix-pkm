@@ -80,6 +80,18 @@ export const getSuiteConfig = async ({
       description: true,
       content: true,
       id: true,
+      pkm_history: {
+        where: {
+          suite_id: suiteId,
+          storey_id: null,
+          space_id: null,
+          is_current: true,
+          model_type: 'SuiteContents',
+        },
+        select: {
+          history_id: true,
+        },
+      },
     },
   })
 

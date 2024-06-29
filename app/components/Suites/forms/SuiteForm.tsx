@@ -2,6 +2,7 @@ import { Form, Link, useNavigation } from '@remix-run/react'
 import { useEffect, useReducer, useState } from 'react'
 import { SuiteUpdateConfigActionResponse } from '~/controllers/SuiteController'
 import ItemContentCodeMirror from '~/components/pkm/forms/ItemContentCodeMirror'
+import { FIXED_NEW_MULTI_CONTENT_ID } from '~/repositories/PkmContentRepository'
 
 type SuiteFormProps = {
   pageTitle: string
@@ -10,6 +11,7 @@ type SuiteFormProps = {
   defaultDescription?: string
   defaultContent?: string
   actionData?: SuiteUpdateConfigActionResponse
+  defaultMultiContents?: MultiContentItem[]
 }
 
 type MultiContentItem = {
@@ -27,13 +29,12 @@ const SuiteForm = ({
   defaultDescription,
   defaultContent,
   actionData,
+  defaultMultiContents,
 }: SuiteFormProps) => {
   const [name, setName] = useState(() => defaultName || '')
   const [description, setDescription] = useState(() => defaultDescription || '')
   const [content, setContent] = useState(
-    () =>
-      defaultContent ||
-      '<div data-children></div>\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n',
+    () => defaultContent || '<div data-children></div>\n\n',
   )
 
   const [interactive, setInteractive] = useState(() => false)
@@ -102,7 +103,17 @@ const SuiteForm = ({
 
       return multiContents
     },
-    [], // BTTODO - Unlike images, I will need to hydrate this when loading again
+    defaultMultiContents
+      ? defaultMultiContents
+      : [
+          {
+            id: FIXED_NEW_MULTI_CONTENT_ID,
+            sortOrder: 1,
+            content: '<div data-children></div>\n\n',
+            status: 'new',
+            originalStatus: 'new',
+          },
+        ],
   )
 
   useEffect(() => {

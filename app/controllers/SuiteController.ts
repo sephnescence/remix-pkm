@@ -8,13 +8,13 @@ import {
   TypedResponse,
   redirect,
 } from '@remix-run/node'
-import { z } from 'zod'
 import { getStoreyItemCounts } from '~/repositories/PkmStoreyRepository'
 import {
   getSuiteConfig,
   getSuiteDashboard,
   updateSuiteConfig,
 } from '~/repositories/PkmSuiteRepository'
+import { determineSyncContentsTransactionsByFormData } from '~/services/PkmContentService'
 
 export type SuiteUpdateConfigActionResponse = {
   errors: {
@@ -128,10 +128,35 @@ export const suiteConfigLoader = async (args: LoaderFunctionArgs) => {
     return redirect('/')
   }
 
+  // A suite can have multiple pkm_history, but for the sake of getting its Multi Contents
+  //    we need the History Item that's current and belongs specifically to the Suite
+  const historyIdForMultiContent = suite.pkm_history[0]?.history_id ?? null
+
+  const resolvedMultiContents: string[] = []
+
+  if (historyIdForMultiContent) {
+    const multiContents = await db.pkmContents.findMany({
+      where: {
+        history_id: historyIdForMultiContent,
+        model_id: suite.id,
+      },
+    })
+
+    for (const multiContent of multiContents) {
+      resolvedMultiContents.push(
+        await displayContent(multiContent.content, user),
+      )
+    }
+  }
+
   return {
     id: suite.id,
     content: suite.content,
-    resolvedContent: await displayContent(suite.content, user),
+    // Interesting when you put it this way. It _does_ make sense to define the glue between multi contents
+    resolvedContent:
+      '<div class="*:mb-2"><div>' +
+      resolvedMultiContents.join('</div><div>') +
+      '</div></div>',
     description: suite.description,
     name: suite.name,
   }
@@ -283,69 +308,26 @@ export const suiteConfigNewAction = async (args: ActionFunctionArgs) => {
     }),
   )
 
-  const keys = [...formData.keys()]
-  let pkmContentsSortOrder = 1
-
-  const incomingContents = []
-  for (const key of keys) {
-    if (key.indexOf('multi_contents') !== 0) {
-      continue
-    }
-
-    const [id, strSortOrder, status] = key.substring(16).split('__')
-
-    try {
-      z.object({
-        id: z.string().uuid(),
-        strSortOrder: z.string(),
-        status: z.enum(['new', 'discarded', 'updated', 'existing', 'deleted']),
-      })
-        .strict()
-        .parse({ id, strSortOrder, status })
-    } catch (e) {
-      console.error(e)
-      return {
-        errors: {
-          fieldErrors: {
-            general: 'Failed to store Suite. Please try again.',
-          },
-        },
-      }
-    }
-
-    const content = formData.get(key)
-    const sortOrder = parseInt(strSortOrder)
-
-    incomingContents.push({
-      id,
-      content,
-      sortOrder,
-      status,
+  try {
+    const incomingContents = determineSyncContentsTransactionsByFormData({
+      formData,
+      modeId: newSuiteId,
+      historyId: newHistoryId,
+      modelType: 'SuiteContents',
     })
-  }
 
-  incomingContents.sort((a, b) => a.sortOrder - b.sortOrder)
-
-  incomingContents.forEach((incomingContent) => {
-    // Check status
-    if (incomingContent.status !== 'new') {
-      return
-    }
-
-    transactions.push(
-      db.pkmContents.create({
-        data: {
-          content_id: incomingContent.id,
-          model_id: newSuiteId,
-          history_id: newHistoryId,
-          sort_order: pkmContentsSortOrder++, // Ignore the sort order from the frontend. It can have gaps
-          content: incomingContent.content
-            ? incomingContent.content.toString()
-            : '',
+    incomingContents.forEach((incomingContent) => {
+      transactions.push(incomingContent)
+    })
+  } catch {
+    return {
+      errors: {
+        fieldErrors: {
+          general: `Failed to store Suite. Please try again.`,
         },
-      }),
-    )
-  })
+      },
+    }
+  }
 
   try {
     await db.$transaction(transactions)
