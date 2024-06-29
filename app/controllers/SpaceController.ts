@@ -100,18 +100,6 @@ export const spaceUpdateConfigAction = async (
     }
   }
 
-  const content: FormDataEntryValue | null = formData.get('content')
-
-  if (!content || content === '') {
-    return {
-      errors: {
-        fieldErrors: {
-          content: 'Content cannot be empty',
-        },
-      },
-    }
-  }
-
   const newHistoryId = crypto.randomUUID()
 
   const transactions: Prisma.PrismaPromise<unknown>[] = [
@@ -123,7 +111,7 @@ export const spaceUpdateConfigAction = async (
       data: {
         name: name.toString(),
         description: description.toString(),
-        content: content.toString(),
+        content: 'Now handled by Multi Contents',
       },
     }),
     db.pkmHistory.update({
@@ -422,18 +410,6 @@ export const spaceConfigNewAction = async (args: ActionFunctionArgs) => {
     }
   }
 
-  const content: FormDataEntryValue | null = formData.get('content')
-
-  if (!content || content === '') {
-    return {
-      errors: {
-        fieldErrors: {
-          content: 'Content cannot be empty',
-        },
-      },
-    }
-  }
-
   const transactions: Prisma.PrismaPromise<unknown>[] = []
 
   const newSpaceId = crypto.randomUUID()
@@ -443,7 +419,7 @@ export const spaceConfigNewAction = async (args: ActionFunctionArgs) => {
       data: {
         id: newSpaceId,
         storey_id: storeyId,
-        content: content.toString(), // Content input will be removed soon
+        content: 'Now handled by Multi Contents',
         description: description.toString(),
         name: name.toString(),
         user_id: user.id,

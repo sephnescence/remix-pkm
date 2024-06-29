@@ -190,148 +190,137 @@ const SuiteForm = ({
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 md:gap-2">
-          <div className="mb-4">
-            <ItemContentCodeMirror content={content} setContent={setContent} />
-            <br />
-            {actionData?.errors.fieldErrors.content && (
-              <div className="text-red-500">
-                {actionData.errors.fieldErrors?.content}
-              </div>
-            )}
+          <div className="md:block">
+            <div className="mb-4">Content</div>
           </div>
           <div className="hidden md:block">
             <div className="mb-4">Content Preview</div>
-            {content && (
-              <div
-                id="innsight-content-preview"
-                dangerouslySetInnerHTML={{ __html: content }}
-              ></div>
-            )}
-            {!content && (
-              <div className="bg-blue-950 p-4">Enter your content here</div>
-            )}
           </div>
         </div>
-        {multiContents &&
-          multiContents.map((multiContent: MultiContentItem) => {
-            return (
-              <div
-                key={multiContent.id}
-                className="grid grid-cols-1 md:grid-cols-2 md:gap-2"
-              >
-                <div className="">
-                  <ItemContentCodeMirror
-                    setContent={(newContent: string) => {
-                      setMultiContents({
-                        type: 'update',
-                        payload: {
-                          id: multiContent.id,
-                          sortOrder: multiContent.sortOrder,
-                          content: newContent,
-                          status: '<unused>',
-                          originalStatus: '<unused>',
-                        },
-                      })
-                    }}
-                    content={multiContent.content}
-                    parentDivId={multiContent.id}
-                    sortOrder={multiContent.sortOrder}
-                    status={multiContent.status}
-                  />
-                  <div className="flex gap-2 mb-2">
-                    {(multiContent.status === 'active' ||
-                      multiContent.status === 'new') && (
-                      <div>
-                        <button
-                          className="bg-orange-700 hover:bg-orange-600 px-1"
-                          type="button"
-                          title="Remove"
-                          onClick={() => {
-                            setMultiContents({
-                              type: 'discard',
-                              payload: {
-                                id: multiContent.id,
-                                sortOrder: multiContents.length,
-                                content: multiContent.content,
-                                status: '<unused>',
-                                originalStatus: '<unused>',
-                              },
-                            })
-                          }}
-                        >
-                          Delete after saving
-                        </button>
-                      </div>
-                    )}
-                    {multiContent.status === 'discarded' && (
-                      <div>
-                        <button
-                          className="bg-blue-600 hover:bg-blue-500 px-1"
-                          type="button"
-                          title="Restore"
-                          onClick={() => {
-                            setMultiContents({
-                              type: 'restore',
-                              payload: {
-                                id: multiContent.id,
-                                sortOrder: multiContents.length,
-                                content: multiContent.content,
-                                status: '<unused>',
-                                originalStatus: '<unused>',
-                              },
-                            })
-                          }}
-                        >
-                          Do not delete
-                        </button>
-                      </div>
-                    )}
-                    {multiContent.status === 'discarded' && (
-                      <div>
-                        <button
-                          className="bg-red-600 hover:bg-red-500 px-1"
-                          type="button"
-                          title="Restore"
-                          onClick={() => {
-                            setMultiContents({
-                              type: 'removeNow',
-                              payload: {
-                                id: multiContent.id,
-                                sortOrder: multiContents.length,
-                                content: multiContent.content,
-                                status: '<unused>',
-                                originalStatus: '<unused>',
-                              },
-                            })
-                          }}
-                        >
-                          Delete now
-                        </button>
+        <div className="grid grid-cols-1 gap-1 md:gap-2">
+          {multiContents &&
+            multiContents.map((multiContent: MultiContentItem) => {
+              return (
+                <div
+                  key={multiContent.id}
+                  className="grid grid-cols-1 gap-1 md:grid-cols-2 md:gap-2"
+                >
+                  <div className="">
+                    <ItemContentCodeMirror
+                      setContent={(newContent: string) => {
+                        setMultiContents({
+                          type: 'update',
+                          payload: {
+                            id: multiContent.id,
+                            sortOrder: multiContent.sortOrder,
+                            content: newContent,
+                            status: '<unused>',
+                            originalStatus: '<unused>',
+                          },
+                        })
+                      }}
+                      content={multiContent.content}
+                      parentDivId={multiContent.id}
+                      sortOrder={multiContent.sortOrder}
+                      status={multiContent.status}
+                    />
+                    <div className="flex gap-2 mb-2">
+                      {(multiContent.status === 'active' ||
+                        multiContent.status === 'new') && (
+                        <div>
+                          <button
+                            className="bg-orange-700 hover:bg-orange-600 px-1"
+                            type="button"
+                            title="Remove"
+                            onClick={() => {
+                              setMultiContents({
+                                type: 'discard',
+                                payload: {
+                                  id: multiContent.id,
+                                  sortOrder: multiContents.length,
+                                  content: multiContent.content,
+                                  status: '<unused>',
+                                  originalStatus: '<unused>',
+                                },
+                              })
+                            }}
+                          >
+                            Delete after saving
+                          </button>
+                        </div>
+                      )}
+                      {multiContent.status === 'discarded' && (
+                        <div>
+                          <button
+                            className="bg-blue-600 hover:bg-blue-500 px-1"
+                            type="button"
+                            title="Restore"
+                            onClick={() => {
+                              setMultiContents({
+                                type: 'restore',
+                                payload: {
+                                  id: multiContent.id,
+                                  sortOrder: multiContents.length,
+                                  content: multiContent.content,
+                                  status: '<unused>',
+                                  originalStatus: '<unused>',
+                                },
+                              })
+                            }}
+                          >
+                            Do not delete
+                          </button>
+                        </div>
+                      )}
+                      {multiContent.status === 'discarded' && (
+                        <div>
+                          <button
+                            className="bg-red-600 hover:bg-red-500 px-1"
+                            type="button"
+                            title="Restore"
+                            onClick={() => {
+                              setMultiContents({
+                                type: 'removeNow',
+                                payload: {
+                                  id: multiContent.id,
+                                  sortOrder: multiContents.length,
+                                  content: multiContent.content,
+                                  status: '<unused>',
+                                  originalStatus: '<unused>',
+                                },
+                              })
+                            }}
+                          >
+                            Delete now
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {actionData?.errors.fieldErrors.content && (
+                      <div className="text-red-500">
+                        {actionData.errors.fieldErrors?.content}
                       </div>
                     )}
                   </div>
-                  {actionData?.errors.fieldErrors.content && (
-                    <div className="text-red-500">
-                      {actionData.errors.fieldErrors?.content}
-                    </div>
-                  )}
+                  <div className="hidden md:block">
+                    {multiContent.content && (
+                      <div
+                        id="innsight-content-preview"
+                        dangerouslySetInnerHTML={{
+                          __html: multiContent.content,
+                        }}
+                      ></div>
+                    )}
+                    {!multiContent.content && (
+                      <div className="bg-blue-950 p-4">
+                        Enter your content here
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="hidden md:block">
-                  {multiContent.content && (
-                    <div
-                      id="innsight-content-preview"
-                      dangerouslySetInnerHTML={{ __html: multiContent.content }}
-                    ></div>
-                  )}
-                  {!multiContent.content && (
-                    <div className="bg-blue-950 p-4">
-                      Enter your content here
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          })}
+              )
+            })}
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 md:gap-2 mb-2">
           <div className="grid grid-cols-1 bg-blue-500">
             <button
