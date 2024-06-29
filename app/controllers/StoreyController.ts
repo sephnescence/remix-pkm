@@ -154,8 +154,8 @@ export const storeyConfigLoader = async (args: LoaderFunctionArgs) => {
         id: multiContent.content_id,
         sortOrder: multiContent.sort_order,
         content: multiContent.content,
-        status: 'existing',
-        originalStatus: 'existing',
+        status: 'active',
+        originalStatus: 'active',
       })
 
       resolvedMultiContents.push(

@@ -32,7 +32,7 @@ export const determineSyncContentsTransactionsByFormData = ({
       z.object({
         id: z.string().uuid(),
         strSortOrder: z.string(),
-        status: z.enum(['new', 'discarded', 'updated', 'existing', 'deleted']),
+        status: z.enum(['new', 'discarded', 'updated', 'active', 'deleted']),
       })
         .strict()
         .parse({ id, strSortOrder, status })

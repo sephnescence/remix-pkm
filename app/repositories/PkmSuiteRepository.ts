@@ -174,13 +174,16 @@ export const getSuiteDashboard = async ({
     },
   }
 
-  const suite = await db.suite.findFirst(args)
+  let suite = await db.suite.findFirst(args)
 
   if (!suite) {
-    return null
+    return {
+      suite: null,
+      historyIdForMultiContent: null,
+    }
   }
 
-  const suiteConfigHistory = suite.pkm_history.find((history) => {
+  let suiteConfigHistory = suite.pkm_history.find((history) => {
     return history.model_type === 'SuiteContents'
   })
 
@@ -192,10 +195,31 @@ export const getSuiteDashboard = async ({
     })
 
     // TypeScript complains if I just call the method recursively
-    return await db.suite.findFirst(args)
+    suite = await db.suite.findFirst(args)
+
+    if (!suite) {
+      return {
+        suite: null,
+        historyIdForMultiContent: null,
+      }
+    }
+
+    suiteConfigHistory = suite.pkm_history.find((history) => {
+      return history.model_type === 'SuiteContents'
+    })
   }
 
-  return suite
+  if (!suiteConfigHistory) {
+    return {
+      suite: null,
+      historyIdForMultiContent: null,
+    }
+  }
+
+  return {
+    suite,
+    historyIdForMultiContent: suiteConfigHistory.history_id,
+  }
 }
 
 export const getSuitesForUser = async ({ userId }: { userId: string }) => {
@@ -335,6 +359,18 @@ export const getSuiteAndChildrenForUser = async ({
       name: true,
       description: true,
       content: true,
+      pkm_history: {
+        where: {
+          suite_id: suiteId,
+          storey_id: null,
+          space_id: null,
+          is_current: true,
+          model_type: 'SuiteContents',
+        },
+        select: {
+          history_id: true,
+        },
+      },
       storeys: {
         select: {
           id: true,

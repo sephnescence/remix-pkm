@@ -33,4 +33,35 @@ export const autoHealSuiteHistoryAndContents = async ({
       },
     }),
   ])
+  return newHistoryId
 }
+
+// export const getSuiteMultiContents = async ({
+//   suiteId,
+//   historyId,
+//   userId,
+// }: {
+//   suiteId: string
+//   userId: string
+// }) => {
+//   const multiContents = await db.pkmContents.findMany({
+//     where: {
+//       history_id: historyIdForMultiContent,
+//       model_id: suite.id,
+//     },
+//   })
+
+//   for (const multiContent of multiContents) {
+//     suiteMultiContents.push({
+//       id: multiContent.content_id,
+//       sortOrder: multiContent.sort_order,
+//       content: multiContent.content,
+//       status: 'active',
+//       originalStatus: 'active',
+//     })
+
+//     resolvedMultiContents.push(
+//       await displayContent(multiContent.content, user),
+//     )
+//   }
+// }

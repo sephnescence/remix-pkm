@@ -52,8 +52,7 @@ export const suiteUpdateConfigAction = async (
   const existingHistoryIdForMultiContent =
     suite.pkm_history[0]?.history_id ?? null
 
-  // BTTODO - I'm not sure about this one. I don't have a migration strategy for this yet.
-  //    The impact is that I won't be able update any Suite that doesn't have a history_id
+  // When loading a Suite now, it should auto heal if it doesn't have an existing history
   if (!existingHistoryIdForMultiContent) {
     return redirect('/')
   }
@@ -214,8 +213,8 @@ export const suiteConfigLoader = async (args: LoaderFunctionArgs) => {
         id: multiContent.content_id,
         sortOrder: multiContent.sort_order,
         content: multiContent.content,
-        status: 'existing',
-        originalStatus: 'existing',
+        status: 'active',
+        originalStatus: 'active',
       })
 
       resolvedMultiContents.push(
@@ -249,12 +248,12 @@ export const suiteDashboardLoader = async (args: LoaderFunctionArgs) => {
     return redirect('/')
   }
 
-  const suiteDashboard = await getSuiteDashboard({
+  const { suite, historyIdForMultiContent } = await getSuiteDashboard({
     suiteId: suite_id,
     userId: user.id,
   })
 
-  if (!suiteDashboard) {
+  if (!suite || !historyIdForMultiContent) {
     return redirect('/')
   }
 
@@ -266,13 +265,13 @@ export const suiteDashboardLoader = async (args: LoaderFunctionArgs) => {
   const url = new URL(args.request.url)
   const tab = url.searchParams.get('tab')
 
-  const resolvedContent = await displaySuiteContent(
-    {
-      id: suiteDashboard.id,
-      name: suiteDashboard.name,
-      description: suiteDashboard.description,
-      content: suiteDashboard.content,
-      storeys: suiteDashboard.storeys.map((storey) => {
+  const resolvedContent = await displaySuiteContent({
+    suite: {
+      id: suite.id,
+      name: suite.name,
+      description: suite.description,
+      content: suite.content,
+      storeys: suite.storeys.map((storey) => {
         return {
           id: storey.id,
           name: storey.name,
@@ -291,11 +290,12 @@ export const suiteDashboardLoader = async (args: LoaderFunctionArgs) => {
         }
       }),
     },
+    historyIdForMultiContent,
     user,
-  )
+  })
 
   return {
-    suiteDashboard,
+    suiteDashboard: suite,
     resolvedContent,
     suiteItemCounts,
     tab: tab ?? 'content',

@@ -47,7 +47,7 @@ export const loader: LoaderFunction = async (args) => {
         id: userId,
         user_id: userId,
         name: 'Welcome Center',
-        description: 'Enjoy your stay at Innsight',
+        description: 'Enjoy your stay at Rethought',
       },
     }),
   )
