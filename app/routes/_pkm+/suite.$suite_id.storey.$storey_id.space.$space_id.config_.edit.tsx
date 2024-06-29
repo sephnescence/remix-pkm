@@ -31,6 +31,7 @@ export default function SpaceConfigEditRoute() {
         defaultName={space.name}
         defaultDescription={space.description}
         defaultContent={space.content}
+        defaultMultiContents={space.multiContents}
       />
     </>
   )

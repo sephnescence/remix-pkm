@@ -1,5 +1,6 @@
 import { db } from '@/utils/db'
 import { Prisma } from '@prisma/client'
+import { autoHealSpaceHistoryAndContents } from '~/services/PkmSpaceService'
 
 export type ItemCountRow = {
   epiphany_count: number
@@ -109,7 +110,7 @@ export const getSpaceConfig = async ({
   spaceId: string
   userId: string
 }) => {
-  const space = await db.space.findFirst({
+  const args = {
     where: {
       user_id: userId,
       id: spaceId,
@@ -119,6 +120,18 @@ export const getSpaceConfig = async ({
       content: true,
       description: true,
       name: true,
+      pkm_history: {
+        where: {
+          suite_id: null,
+          storey_id: null,
+          space_id: spaceId,
+          is_current: true,
+          model_type: 'SpaceContents',
+        },
+        select: {
+          history_id: true,
+        },
+      },
       storey: {
         select: {
           id: true,
@@ -132,10 +145,23 @@ export const getSpaceConfig = async ({
         },
       },
     },
-  })
+  }
+
+  const space = await db.space.findFirst(args)
 
   if (!space) {
     return null
+  }
+
+  if (!space.pkm_history.length) {
+    await autoHealSpaceHistoryAndContents({
+      spaceId,
+      userId,
+      content: space.content,
+    })
+
+    // TypeScript complains if I just call the method recursively
+    return await db.space.findFirst(args)
   }
 
   return space
@@ -150,7 +176,7 @@ export const getSpaceDashboard = async ({
   spaceId: string
   userId: string
 }) => {
-  const space = await db.space.findFirst({
+  const args = {
     where: {
       user_id: userId,
       storey_id: storeyId,
@@ -233,10 +259,27 @@ export const getSpaceDashboard = async ({
         },
       },
     },
-  })
+  }
+
+  const space = await db.space.findFirst(args)
 
   if (!space) {
     return null
+  }
+
+  const spaceConfigHistory = space.pkm_history.find((history) => {
+    return history.model_type === 'SpaceContents'
+  })
+
+  if (!spaceConfigHistory) {
+    await autoHealSpaceHistoryAndContents({
+      spaceId,
+      userId,
+      content: space.content,
+    })
+
+    // TypeScript complains if I just call the method recursively
+    return await db.space.findFirst(args)
   }
 
   return space

@@ -14,7 +14,7 @@ type SuiteFormProps = {
   defaultMultiContents?: MultiContentItem[]
 }
 
-type MultiContentItem = {
+export type MultiContentItem = {
   id: string // Note: Will be ignored when adding a new MultiContent
   sortOrder: number
   content: string

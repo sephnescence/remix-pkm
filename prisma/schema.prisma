@@ -278,7 +278,8 @@ model PkmImage {
 //  This is so that links will still work forever, they'll just be orphaned if need be
 //  Better yet, don't allow deletion for contents that have links (Status - Referenced)
 model PkmContents {
-  content_id String @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
+  content_id String @db.Uuid
   model_id String @db.Uuid
   history_id String @db.Uuid
   createdAt DateTime @default(now())

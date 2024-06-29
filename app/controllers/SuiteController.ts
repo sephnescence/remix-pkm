@@ -8,11 +8,11 @@ import {
   TypedResponse,
   redirect,
 } from '@remix-run/node'
+import { MultiContentItem } from '~/components/Suites/forms/SuiteForm'
 import { getStoreyItemCounts } from '~/repositories/PkmStoreyRepository'
 import {
   getSuiteConfig,
   getSuiteDashboard,
-  updateSuiteConfig,
 } from '~/repositories/PkmSuiteRepository'
 import { determineSyncContentsTransactionsByFormData } from '~/services/PkmContentService'
 
@@ -37,6 +37,24 @@ export const suiteUpdateConfigAction = async (
 
   const suite_id = args.params.suite_id
   if (!suite_id) {
+    return redirect('/')
+  }
+
+  const suite = await getSuiteConfig({
+    suiteId: suite_id,
+    userId: user.id,
+  })
+
+  if (!suite) {
+    return redirect('/')
+  }
+
+  const existingHistoryIdForMultiContent =
+    suite.pkm_history[0]?.history_id ?? null
+
+  // BTTODO - I'm not sure about this one. I don't have a migration strategy for this yet.
+  //    The impact is that I won't be able update any Suite that doesn't have a history_id
+  if (!existingHistoryIdForMultiContent) {
     return redirect('/')
   }
 
@@ -83,15 +101,69 @@ export const suiteUpdateConfigAction = async (
     }
   }
 
-  const response = await updateSuiteConfig({
-    suiteId: suite_id,
-    userId: user.id,
-    content: content.toString(),
-    description: description.toString(),
-    name: name.toString(),
-  })
+  const newHistoryId = crypto.randomUUID()
 
-  if (!response.success) {
+  const transactions: Prisma.PrismaPromise<unknown>[] = [
+    db.suite.update({
+      where: {
+        user_id: user.id,
+        id: suite.id,
+      },
+      data: {
+        name: name.toString(),
+        description: description.toString(),
+        content: content.toString(),
+      },
+    }),
+    db.pkmHistory.update({
+      where: {
+        history_id: existingHistoryIdForMultiContent,
+        is_current: true,
+      },
+      data: {
+        is_current: false,
+      },
+    }),
+    db.pkmHistory.create({
+      data: {
+        history_id: newHistoryId,
+        model_id: suite.id,
+        model_type: 'SuiteContents',
+        is_current: true,
+        user_id: user.id,
+        suite_id: suite.id,
+        storey_id: null,
+        space_id: null,
+      },
+    }),
+  ]
+
+  try {
+    const incomingContents = determineSyncContentsTransactionsByFormData({
+      formData,
+      modeId: suite_id,
+      historyId: newHistoryId,
+      modelType: 'SuiteContents',
+    })
+
+    incomingContents.forEach((incomingContent) => {
+      transactions.push(incomingContent)
+    })
+  } catch {
+    return {
+      errors: {
+        fieldErrors: {
+          general: `Failed to store Suite. Please try again.`,
+        },
+      },
+    }
+  }
+
+  try {
+    await db.$transaction(transactions)
+
+    return redirect(`/suite/${suite.id}/config`)
+  } catch {
     return {
       errors: {
         fieldErrors: {
@@ -100,12 +172,6 @@ export const suiteUpdateConfigAction = async (
       },
     }
   }
-
-  if (response.suite) {
-    return redirect(`/suite/${response.suite.id}/config`)
-  }
-
-  return redirect('/') // Not that it should get here
 }
 
 export const suiteConfigLoader = async (args: LoaderFunctionArgs) => {
@@ -132,6 +198,7 @@ export const suiteConfigLoader = async (args: LoaderFunctionArgs) => {
   //    we need the History Item that's current and belongs specifically to the Suite
   const historyIdForMultiContent = suite.pkm_history[0]?.history_id ?? null
 
+  const suiteMultiContents: MultiContentItem[] = []
   const resolvedMultiContents: string[] = []
 
   if (historyIdForMultiContent) {
@@ -143,6 +210,14 @@ export const suiteConfigLoader = async (args: LoaderFunctionArgs) => {
     })
 
     for (const multiContent of multiContents) {
+      suiteMultiContents.push({
+        id: multiContent.content_id,
+        sortOrder: multiContent.sort_order,
+        content: multiContent.content,
+        status: 'existing',
+        originalStatus: 'existing',
+      })
+
       resolvedMultiContents.push(
         await displayContent(multiContent.content, user),
       )
@@ -157,6 +232,7 @@ export const suiteConfigLoader = async (args: LoaderFunctionArgs) => {
       '<div class="*:mb-2"><div>' +
       resolvedMultiContents.join('</div><div>') +
       '</div></div>',
+    multiContents: suiteMultiContents,
     description: suite.description,
     name: suite.name,
   }
@@ -298,7 +374,7 @@ export const suiteConfigNewAction = async (args: ActionFunctionArgs) => {
       data: {
         history_id: newHistoryId,
         model_id: newSuiteId,
-        model_type: 'SuiteContents', // BTTODO - What are the impacts of this?
+        model_type: 'SuiteContents',
         is_current: true,
         user_id: user.id,
         suite_id: newSuiteId,

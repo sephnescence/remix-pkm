@@ -24,6 +24,7 @@ export default function SuiteConfigEditRoute() {
         defaultName={suite.name}
         defaultDescription={suite.description}
         defaultContent={suite.content}
+        defaultMultiContents={suite.multiContents}
       />
     </>
   )

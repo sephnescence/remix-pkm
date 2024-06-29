@@ -1,6 +1,5 @@
 import { db } from '@/utils/db'
 import { getAuth } from '@clerk/remix/ssr.server'
-import { Prisma } from '@prisma/client'
 import { LoaderFunction, redirect } from '@remix-run/node'
 import { randomUUID } from 'node:crypto'
 import { sessionStorage } from '~/session/session.server'
@@ -52,6 +51,7 @@ export const loader: LoaderFunction = async (args) => {
       },
     }),
   )
+
   transactions.push(
     db.storey.upsert({
       where: {
@@ -67,6 +67,7 @@ export const loader: LoaderFunction = async (args) => {
       },
     }),
   )
+
   transactions.push(
     db.space.upsert({
       where: {
@@ -81,54 +82,6 @@ export const loader: LoaderFunction = async (args) => {
         description: 'Check in',
       },
     }),
-  )
-
-  transactions.push(
-    db.$queryRaw(
-      Prisma.sql`
-        insert into "PkmContents" ("content_id", "model_id", "history_id", "sort_order", "content")
-        select
-          id as "content_id",
-          id as "model_id",
-          id as "history_id",
-          1 as "sort_order",
-          "content"
-        from "Suite" where user_id = ${userId}::uuid
-        on conflict do nothing
-      `,
-    ),
-  )
-
-  transactions.push(
-    db.$queryRaw(
-      Prisma.sql`
-        insert into "PkmContents" ("content_id", "model_id", "history_id", "sort_order", "content")
-        select
-          id as "content_id",
-          id as "model_id",
-          id as "history_id",
-          1 as "sort_order",
-          "content"
-        from "Storey" where user_id = ${userId}::uuid
-        on conflict do nothing
-      `,
-    ),
-  )
-
-  transactions.push(
-    db.$queryRaw(
-      Prisma.sql`
-        insert into "PkmContents" ("content_id", "model_id", "history_id", "sort_order", "content")
-        select
-          id as "content_id",
-          id as "model_id",
-          id as "history_id",
-          1 as "sort_order",
-          "content"
-        from "Space" where user_id = ${userId}::uuid
-        on conflict do nothing
-      `,
-    ),
   )
 
   try {

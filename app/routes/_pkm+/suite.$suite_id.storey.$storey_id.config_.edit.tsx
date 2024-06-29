@@ -29,6 +29,7 @@ export default function StoreyConfigEditRoute() {
         defaultName={storey.name}
         defaultDescription={storey.description}
         defaultContent={storey.content}
+        defaultMultiContents={storey.multiContents}
       />
     </>
   )

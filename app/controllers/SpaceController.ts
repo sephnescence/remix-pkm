@@ -1,11 +1,13 @@
 import { getUserAuth } from '@/utils/auth'
 import { displayContent, displaySpaceContent } from '@/utils/content'
+import { db } from '@/utils/db'
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
   TypedResponse,
   redirect,
 } from '@remix-run/node'
+import { MultiContentItem } from '~/components/Suites/forms/SuiteForm'
 import {
   getSpaceItemCounts,
   getSpaceConfig,
@@ -140,10 +142,44 @@ export const spaceConfigLoader = async (args: LoaderFunctionArgs) => {
     return redirect('/')
   }
 
+  // A space can have multiple pkm_history, but for the sake of getting its Multi Contents
+  //    we need the History Item that's current and belongs specifically to the Suite
+  const historyIdForMultiContent = space.pkm_history[0]?.history_id ?? null
+
+  const suiteMultiContents: MultiContentItem[] = []
+  const resolvedMultiContents: string[] = []
+
+  if (historyIdForMultiContent) {
+    const multiContents = await db.pkmContents.findMany({
+      where: {
+        history_id: historyIdForMultiContent,
+        model_id: space.id,
+      },
+    })
+
+    for (const multiContent of multiContents) {
+      suiteMultiContents.push({
+        id: multiContent.content_id,
+        sortOrder: multiContent.sort_order,
+        content: multiContent.content,
+        status: 'existing',
+        originalStatus: 'existing',
+      })
+
+      resolvedMultiContents.push(
+        await displayContent(multiContent.content, user),
+      )
+    }
+  }
+
   return {
     id: space.id,
     content: space.content,
-    resolvedContent: await displayContent(space.content, user),
+    resolvedContent:
+      '<div class="*:mb-2"><div>' +
+      resolvedMultiContents.join('</div><div>') +
+      '</div></div>',
+    multiContents: suiteMultiContents,
     description: space.description,
     name: space.name,
     suiteId: space.storey.suite.id,
