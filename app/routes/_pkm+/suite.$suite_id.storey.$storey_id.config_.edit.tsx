@@ -28,7 +28,6 @@ export default function StoreyConfigEditRoute() {
         cancelUrl={`/suite/${storey.suiteId}/storey/${storey.id}/config`}
         defaultName={storey.name}
         defaultDescription={storey.description}
-        defaultContent={storey.content}
         defaultMultiContents={storey.multiContents}
       />
     </>

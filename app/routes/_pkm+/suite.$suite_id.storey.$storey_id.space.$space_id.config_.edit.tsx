@@ -30,7 +30,6 @@ export default function SpaceConfigEditRoute() {
         cancelUrl={`/suite/${space.suiteId}/storey/${space.storeyId}/space/${space.id}/config`}
         defaultName={space.name}
         defaultDescription={space.description}
-        defaultContent={space.content}
         defaultMultiContents={space.multiContents}
       />
     </>

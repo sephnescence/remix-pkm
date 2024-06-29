@@ -9,7 +9,6 @@ type SuiteFormProps = {
   cancelUrl?: string
   defaultName?: string
   defaultDescription?: string
-  defaultContent?: string
   actionData?: SuiteUpdateConfigActionResponse
   defaultMultiContents?: MultiContentItem[]
 }
@@ -27,15 +26,11 @@ const SuiteForm = ({
   cancelUrl,
   defaultName,
   defaultDescription,
-  defaultContent,
   actionData,
   defaultMultiContents,
 }: SuiteFormProps) => {
   const [name, setName] = useState(() => defaultName || '')
   const [description, setDescription] = useState(() => defaultDescription || '')
-  const [content, setContent] = useState(
-    () => defaultContent || '<div data-children></div>\n\n',
-  )
 
   const [interactive, setInteractive] = useState(() => false)
   const navigation = useNavigation()

@@ -23,7 +23,6 @@ export default function SuiteConfigEditRoute() {
         cancelUrl={`/suite/${suite.id}/config`}
         defaultName={suite.name}
         defaultDescription={suite.description}
-        defaultContent={suite.content}
         defaultMultiContents={suite.multiContents}
       />
     </>
