@@ -37,10 +37,10 @@ function App() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {/* <script
+        <script
           src="https://kit.fontawesome.com/b0498c8950.js"
           crossOrigin="anonymous"
-        ></script> */}
+        ></script>
         <Meta />
         <Links />
       </head>
