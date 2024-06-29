@@ -1,11 +1,11 @@
 import { historyModelTypeToModelTypeSlug } from '@/utils/apiUtils'
-import { getCurrentHistoryItemsForUser } from '~/repositories/PkmHistoryRepository'
+import { CurrentHistoryItems } from '~/repositories/PkmHistoryRepository'
 import PkmItemWithLink from '../pkm/PkmItemWithLink'
 
 const HistoryItemDashboard = ({
   historyItems,
 }: {
-  historyItems: Awaited<ReturnType<typeof getCurrentHistoryItemsForUser>>
+  historyItems: CurrentHistoryItems
 }) => {
   if (!historyItems.historyItem) {
     return <></>

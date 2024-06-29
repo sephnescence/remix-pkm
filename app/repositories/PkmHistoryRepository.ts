@@ -28,6 +28,10 @@ type GetHistoryItemArgs = {
   userId: string
 }
 
+export type CurrentHistoryItems = Awaited<
+  ReturnType<typeof getCurrentHistoryItemsForUser>
+>
+
 export const getCurrentHistoryItemsForUser = async ({
   userId,
   page = 1,
