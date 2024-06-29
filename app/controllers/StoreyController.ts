@@ -1,6 +1,7 @@
 import { getUserAuth } from '@/utils/auth'
 import { displayContent, displayStoreyContent } from '@/utils/content'
 import { db } from '@/utils/db'
+import { Prisma } from '@prisma/client'
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -12,10 +13,9 @@ import { getSpaceItemCounts } from '~/repositories/PkmSpaceRepository'
 import {
   getStoreyConfig,
   getStoreyDashboard,
-  storeStoreyConfig,
-  updateStoreyConfig,
 } from '~/repositories/PkmStoreyRepository'
 import { getSuiteForUser } from '~/repositories/PkmSuiteRepository'
+import { determineSyncContentsTransactionsByFormData } from '~/services/PkmContentService'
 
 export type StoreyUpdateConfigActionResponse = {
   errors: {
@@ -43,6 +43,23 @@ export const storeyUpdateConfigAction = async (
 
   const storeyId = args.params.storey_id
   if (!storeyId) {
+    return redirect('/')
+  }
+
+  const storey = await getStoreyConfig({
+    storeyId,
+    userId: user.id,
+  })
+
+  if (!storey) {
+    return redirect('/')
+  }
+
+  const existingHistoryIdForMultiContent =
+    storey.pkm_history[0]?.history_id ?? null
+
+  // When loading a Storey now, it should auto heal if it doesn't have an existing history
+  if (!existingHistoryIdForMultiContent) {
     return redirect('/')
   }
 
@@ -89,29 +106,77 @@ export const storeyUpdateConfigAction = async (
     }
   }
 
-  const response = await updateStoreyConfig({
-    storeyId,
-    userId: user.id,
-    content: content.toString(),
-    description: description.toString(),
-    name: name.toString(),
-  })
+  const newHistoryId = crypto.randomUUID()
 
-  if (!response.success) {
+  const transactions: Prisma.PrismaPromise<unknown>[] = [
+    db.storey.update({
+      where: {
+        user_id: user.id,
+        id: storey.id,
+      },
+      data: {
+        name: name.toString(),
+        description: description.toString(),
+        content: content.toString(),
+      },
+    }),
+    db.pkmHistory.update({
+      where: {
+        history_id: existingHistoryIdForMultiContent,
+        is_current: true,
+      },
+      data: {
+        is_current: false,
+      },
+    }),
+    db.pkmHistory.create({
+      data: {
+        history_id: newHistoryId,
+        model_id: storey.id,
+        model_type: 'StoreyContents',
+        is_current: true,
+        user_id: user.id,
+        suite_id: null,
+        storey_id: storey.id,
+        space_id: null,
+      },
+    }),
+  ]
+
+  try {
+    const incomingContents = determineSyncContentsTransactionsByFormData({
+      formData,
+      modeId: storeyId,
+      historyId: newHistoryId,
+      modelType: 'StoreyContents',
+    })
+
+    incomingContents.forEach((incomingContent) => {
+      transactions.push(incomingContent)
+    })
+  } catch {
     return {
       errors: {
         fieldErrors: {
-          general: 'Failed to update Storey. Please try again.',
+          general: `Failed to update Storey. Please try again. [1]`,
         },
       },
     }
   }
 
-  if (response.storey) {
-    return redirect(`/suite/${suiteId}/storey/${response.storey.id}/config`)
-  }
+  try {
+    await db.$transaction(transactions)
 
-  return redirect('/') // Not that it should get here
+    return redirect(`/suite/${suiteId}/storey/${storeyId}/config`)
+  } catch {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Failed to update Storey. Please try again. [2]',
+        },
+      },
+    }
+  }
 }
 
 export const storeyConfigLoader = async (args: LoaderFunctionArgs) => {
@@ -192,6 +257,21 @@ export const storeyDashboardLoader = async (args: LoaderFunctionArgs) => {
 
   const storey_id = args.params.storey_id
   if (!storey_id) {
+    return redirect('/')
+  }
+
+  const storeyConfig = await getStoreyConfig({
+    storeyId: storey_id,
+    userId: user.id,
+  })
+
+  if (!storeyConfig) {
+    return redirect('/')
+  }
+
+  const historyIdForMultiContent = storeyConfig.pkm_history[0]?.history_id
+
+  if (!historyIdForMultiContent) {
     return redirect('/')
   }
 
@@ -321,27 +401,72 @@ export const storeyConfigNewAction = async (args: ActionFunctionArgs) => {
     }
   }
 
-  const response = await storeStoreyConfig({
-    userId: user.id,
-    suiteId: suiteId.toString(),
-    content: content.toString(),
-    description: description.toString(),
-    name: name.toString(),
-  })
+  const transactions: Prisma.PrismaPromise<unknown>[] = []
 
-  if (!response.success) {
+  const newStoreyId = crypto.randomUUID()
+
+  transactions.push(
+    db.storey.create({
+      data: {
+        id: newStoreyId,
+        suite_id: suiteId,
+        content: content.toString(), // Content input will be removed soon
+        description: description.toString(),
+        name: name.toString(),
+        user_id: user.id,
+      },
+    }),
+  )
+
+  const newHistoryId = crypto.randomUUID()
+
+  transactions.push(
+    db.pkmHistory.create({
+      data: {
+        history_id: newHistoryId,
+        model_id: newStoreyId,
+        model_type: 'StoreyContents',
+        is_current: true,
+        user_id: user.id,
+        suite_id: null,
+        storey_id: newStoreyId,
+        space_id: null,
+      },
+    }),
+  )
+
+  try {
+    const incomingContents = determineSyncContentsTransactionsByFormData({
+      formData,
+      modeId: newStoreyId,
+      historyId: newHistoryId,
+      modelType: 'StoreyContents',
+    })
+
+    incomingContents.forEach((incomingContent) => {
+      transactions.push(incomingContent)
+    })
+  } catch {
     return {
       errors: {
         fieldErrors: {
-          general: 'Failed to store Storey. Please try again.',
+          general: `Failed to store Storey. Please try again. [1]`,
         },
       },
     }
   }
 
-  if (response.storey) {
-    return redirect(`/suite/${suiteId}/storey/${response.storey.id}/config`)
-  }
+  try {
+    await db.$transaction(transactions)
 
-  return redirect('/') // Not that it should get here
+    return redirect(`/suite/${suiteId}/storey/${newStoreyId}/config`)
+  } catch {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Failed to store Storey. Please try again. [2]',
+        },
+      },
+    }
+  }
 }

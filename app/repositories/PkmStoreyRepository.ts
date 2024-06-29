@@ -15,22 +15,6 @@ export type StoreyItemCountsResults = ItemCountRow & {
   id: string
 }
 
-type StoreStoreyArgs = {
-  suiteId: string
-  userId: string
-  content: string
-  description: string
-  name: string
-}
-
-type UpdateStoreyArgs = {
-  storeyId: string
-  userId: string
-  content: string
-  description: string
-  name: string
-}
-
 export type StoreyForMove = {
   id: string
   description: string
@@ -38,70 +22,6 @@ export type StoreyForMove = {
   counts: ItemCountRow
   spaces: number
   suiteId: string
-}
-
-export const storeStoreyConfig = async ({
-  suiteId,
-  userId,
-  content,
-  description,
-  name,
-}: StoreStoreyArgs) => {
-  return await db.storey
-    .create({
-      data: {
-        suite_id: suiteId,
-        user_id: userId,
-        name,
-        description,
-        content,
-      },
-    })
-    .then((storey) => {
-      return {
-        success: true,
-        storey,
-      }
-    })
-    .catch(() => {
-      return {
-        success: false,
-        storey: null,
-      }
-    })
-}
-
-export const updateStoreyConfig = async ({
-  storeyId,
-  userId,
-  content,
-  description,
-  name,
-}: UpdateStoreyArgs) => {
-  return await db.storey
-    .update({
-      where: {
-        user_id: userId,
-        id: storeyId,
-      },
-      data: {
-        name,
-        description,
-        content,
-      },
-    })
-    .then((storey) => {
-      return {
-        success: true,
-        storey,
-      }
-    })
-    .catch(() => {
-      return {
-        success: false,
-        storey: null,
-      }
-    })
 }
 
 export const getStoreyConfig = async ({
@@ -261,21 +181,6 @@ export const getStoreyDashboard = async ({
 
   if (!storey) {
     return null
-  }
-
-  const storeyConfigHistory = storey.pkm_history.find((history) => {
-    return history.model_type === 'StoreyContents'
-  })
-
-  if (!storeyConfigHistory) {
-    await autoHealStoreyHistoryAndContents({
-      storeyId,
-      userId,
-      content: storey.content,
-    })
-
-    // TypeScript complains if I just call the method recursively
-    return await db.storey.findFirst(args)
   }
 
   return storey

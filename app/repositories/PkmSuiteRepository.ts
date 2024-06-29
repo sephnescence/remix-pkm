@@ -174,52 +174,13 @@ export const getSuiteDashboard = async ({
     },
   }
 
-  let suite = await db.suite.findFirst(args)
+  const suite = await db.suite.findFirst(args)
 
   if (!suite) {
-    return {
-      suite: null,
-      historyIdForMultiContent: null,
-    }
+    return null
   }
 
-  let suiteConfigHistory = suite.pkm_history.find((history) => {
-    return history.model_type === 'SuiteContents'
-  })
-
-  if (!suiteConfigHistory) {
-    await autoHealSuiteHistoryAndContents({
-      suiteId,
-      userId,
-      content: suite.content,
-    })
-
-    // TypeScript complains if I just call the method recursively
-    suite = await db.suite.findFirst(args)
-
-    if (!suite) {
-      return {
-        suite: null,
-        historyIdForMultiContent: null,
-      }
-    }
-
-    suiteConfigHistory = suite.pkm_history.find((history) => {
-      return history.model_type === 'SuiteContents'
-    })
-  }
-
-  if (!suiteConfigHistory) {
-    return {
-      suite: null,
-      historyIdForMultiContent: null,
-    }
-  }
-
-  return {
-    suite,
-    historyIdForMultiContent: suiteConfigHistory.history_id,
-  }
+  return suite
 }
 
 export const getSuitesForUser = async ({ userId }: { userId: string }) => {

@@ -1,6 +1,7 @@
 import { getUserAuth } from '@/utils/auth'
 import { displayContent, displaySpaceContent } from '@/utils/content'
 import { db } from '@/utils/db'
+import { Prisma } from '@prisma/client'
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -12,11 +13,10 @@ import {
   getSpaceItemCounts,
   getSpaceConfig,
   getSpaceDashboard,
-  storeSpaceConfig,
-  updateSpaceConfig,
 } from '~/repositories/PkmSpaceRepository'
 import { getStoreyForUser } from '~/repositories/PkmStoreyRepository'
 import { getSuiteForUser } from '~/repositories/PkmSuiteRepository'
+import { determineSyncContentsTransactionsByFormData } from '~/services/PkmContentService'
 
 export type SpaceUpdateConfigActionResponse = {
   errors: {
@@ -49,6 +49,23 @@ export const spaceUpdateConfigAction = async (
 
   const spaceId = args.params.space_id
   if (!spaceId) {
+    return redirect('/')
+  }
+
+  const space = await getSpaceConfig({
+    spaceId,
+    userId: user.id,
+  })
+
+  if (!space) {
+    return redirect('/')
+  }
+
+  const existingHistoryIdForMultiContent =
+    space.pkm_history[0]?.history_id ?? null
+
+  // When loading a Suite now, it should auto heal if it doesn't have an existing history
+  if (!existingHistoryIdForMultiContent) {
     return redirect('/')
   }
 
@@ -95,31 +112,79 @@ export const spaceUpdateConfigAction = async (
     }
   }
 
-  const response = await updateSpaceConfig({
-    spaceId,
-    userId: user.id,
-    content: content.toString(),
-    description: description.toString(),
-    name: name.toString(),
-  })
+  const newHistoryId = crypto.randomUUID()
 
-  if (!response.success) {
+  const transactions: Prisma.PrismaPromise<unknown>[] = [
+    db.space.update({
+      where: {
+        user_id: user.id,
+        id: space.id,
+      },
+      data: {
+        name: name.toString(),
+        description: description.toString(),
+        content: content.toString(),
+      },
+    }),
+    db.pkmHistory.update({
+      where: {
+        history_id: existingHistoryIdForMultiContent,
+        is_current: true,
+      },
+      data: {
+        is_current: false,
+      },
+    }),
+    db.pkmHistory.create({
+      data: {
+        history_id: newHistoryId,
+        model_id: space.id,
+        model_type: 'SpaceContents',
+        is_current: true,
+        user_id: user.id,
+        suite_id: space.id,
+        storey_id: null,
+        space_id: null,
+      },
+    }),
+  ]
+
+  try {
+    const incomingContents = determineSyncContentsTransactionsByFormData({
+      formData,
+      modeId: spaceId,
+      historyId: newHistoryId,
+      modelType: 'SpaceContents',
+    })
+
+    incomingContents.forEach((incomingContent) => {
+      transactions.push(incomingContent)
+    })
+  } catch {
     return {
       errors: {
         fieldErrors: {
-          general: 'Failed to update Space. Please try again.',
+          general: `Failed to update Space. Please try again. [1]`,
         },
       },
     }
   }
 
-  if (response.space) {
+  try {
+    await db.$transaction(transactions)
+
     return redirect(
       `/suite/${suiteId}/storey/${storeyId}/space/${spaceId}/config`,
     )
+  } catch {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Failed to update Space. Please try again. [2]',
+        },
+      },
+    }
   }
-
-  return redirect('/') // Not that it should get here
 }
 
 export const spaceConfigLoader = async (args: LoaderFunctionArgs) => {
@@ -202,6 +267,21 @@ export const spaceDashboardLoader = async (args: LoaderFunctionArgs) => {
 
   const space_id = args.params.space_id
   if (!space_id) {
+    return redirect('/')
+  }
+
+  const spaceConfig = await getSpaceConfig({
+    spaceId: space_id,
+    userId: user.id,
+  })
+
+  if (!spaceConfig) {
+    return redirect('/')
+  }
+
+  const historyIdForMultiContent = spaceConfig.pkm_history[0]?.history_id
+
+  if (!historyIdForMultiContent) {
     return redirect('/')
   }
 
@@ -353,29 +433,74 @@ export const spaceConfigNewAction = async (args: ActionFunctionArgs) => {
     }
   }
 
-  const response = await storeSpaceConfig({
-    userId: user.id,
-    storeyId: storeyId.toString(),
-    content: content.toString(),
-    description: description.toString(),
-    name: name.toString(),
-  })
+  const transactions: Prisma.PrismaPromise<unknown>[] = []
 
-  if (!response.success) {
+  const newSpaceId = crypto.randomUUID()
+
+  transactions.push(
+    db.space.create({
+      data: {
+        id: newSpaceId,
+        storey_id: storeyId,
+        content: content.toString(), // Content input will be removed soon
+        description: description.toString(),
+        name: name.toString(),
+        user_id: user.id,
+      },
+    }),
+  )
+
+  const newHistoryId = crypto.randomUUID()
+
+  transactions.push(
+    db.pkmHistory.create({
+      data: {
+        history_id: newHistoryId,
+        model_id: newSpaceId,
+        model_type: 'SpaceContents',
+        is_current: true,
+        user_id: user.id,
+        suite_id: null,
+        storey_id: null,
+        space_id: newSpaceId,
+      },
+    }),
+  )
+
+  try {
+    const incomingContents = determineSyncContentsTransactionsByFormData({
+      formData,
+      modeId: newSpaceId,
+      historyId: newHistoryId,
+      modelType: 'SpaceContents',
+    })
+
+    incomingContents.forEach((incomingContent) => {
+      transactions.push(incomingContent)
+    })
+  } catch {
     return {
       errors: {
         fieldErrors: {
-          general: 'Failed to store Space. Please try again.',
+          general: `Failed to store Space. Please try again. [1]`,
         },
       },
     }
   }
 
-  if (response.space) {
-    return redirect(
-      `/suite/${suiteId}/storey/${storeyId}/space/${response.space.id}/config`,
-    )
-  }
+  try {
+    await db.$transaction(transactions)
 
-  return redirect('/') // Not that it should get here
+    return redirect(
+      `/suite/${suiteId}/storey/${storeyId}/space/${newSpaceId}/config`,
+    )
+  } catch {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Failed to store Space. Please try again. [2]',
+        },
+      },
+    }
+  }
 }

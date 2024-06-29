@@ -35,13 +35,13 @@ export const suiteUpdateConfigAction = async (
     return redirect('/')
   }
 
-  const suite_id = args.params.suite_id
-  if (!suite_id) {
+  const suiteId = args.params.suite_id
+  if (!suiteId) {
     return redirect('/')
   }
 
   const suite = await getSuiteConfig({
-    suiteId: suite_id,
+    suiteId,
     userId: user.id,
   })
 
@@ -140,7 +140,7 @@ export const suiteUpdateConfigAction = async (
   try {
     const incomingContents = determineSyncContentsTransactionsByFormData({
       formData,
-      modeId: suite_id,
+      modeId: suiteId,
       historyId: newHistoryId,
       modelType: 'SuiteContents',
     })
@@ -152,7 +152,7 @@ export const suiteUpdateConfigAction = async (
     return {
       errors: {
         fieldErrors: {
-          general: `Failed to store Suite. Please try again.`,
+          general: `Failed to update Suite. Please try again. [1]`,
         },
       },
     }
@@ -161,12 +161,12 @@ export const suiteUpdateConfigAction = async (
   try {
     await db.$transaction(transactions)
 
-    return redirect(`/suite/${suite.id}/config`)
+    return redirect(`/suite/${suiteId}/config`)
   } catch {
     return {
       errors: {
         fieldErrors: {
-          general: 'Failed to update Suite. Please try again.',
+          general: 'Failed to update Suite. Please try again. [2]',
         },
       },
     }
@@ -248,12 +248,27 @@ export const suiteDashboardLoader = async (args: LoaderFunctionArgs) => {
     return redirect('/')
   }
 
-  const { suite, historyIdForMultiContent } = await getSuiteDashboard({
+  const suiteConfig = await getSuiteConfig({
     suiteId: suite_id,
     userId: user.id,
   })
 
-  if (!suite || !historyIdForMultiContent) {
+  if (!suiteConfig) {
+    return redirect('/')
+  }
+
+  const historyIdForMultiContent = suiteConfig.pkm_history[0]?.history_id
+
+  if (!historyIdForMultiContent) {
+    return redirect('/')
+  }
+
+  const suite = await getSuiteDashboard({
+    suiteId: suite_id,
+    userId: user.id,
+  })
+
+  if (!suite) {
     return redirect('/')
   }
 
@@ -399,7 +414,7 @@ export const suiteConfigNewAction = async (args: ActionFunctionArgs) => {
     return {
       errors: {
         fieldErrors: {
-          general: `Failed to store Suite. Please try again.`,
+          general: `Failed to store Suite. Please try again. [1]`,
         },
       },
     }
@@ -413,7 +428,7 @@ export const suiteConfigNewAction = async (args: ActionFunctionArgs) => {
     return {
       errors: {
         fieldErrors: {
-          general: 'Failed to store Suite. Please try again.',
+          general: 'Failed to store Suite. Please try again. [2]',
         },
       },
     }

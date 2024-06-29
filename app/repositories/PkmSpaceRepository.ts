@@ -15,92 +15,12 @@ export type SpaceItemCountsResults = ItemCountRow & {
   id: string
 }
 
-type StoreSpaceArgs = {
-  storeyId: string
-  userId: string
-  content: string
-  description: string
-  name: string
-}
-
-type UpdateSpaceArgs = {
-  spaceId: string
-  userId: string
-  content: string
-  description: string
-  name: string
-}
-
 export type SpaceForMove = {
   id: string
   description: string
   name: string
   counts: ItemCountRow
   storeyId: string
-}
-
-export const storeSpaceConfig = async ({
-  storeyId,
-  userId,
-  content,
-  description,
-  name,
-}: StoreSpaceArgs) => {
-  return await db.space
-    .create({
-      data: {
-        storey_id: storeyId,
-        user_id: userId,
-        name,
-        description,
-        content,
-      },
-    })
-    .then((space) => {
-      return {
-        success: true,
-        space,
-      }
-    })
-    .catch(() => {
-      return {
-        success: false,
-        space: null,
-      }
-    })
-}
-
-export const updateSpaceConfig = async ({
-  spaceId,
-  userId,
-  content,
-  description,
-  name,
-}: UpdateSpaceArgs) => {
-  return await db.space
-    .update({
-      where: {
-        user_id: userId,
-        id: spaceId,
-      },
-      data: {
-        name,
-        description,
-        content,
-      },
-    })
-    .then((space) => {
-      return {
-        success: true,
-        space,
-      }
-    })
-    .catch(() => {
-      return {
-        success: false,
-        space: null,
-      }
-    })
 }
 
 export const getSpaceConfig = async ({
@@ -265,21 +185,6 @@ export const getSpaceDashboard = async ({
 
   if (!space) {
     return null
-  }
-
-  const spaceConfigHistory = space.pkm_history.find((history) => {
-    return history.model_type === 'SpaceContents'
-  })
-
-  if (!spaceConfigHistory) {
-    await autoHealSpaceHistoryAndContents({
-      spaceId,
-      userId,
-      content: space.content,
-    })
-
-    // TypeScript complains if I just call the method recursively
-    return await db.space.findFirst(args)
   }
 
   return space
