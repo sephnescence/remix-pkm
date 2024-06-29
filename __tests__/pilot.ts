@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { determineSyncContentsTransactions } from '~/services/PkmContentService'
 
 test('adds 1 + 2 to equal 3', () => {
@@ -5,8 +6,8 @@ test('adds 1 + 2 to equal 3', () => {
 })
 
 test('determineSyncContentsTransactions - Creating a suite returns the expected transactions', () => {
-  const newContentId = crypto.randomUUID()
-  const suiteId = crypto.randomUUID()
+  const newContentId = randomUUID()
+  const suiteId = randomUUID()
 
   const transactions = determineSyncContentsTransactions({
     contents: [
