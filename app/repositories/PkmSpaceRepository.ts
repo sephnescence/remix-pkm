@@ -299,6 +299,18 @@ export const getSpaceForUser = async ({
       description: true,
       content: true,
       id: true,
+      pkm_history: {
+        where: {
+          suite_id: null,
+          storey_id: null,
+          space_id: spaceId,
+          is_current: true,
+          model_type: 'SpaceContents',
+        },
+        select: {
+          history_id: true,
+        },
+      },
       storey: {
         select: {
           id: true,

@@ -179,13 +179,13 @@ export const suiteConfigLoader = async (args: LoaderFunctionArgs) => {
     return redirect('/')
   }
 
-  const suite_id = args.params.suite_id
-  if (!suite_id) {
+  const suiteId = args.params.suite_id
+  if (!suiteId) {
     return redirect('/')
   }
 
   const suite = await getSuiteConfig({
-    suiteId: suite_id,
+    suiteId,
     userId: user.id,
   })
 
@@ -243,13 +243,13 @@ export const suiteDashboardLoader = async (args: LoaderFunctionArgs) => {
     return redirect('/')
   }
 
-  const suite_id = args.params.suite_id
-  if (!suite_id) {
+  const suiteId = args.params.suite_id
+  if (!suiteId) {
     return redirect('/')
   }
 
   const suiteConfig = await getSuiteConfig({
-    suiteId: suite_id,
+    suiteId,
     userId: user.id,
   })
 
@@ -264,7 +264,7 @@ export const suiteDashboardLoader = async (args: LoaderFunctionArgs) => {
   }
 
   const suite = await getSuiteDashboard({
-    suiteId: suite_id,
+    suiteId,
     userId: user.id,
   })
 
@@ -273,7 +273,7 @@ export const suiteDashboardLoader = async (args: LoaderFunctionArgs) => {
   }
 
   const suiteItemCounts = await getStoreyItemCounts({
-    suiteId: suite_id,
+    suiteId,
     userId: user.id,
   })
 

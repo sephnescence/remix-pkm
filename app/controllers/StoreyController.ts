@@ -293,8 +293,8 @@ export const storeyDashboardLoader = async (args: LoaderFunctionArgs) => {
   const url = new URL(args.request.url)
   const tab = url.searchParams.get('tab')
 
-  const resolvedContent = await displayStoreyContent(
-    {
+  const resolvedContent = await displayStoreyContent({
+    storey: {
       id: storeyDashboard.id,
       name: storeyDashboard.name,
       description: storeyDashboard.description,
@@ -310,8 +310,9 @@ export const storeyDashboardLoader = async (args: LoaderFunctionArgs) => {
         }
       }),
     },
+    historyIdForMultiContent,
     user,
-  )
+  })
 
   return {
     resolvedContent,

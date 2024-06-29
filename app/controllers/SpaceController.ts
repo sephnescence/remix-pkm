@@ -64,7 +64,7 @@ export const spaceUpdateConfigAction = async (
   const existingHistoryIdForMultiContent =
     space.pkm_history[0]?.history_id ?? null
 
-  // When loading a Suite now, it should auto heal if it doesn't have an existing history
+  // When loading a Space now, it should auto heal if it doesn't have an existing history
   if (!existingHistoryIdForMultiContent) {
     return redirect('/')
   }
@@ -142,9 +142,9 @@ export const spaceUpdateConfigAction = async (
         model_type: 'SpaceContents',
         is_current: true,
         user_id: user.id,
-        suite_id: space.id,
+        suite_id: null,
         storey_id: null,
-        space_id: null,
+        space_id: space.id,
       },
     }),
   ]
@@ -260,18 +260,18 @@ export const spaceDashboardLoader = async (args: LoaderFunctionArgs) => {
     return redirect('/')
   }
 
-  const storey_id = args.params.storey_id
-  if (!storey_id) {
+  const storeyId = args.params.storey_id
+  if (!storeyId) {
     return redirect('/')
   }
 
-  const space_id = args.params.space_id
-  if (!space_id) {
+  const spaceId = args.params.space_id
+  if (!spaceId) {
     return redirect('/')
   }
 
   const spaceConfig = await getSpaceConfig({
-    spaceId: space_id,
+    spaceId,
     userId: user.id,
   })
 
@@ -286,8 +286,8 @@ export const spaceDashboardLoader = async (args: LoaderFunctionArgs) => {
   }
 
   const spaceDashboard = await getSpaceDashboard({
-    storeyId: storey_id,
-    spaceId: space_id,
+    storeyId,
+    spaceId,
     userId: user.id,
   })
 
@@ -296,15 +296,15 @@ export const spaceDashboardLoader = async (args: LoaderFunctionArgs) => {
   }
 
   const spaceItemCounts = await getSpaceItemCounts({
-    storeyId: storey_id,
+    storeyId,
     userId: user.id,
   })
 
   const url = new URL(args.request.url)
   const tab = url.searchParams.get('tab')
 
-  const resolvedContent = await displaySpaceContent(
-    {
+  const resolvedContent = await displaySpaceContent({
+    space: {
       id: spaceDashboard.id,
       name: spaceDashboard.name,
       description: spaceDashboard.description,
@@ -320,8 +320,9 @@ export const spaceDashboardLoader = async (args: LoaderFunctionArgs) => {
         },
       },
     },
+    historyIdForMultiContent,
     user,
-  )
+  })
 
   return {
     resolvedContent,

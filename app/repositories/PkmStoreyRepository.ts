@@ -364,6 +364,18 @@ export const getStoreyAndChildrenForUser = async ({
       description: true,
       content: true,
       suite_id: true,
+      pkm_history: {
+        where: {
+          suite_id: null,
+          storey_id: storeyId,
+          space_id: null,
+          is_current: true,
+          model_type: 'StoreyContents',
+        },
+        select: {
+          history_id: true,
+        },
+      },
       spaces: {
         select: {
           id: true,
