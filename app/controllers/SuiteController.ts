@@ -1,18 +1,20 @@
 import { getUserAuth } from '@/utils/auth'
 import { displayContent, displaySuiteContent } from '@/utils/content'
+import { db } from '@/utils/db'
+import { Prisma } from '@prisma/client'
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
   TypedResponse,
   redirect,
 } from '@remix-run/node'
+import { MultiContentItem } from '~/components/Suites/forms/SuiteForm'
 import { getStoreyItemCounts } from '~/repositories/PkmStoreyRepository'
 import {
   getSuiteConfig,
   getSuiteDashboard,
-  storeSuiteConfig,
-  updateSuiteConfig,
 } from '~/repositories/PkmSuiteRepository'
+import { determineSyncContentsTransactionsByFormData } from '~/services/PkmContentService'
 
 export type SuiteUpdateConfigActionResponse = {
   errors: {
@@ -33,8 +35,25 @@ export const suiteUpdateConfigAction = async (
     return redirect('/')
   }
 
-  const suite_id = args.params.suite_id
-  if (!suite_id) {
+  const suiteId = args.params.suite_id
+  if (!suiteId) {
+    return redirect('/')
+  }
+
+  const suite = await getSuiteConfig({
+    suiteId,
+    userId: user.id,
+  })
+
+  if (!suite) {
+    return redirect('/')
+  }
+
+  const existingHistoryIdForMultiContent =
+    suite.pkm_history[0]?.history_id ?? null
+
+  // When loading a Suite now, it should auto heal if it doesn't have an existing history
+  if (!existingHistoryIdForMultiContent) {
     return redirect('/')
   }
 
@@ -69,41 +88,77 @@ export const suiteUpdateConfigAction = async (
     }
   }
 
-  const content: FormDataEntryValue | null = formData.get('content')
+  const newHistoryId = crypto.randomUUID()
 
-  if (!content || content === '') {
+  const transactions: Prisma.PrismaPromise<unknown>[] = [
+    db.suite.update({
+      where: {
+        user_id: user.id,
+        id: suite.id,
+      },
+      data: {
+        name: name.toString(),
+        description: description.toString(),
+        content: 'Now handled by Multi Contents',
+      },
+    }),
+    db.pkmHistory.update({
+      where: {
+        history_id: existingHistoryIdForMultiContent,
+        is_current: true,
+      },
+      data: {
+        is_current: false,
+      },
+    }),
+    db.pkmHistory.create({
+      data: {
+        history_id: newHistoryId,
+        model_id: suite.id,
+        model_type: 'SuiteContents',
+        is_current: true,
+        user_id: user.id,
+        suite_id: suite.id,
+        storey_id: null,
+        space_id: null,
+      },
+    }),
+  ]
+
+  try {
+    const incomingContents = determineSyncContentsTransactionsByFormData({
+      formData,
+      modeId: suiteId,
+      historyId: newHistoryId,
+      modelType: 'SuiteContents',
+    })
+
+    incomingContents.forEach((incomingContent) => {
+      transactions.push(incomingContent)
+    })
+  } catch {
     return {
       errors: {
         fieldErrors: {
-          content: 'Content cannot be empty',
+          general: `Failed to update Suite. Please try again. [1]`,
         },
       },
     }
   }
 
-  const response = await updateSuiteConfig({
-    suiteId: suite_id,
-    userId: user.id,
-    content: content.toString(),
-    description: description.toString(),
-    name: name.toString(),
-  })
+  try {
+    await db.$transaction(transactions)
 
-  if (!response.success) {
+    return redirect(`/suite/${suiteId}/config`)
+  } catch {
     return {
       errors: {
         fieldErrors: {
-          general: 'Failed to update Suite. Please try again.',
+          general: 'Failed to update Suite. Please try again. [2]',
         },
       },
     }
   }
-
-  if (response.suite) {
-    return redirect(`/suite/${response.suite.id}/config`)
-  }
-
-  return redirect('/') // Not that it should get here
 }
 
 export const suiteConfigLoader = async (args: LoaderFunctionArgs) => {
@@ -112,13 +167,13 @@ export const suiteConfigLoader = async (args: LoaderFunctionArgs) => {
     return redirect('/')
   }
 
-  const suite_id = args.params.suite_id
-  if (!suite_id) {
+  const suiteId = args.params.suite_id
+  if (!suiteId) {
     return redirect('/')
   }
 
   const suite = await getSuiteConfig({
-    suiteId: suite_id,
+    suiteId,
     userId: user.id,
   })
 
@@ -126,10 +181,45 @@ export const suiteConfigLoader = async (args: LoaderFunctionArgs) => {
     return redirect('/')
   }
 
+  // A suite can have multiple pkm_history, but for the sake of getting its Multi Contents
+  //    we need the History Item that's current and belongs specifically to the Suite
+  const historyIdForMultiContent = suite.pkm_history[0]?.history_id ?? null
+
+  const suiteMultiContents: MultiContentItem[] = []
+  const resolvedMultiContents: string[] = []
+
+  if (historyIdForMultiContent) {
+    const multiContents = await db.pkmContents.findMany({
+      where: {
+        history_id: historyIdForMultiContent,
+        model_id: suite.id,
+      },
+    })
+
+    for (const multiContent of multiContents) {
+      suiteMultiContents.push({
+        id: multiContent.content_id,
+        sortOrder: multiContent.sort_order,
+        content: multiContent.content,
+        status: 'active',
+        originalStatus: 'active',
+      })
+
+      resolvedMultiContents.push(
+        await displayContent(multiContent.content, user),
+      )
+    }
+  }
+
   return {
     id: suite.id,
     content: suite.content,
-    resolvedContent: await displayContent(suite.content, user),
+    // Interesting when you put it this way. It _does_ make sense to define the glue between multi contents
+    resolvedContent:
+      '<div class="*:mb-2"><div>' +
+      resolvedMultiContents.join('</div><div>') +
+      '</div></div>',
+    multiContents: suiteMultiContents,
     description: suite.description,
     name: suite.name,
   }
@@ -141,35 +231,50 @@ export const suiteDashboardLoader = async (args: LoaderFunctionArgs) => {
     return redirect('/')
   }
 
-  const suite_id = args.params.suite_id
-  if (!suite_id) {
+  const suiteId = args.params.suite_id
+  if (!suiteId) {
     return redirect('/')
   }
 
-  const suiteDashboard = await getSuiteDashboard({
-    suiteId: suite_id,
+  const suiteConfig = await getSuiteConfig({
+    suiteId,
     userId: user.id,
   })
 
-  if (!suiteDashboard) {
+  if (!suiteConfig) {
+    return redirect('/')
+  }
+
+  const historyIdForMultiContent = suiteConfig.pkm_history[0]?.history_id
+
+  if (!historyIdForMultiContent) {
+    return redirect('/')
+  }
+
+  const suite = await getSuiteDashboard({
+    suiteId,
+    userId: user.id,
+  })
+
+  if (!suite) {
     return redirect('/')
   }
 
   const suiteItemCounts = await getStoreyItemCounts({
-    suiteId: suite_id,
+    suiteId,
     userId: user.id,
   })
 
   const url = new URL(args.request.url)
   const tab = url.searchParams.get('tab')
 
-  const resolvedContent = await displaySuiteContent(
-    {
-      id: suiteDashboard.id,
-      name: suiteDashboard.name,
-      description: suiteDashboard.description,
-      content: suiteDashboard.content,
-      storeys: suiteDashboard.storeys.map((storey) => {
+  const resolvedContent = await displaySuiteContent({
+    suite: {
+      id: suite.id,
+      name: suite.name,
+      description: suite.description,
+      content: suite.content,
+      storeys: suite.storeys.map((storey) => {
         return {
           id: storey.id,
           name: storey.name,
@@ -188,11 +293,12 @@ export const suiteDashboardLoader = async (args: LoaderFunctionArgs) => {
         }
       }),
     },
+    historyIdForMultiContent,
     user,
-  )
+  })
 
   return {
-    suiteDashboard,
+    suiteDashboard: suite,
     resolvedContent,
     suiteItemCounts,
     tab: tab ?? 'content',
@@ -236,38 +342,71 @@ export const suiteConfigNewAction = async (args: ActionFunctionArgs) => {
     }
   }
 
-  const content: FormDataEntryValue | null = formData.get('content')
+  const transactions: Prisma.PrismaPromise<unknown>[] = []
 
-  if (!content || content === '') {
+  const newSuiteId = crypto.randomUUID()
+
+  transactions.push(
+    db.suite.create({
+      data: {
+        id: newSuiteId,
+        content: 'Now handled by Multi Contents',
+        description: description.toString(),
+        name: name.toString(),
+        user_id: user.id,
+      },
+    }),
+  )
+
+  const newHistoryId = crypto.randomUUID()
+
+  transactions.push(
+    db.pkmHistory.create({
+      data: {
+        history_id: newHistoryId,
+        model_id: newSuiteId,
+        model_type: 'SuiteContents',
+        is_current: true,
+        user_id: user.id,
+        suite_id: newSuiteId,
+        storey_id: null,
+        space_id: null,
+      },
+    }),
+  )
+
+  try {
+    const incomingContents = determineSyncContentsTransactionsByFormData({
+      formData,
+      modeId: newSuiteId,
+      historyId: newHistoryId,
+      modelType: 'SuiteContents',
+    })
+
+    incomingContents.forEach((incomingContent) => {
+      transactions.push(incomingContent)
+    })
+  } catch {
     return {
       errors: {
         fieldErrors: {
-          content: 'Content cannot be empty',
+          general: `Failed to store Suite. Please try again. [1]`,
         },
       },
     }
   }
 
-  const response = await storeSuiteConfig({
-    userId: user.id,
-    content: content.toString(),
-    description: description.toString(),
-    name: name.toString(),
-  })
+  try {
+    await db.$transaction(transactions)
 
-  if (!response.success) {
+    return redirect(`/suite/${newSuiteId}/config`)
+  } catch {
     return {
       errors: {
         fieldErrors: {
-          general: 'Failed to store Suite. Please try again.',
+          general: 'Failed to store Suite. Please try again. [2]',
         },
       },
     }
   }
-
-  if (response.suite) {
-    return redirect(`/suite/${response.suite.id}/config`)
-  }
-
-  return redirect('/') // Not that it should get here
 }

@@ -60,6 +60,7 @@ import {
 import { getSpaceForUser } from '~/repositories/PkmSpaceRepository'
 import { getStoreyAndChildrenForUser } from '~/repositories/PkmStoreyRepository'
 import { getSuiteAndChildrenForUser } from '~/repositories/PkmSuiteRepository'
+import { db } from './db'
 
 export const resolveContentByArrayParams = async ({
   params,
@@ -110,15 +111,18 @@ export const viewSuiteContent = async (
       suiteId: args.suiteId,
       userId: user.id,
     })
+
     if (!suite) {
       return invalidOperationResponse('Suite - Suite not found')
     }
 
-    if (!suite.content) {
-      return invalidOperationResponse('Suite - Suite has no content')
-    }
+    const historyIdForMultiContent = suite.pkm_history[0]?.history_id ?? null
 
-    return await displaySuiteContent(suite, user)
+    return await displaySuiteContent({
+      suite,
+      historyIdForMultiContent,
+      user,
+    })
   } catch {
     return null
   }
@@ -142,15 +146,18 @@ export const viewStoreyContent = async (
       storeyId: args.storeyId,
       userId: user.id,
     })
+
     if (!storey) {
       return invalidOperationResponse('Storey - Storey not found')
     }
 
-    if (!storey.content) {
-      return invalidOperationResponse('Storey - Storey has no content')
-    }
+    const historyIdForMultiContent = storey.pkm_history[0]?.history_id ?? null
 
-    return await displayStoreyContent(storey, user)
+    return await displayStoreyContent({
+      storey,
+      historyIdForMultiContent,
+      user,
+    })
   } catch {
     return null
   }
@@ -174,15 +181,14 @@ export const viewSpaceContent = async (
       spaceId: args.spaceId,
       userId: user.id,
     })
+
     if (!space) {
       return invalidOperationResponse('Space - Space not found')
     }
 
-    if (!space.content) {
-      return invalidOperationResponse('Space - Space has no content')
-    }
+    const historyIdForMultiContent = space.pkm_history[0]?.history_id ?? null
 
-    return await displaySpaceContent(space, user)
+    return await displaySpaceContent({ space, historyIdForMultiContent, user })
   } catch (e) {
     return null
   }
@@ -531,7 +537,11 @@ export const looselyCheckArrayParamsAreValid = (params: string[]) => {
   }
 }
 
-export const displaySuiteContent = async (
+export const displaySuiteContent = async ({
+  suite,
+  historyIdForMultiContent,
+  user,
+}: {
   suite: {
     id: string
     name: string
@@ -551,181 +561,217 @@ export const displaySuiteContent = async (
         storey_id: string
       }[]
     }[]
-  },
-  user: User,
-) => {
-  if (!suite.content) {
-    return ''
   }
+  historyIdForMultiContent: string
+  user: User
+}) => {
+  const multiContents = await db.pkmContents.findMany({
+    where: {
+      history_id: historyIdForMultiContent,
+      model_id: suite.id,
+    },
+    orderBy: {
+      sort_order: 'asc',
+    },
+  })
 
-  let returnContent = suite.content
+  const resolvedMultiContents = []
 
-  // == Suite Specific ==
+  for (const content of multiContents) {
+    let returnContent = content.content
 
-  returnContent = await expandSuiteStoreyKanbans(returnContent, suite, user)
-  returnContent = await expandSuiteKanbans(returnContent, suite, user)
+    // == Suite Specific ==
 
-  returnContent = expandSuiteName(returnContent, suite)
-  returnContent = expandSuiteDescription(returnContent, suite)
+    returnContent = await expandSuiteStoreyKanbans(returnContent, suite, user)
+    returnContent = await expandSuiteKanbans(returnContent, suite, user)
 
-  // == Suite Children ==
+    returnContent = expandSuiteName(returnContent, suite)
+    returnContent = expandSuiteDescription(returnContent, suite)
 
-  if (!suite.storeys) {
-    return displayContent(returnContent, user)
-  }
+    // == Suite Children ==
 
-  const children = [...returnContent.matchAll(/<div data-children><\/div>/gi)]
-
-  if (children.length) {
-    let childrenContent = ''
-    for (const storey of suite.storeys.sort((storeyA, storeyB) =>
-      storeyA.name.localeCompare(storeyB.name),
-    )) {
-      const suiteContent = await displayStoreyContent(storey, user)
-      childrenContent += `<div class="mb-2">${suiteContent}</div>`
+    if (!suite.storeys) {
+      resolvedMultiContents.push(await displayContent(returnContent, user))
+      continue
     }
 
-    for (const { 0: match, index } of children.reverse()) {
+    const children = [...returnContent.matchAll(/<div data-children><\/div>/gi)]
+
+    if (children.length) {
+      let childrenContent = ''
+      for (const storey of suite.storeys.sort((storeyA, storeyB) =>
+        storeyA.name.localeCompare(storeyB.name),
+      )) {
+        const suiteContent = await displayStoreyContent({
+          storey,
+          historyIdForMultiContent,
+          user,
+        })
+        childrenContent += `<div class="mb-2">${suiteContent}</div>`
+      }
+
+      for (const { 0: match, index } of children.reverse()) {
+        returnContent =
+          returnContent.slice(0, index) +
+          childrenContent +
+          returnContent.slice(index! + match.length)
+      }
+    }
+
+    const childrenComplex = [
+      ...returnContent.matchAll(
+        /<div data-children-list(-names|-descriptions|-contents)?(-names|-descriptions|-contents)?(-names|-descriptions|-contents)><\/div>/gi,
+      ),
+    ]
+
+    // The typing on matchAll is horrendous, so we have to do this foreach instead of referencing the first result
+    for (const {
+      0: match,
+      1: flagOne,
+      2: flagTwo,
+      3: flagThree,
+      index,
+    } of childrenComplex.reverse()) {
+      let childrenComplexContent = ''
+      for (const storey of suite.storeys.sort((storeyA, storeyB) =>
+        storeyA.name.localeCompare(storeyB.name),
+      )) {
+        childrenComplexContent += '<div class="mb-2">'
+
+        let storeyContent = ''
+
+        if (flagOne === '-names') {
+          storeyContent += `<div>${storey.name}</div>`
+        }
+
+        if (flagOne === '-descriptions') {
+          storeyContent += `<div>${storey.description}</div>`
+        }
+
+        if (flagOne === '-contents') {
+          storeyContent += `<div>${storey.content}</div>`
+        }
+
+        if (flagTwo === '-names') {
+          storeyContent += `<div>${storey.name}</div>`
+        }
+
+        if (flagTwo === '-descriptions') {
+          storeyContent += `<div>${storey.description}</div>`
+        }
+
+        if (flagTwo === '-contents') {
+          storeyContent += `<div>${storey.content}</div>`
+        }
+
+        if (flagThree === '-names') {
+          storeyContent += `<div>${storey.name}</div>`
+        }
+
+        if (flagThree === '-descriptions') {
+          storeyContent += `<div>${storey.description}</div>`
+        }
+
+        if (flagThree === '-contents') {
+          storeyContent += `<div>${storey.content}</div>`
+        }
+
+        const fakeStorey = {
+          id: storey.id,
+          name: storey.name,
+          description: storey.description,
+          content: storeyContent,
+          suite_id: storey.suite_id,
+          spaces: storey.spaces?.map((space) => {
+            return {
+              id: space.id,
+              name: space.name,
+              description: space.description,
+              content: space.content,
+              storey_id: space.storey_id,
+            }
+          }),
+        }
+
+        childrenComplexContent += await displayStoreyContent({
+          storey: fakeStorey,
+          historyIdForMultiContent,
+          user,
+        })
+
+        childrenComplexContent += '</div>'
+      }
+
       returnContent =
-        returnContent.slice(0, index) +
-        childrenContent +
+        returnContent.slice(0, index!) +
+        childrenComplexContent +
         returnContent.slice(index! + match.length)
     }
-  }
 
-  const childrenComplex = [
-    ...returnContent.matchAll(
-      /<div data-children-list(-names|-descriptions|-contents)?(-names|-descriptions|-contents)?(-names|-descriptions|-contents)><\/div>/gi,
-    ),
-  ]
+    const childrenWithNameLinks = [
+      ...returnContent.matchAll(/<div data-children-w-name-links><\/div>/gi),
+    ]
 
-  // The typing on matchAll is horrendous, so we have to do this foreach instead of referencing the first result
-  for (const {
-    0: match,
-    1: flagOne,
-    2: flagTwo,
-    3: flagThree,
-    index,
-  } of childrenComplex.reverse()) {
-    let childrenComplexContent = ''
-    for (const storey of suite.storeys.sort((storeyA, storeyB) =>
-      storeyA.name.localeCompare(storeyB.name),
-    )) {
-      childrenComplexContent += '<div class="mb-2">'
-
-      let storeyContent = ''
-
-      if (flagOne === '-names') {
-        storeyContent += `<div>${storey.name}</div>`
-      }
-
-      if (flagOne === '-descriptions') {
-        storeyContent += `<div>${storey.description}</div>`
-      }
-
-      if (flagOne === '-contents') {
-        storeyContent += `<div>${storey.content}</div>`
-      }
-
-      if (flagTwo === '-names') {
-        storeyContent += `<div>${storey.name}</div>`
-      }
-
-      if (flagTwo === '-descriptions') {
-        storeyContent += `<div>${storey.description}</div>`
-      }
-
-      if (flagTwo === '-contents') {
-        storeyContent += `<div>${storey.content}</div>`
-      }
-
-      if (flagThree === '-names') {
-        storeyContent += `<div>${storey.name}</div>`
-      }
-
-      if (flagThree === '-descriptions') {
-        storeyContent += `<div>${storey.description}</div>`
-      }
-
-      if (flagThree === '-contents') {
-        storeyContent += `<div>${storey.content}</div>`
-      }
-
-      const fakeStorey = {
-        id: storey.id,
-        name: storey.name,
-        description: storey.description,
-        content: storeyContent,
-        suite_id: storey.suite_id,
-        spaces: storey.spaces?.map((space) => {
-          return {
-            id: space.id,
-            name: space.name,
-            description: space.description,
-            content: space.content,
-            storey_id: space.storey_id,
-          }
-        }),
-      }
-
-      childrenComplexContent += await displayStoreyContent(fakeStorey, user)
-
-      childrenComplexContent += '</div>'
-    }
-
-    returnContent =
-      returnContent.slice(0, index!) +
-      childrenComplexContent +
-      returnContent.slice(index! + match.length)
-  }
-
-  const childrenWithNameLinks = [
-    ...returnContent.matchAll(/<div data-children-w-name-links><\/div>/gi),
-  ]
-
-  if (childrenWithNameLinks.length) {
-    let childrenContent = ''
-    for (const storey of suite.storeys.sort((storeyA, storeyB) =>
-      storeyA.name.localeCompare(storeyB.name),
-    )) {
-      const suiteContent = await displayStoreyContent(storey, user)
-      childrenContent += `
+    if (childrenWithNameLinks.length) {
+      let childrenContent = ''
+      for (const storey of suite.storeys.sort((storeyA, storeyB) =>
+        storeyA.name.localeCompare(storeyB.name),
+      )) {
+        const suiteContent = await displayStoreyContent({
+          storey,
+          historyIdForMultiContent,
+          user,
+        })
+        childrenContent += `
         <div class="mb-2">
           <div class="w-full text-xs text-right">
             <a href="/suite/${suite.id}/storey/${storey.id}/dashboard">${storey.name}</a>
           </div>
           ${suiteContent}
         </div>`
+      }
+
+      for (const { 0: match, index } of childrenWithNameLinks.reverse()) {
+        returnContent =
+          returnContent.slice(0, index) +
+          childrenContent +
+          returnContent.slice(index! + match.length)
+      }
     }
 
-    for (const { 0: match, index } of childrenWithNameLinks.reverse()) {
+    const storeys = [
+      ...returnContent.matchAll(
+        /<div data-storey="([a-zA-Z0-9/-]*)"><\/div>/gi,
+      ),
+    ]
+
+    for (const { 0: match, 1: storeyId, index } of storeys.reverse()) {
       returnContent =
         returnContent.slice(0, index) +
-        childrenContent +
-        returnContent.slice(index! + match.length)
-    }
-  }
-
-  const storeys = [
-    ...returnContent.matchAll(/<div data-storey="([a-zA-Z0-9/-]*)"><\/div>/gi),
-  ]
-
-  for (const { 0: match, 1: storeyId, index } of storeys.reverse()) {
-    returnContent =
-      returnContent.slice(0, index) +
-      `<a href="/suite/${suite.id}/storey/${storeyId}/dashboard">
+        `<a href="/suite/${suite.id}/storey/${storeyId}/dashboard">
         <div data-content-loc="/content/suiteId/${suite.id}/storeyId/${storeyId}"></div>
       </a>` +
-      returnContent.slice(index! + match.length)
+        returnContent.slice(index! + match.length)
+    }
+
+    resolvedMultiContents.push(await displayContent(returnContent, user))
   }
 
-  return displayContent(returnContent, user)
+  return (
+    '<div class="*:mb-2"><div>' +
+    resolvedMultiContents.join('</div><div>') +
+    '</div></div>'
+  )
 }
 
 /*
   Expand Storey-only supported variables
 */
-export const displayStoreyContent = async (
+export const displayStoreyContent = async ({
+  storey,
+  historyIdForMultiContent,
+  user,
+}: {
   storey: {
     id: string
     name: string
@@ -739,152 +785,83 @@ export const displayStoreyContent = async (
       content: string
       storey_id: string
     }[]
-  },
-  user: User,
-) => {
-  if (!storey.content) {
-    return ''
   }
+  historyIdForMultiContent: string
+  user: User
+}) => {
+  const multiContents = await db.pkmContents.findMany({
+    where: {
+      history_id: historyIdForMultiContent,
+      model_id: storey.id,
+    },
+    orderBy: {
+      sort_order: 'asc',
+    },
+  })
 
-  let returnContent = storey.content
+  const resolvedMultiContents = []
 
-  // == Storey Specific ==
+  for (const content of multiContents) {
+    let returnContent = content.content
 
-  returnContent = await expandStoreySpaceKanbans(returnContent, storey, user)
-  returnContent = await expandStoreyKanbans(returnContent, storey, user)
+    // == Storey Specific ==
 
-  const nameLinks = [...returnContent.matchAll(/<div data-name-link><\/div>/gi)]
+    returnContent = await expandStoreySpaceKanbans(returnContent, storey, user)
+    returnContent = await expandStoreyKanbans(returnContent, storey, user)
 
-  if (nameLinks.length) {
-    for (const { 0: match, index } of nameLinks.reverse()) {
-      returnContent =
-        returnContent.slice(0, index) +
-        `<a href="/suite/${storey.suite_id}/storey/${storey.id}/dashboard"><div>${storey.name}</div></a>` +
-        returnContent.slice(index! + match.length)
-    }
-  }
+    const nameLinks = [
+      ...returnContent.matchAll(/<div data-name-link><\/div>/gi),
+    ]
 
-  const names = [...returnContent.matchAll(/<div data-name><\/div>/gi)]
-
-  if (names.length) {
-    for (const { 0: match, index } of names.reverse()) {
-      returnContent =
-        returnContent.slice(0, index) +
-        `<div>${storey.name}</div>` +
-        returnContent.slice(index! + match.length)
-    }
-  }
-
-  const descriptions = [
-    ...returnContent.matchAll(/<div data-description><\/div>/gi),
-  ]
-
-  if (descriptions.length) {
-    for (const { 0: match, index } of descriptions.reverse()) {
-      returnContent =
-        returnContent.slice(0, index) +
-        `<div>${storey.description}</div>` +
-        returnContent.slice(index! + match.length)
-    }
-  }
-
-  // == Storey Children ==
-
-  if (!storey.spaces) {
-    return displayContent(returnContent, user)
-  }
-
-  const children = [...returnContent.matchAll(/<div data-children><\/div>/gi)]
-
-  if (children.length) {
-    let childrenContent = ''
-    for (const space of storey.spaces.sort((spaceA, spaceB) =>
-      spaceA.name.localeCompare(spaceB.name),
-    )) {
-      const spaceContent = await displaySpaceContent(
-        {
-          id: space.id,
-          name: space.name,
-          description: space.description,
-          content: space.content,
-          storey: {
-            id: storey.id,
-            name: storey.name,
-            description: storey.description,
-            suite: {
-              id: storey.suite_id,
-              name: 'NOT YET IMPLEMENTED',
-              description: 'NOT YET IMPLEMENTED',
-            },
-          },
-        },
-        user,
-      )
-      childrenContent += `<div class="mb-2">${spaceContent}</div>`
+    if (nameLinks.length) {
+      for (const { 0: match, index } of nameLinks.reverse()) {
+        returnContent =
+          returnContent.slice(0, index) +
+          `<a href="/suite/${storey.suite_id}/storey/${storey.id}/dashboard"><div>${storey.name}</div></a>` +
+          returnContent.slice(index! + match.length)
+      }
     }
 
-    for (const { 0: match, index } of children.reverse()) {
-      returnContent =
-        returnContent.slice(0, index) +
-        childrenContent +
-        returnContent.slice(index! + match.length)
-    }
-  }
+    const names = [...returnContent.matchAll(/<div data-name><\/div>/gi)]
 
-  const childrenWithNameLinks = [
-    ...returnContent.matchAll(/<div data-children-w-name-links><\/div>/gi),
-  ]
-
-  if (childrenWithNameLinks.length) {
-    let childrenContent = ''
-    for (const space of storey.spaces.sort((spaceA, spaceB) =>
-      spaceA.name.localeCompare(spaceB.name),
-    )) {
-      const spaceContent = await displaySpaceContent(
-        {
-          id: space.id,
-          name: space.name,
-          description: space.description,
-          content: space.content,
-          storey: {
-            id: storey.id,
-            name: storey.name,
-            description: storey.description,
-            suite: {
-              id: storey.suite_id,
-              name: 'NOT YET IMPLEMENTED',
-              description: 'NOT YET IMPLEMENTED',
-            },
-          },
-        },
-        user,
-      )
-      childrenContent += `
-        <div class="mb-2">
-          <div class="w-full text-xs text-right">
-            <a href="/suite/${storey.suite_id}/storey/${storey.id}/space/${space.id}/dashboard">${space.name}</a>
-          </div>
-          ${spaceContent}
-        </div>`
+    if (names.length) {
+      for (const { 0: match, index } of names.reverse()) {
+        returnContent =
+          returnContent.slice(0, index) +
+          `<div>${storey.name}</div>` +
+          returnContent.slice(index! + match.length)
+      }
     }
 
-    for (const { 0: match, index } of childrenWithNameLinks.reverse()) {
-      returnContent =
-        returnContent.slice(0, index) +
-        childrenContent +
-        returnContent.slice(index! + match.length)
+    const descriptions = [
+      ...returnContent.matchAll(/<div data-description><\/div>/gi),
+    ]
+
+    if (descriptions.length) {
+      for (const { 0: match, index } of descriptions.reverse()) {
+        returnContent =
+          returnContent.slice(0, index) +
+          `<div>${storey.description}</div>` +
+          returnContent.slice(index! + match.length)
+      }
     }
-  }
 
-  const spaces = [
-    ...returnContent.matchAll(/<div data-space="([a-zA-Z0-9/-]*)"><\/div>/gi),
-  ]
+    // == Storey Children ==
 
-  for (const { 0: match, 1: spaceId, index } of spaces.reverse()) {
-    const space = storey.spaces.find((space) => space.id === spaceId)
-    const spaceContent = space
-      ? await displaySpaceContent(
-          {
+    if (!storey.spaces) {
+      resolvedMultiContents.push(await displayContent(returnContent, user))
+      continue
+    }
+
+    const children = [...returnContent.matchAll(/<div data-children><\/div>/gi)]
+
+    if (children.length) {
+      let childrenContent = ''
+      for (const space of storey.spaces.sort((spaceA, spaceB) =>
+        spaceA.name.localeCompare(spaceB.name),
+      )) {
+        const spaceContent = await displaySpaceContent({
+          space: {
             id: space.id,
             name: space.name,
             description: space.description,
@@ -900,20 +877,116 @@ export const displayStoreyContent = async (
               },
             },
           },
+          historyIdForMultiContent,
           user,
-        )
-      : 'SPACE NOT FOUND'
+        })
+        childrenContent += `<div class="mb-2">${spaceContent}</div>`
+      }
 
-    returnContent =
-      returnContent.slice(0, index) +
-      spaceContent +
-      returnContent.slice(index! + match.length)
+      for (const { 0: match, index } of children.reverse()) {
+        returnContent =
+          returnContent.slice(0, index) +
+          childrenContent +
+          returnContent.slice(index! + match.length)
+      }
+    }
+
+    const childrenWithNameLinks = [
+      ...returnContent.matchAll(/<div data-children-w-name-links><\/div>/gi),
+    ]
+
+    if (childrenWithNameLinks.length) {
+      let childrenContent = ''
+      for (const space of storey.spaces.sort((spaceA, spaceB) =>
+        spaceA.name.localeCompare(spaceB.name),
+      )) {
+        const spaceContent = await displaySpaceContent({
+          space: {
+            id: space.id,
+            name: space.name,
+            description: space.description,
+            content: space.content,
+            storey: {
+              id: storey.id,
+              name: storey.name,
+              description: storey.description,
+              suite: {
+                id: storey.suite_id,
+                name: 'NOT YET IMPLEMENTED',
+                description: 'NOT YET IMPLEMENTED',
+              },
+            },
+          },
+          historyIdForMultiContent,
+          user,
+        })
+        childrenContent += `
+        <div class="mb-2">
+          <div class="w-full text-xs text-right">
+            <a href="/suite/${storey.suite_id}/storey/${storey.id}/space/${space.id}/dashboard">${space.name}</a>
+          </div>
+          ${spaceContent}
+        </div>`
+      }
+
+      for (const { 0: match, index } of childrenWithNameLinks.reverse()) {
+        returnContent =
+          returnContent.slice(0, index) +
+          childrenContent +
+          returnContent.slice(index! + match.length)
+      }
+    }
+
+    const spaces = [
+      ...returnContent.matchAll(/<div data-space="([a-zA-Z0-9/-]*)"><\/div>/gi),
+    ]
+
+    for (const { 0: match, 1: spaceId, index } of spaces.reverse()) {
+      const space = storey.spaces.find((space) => space.id === spaceId)
+      const spaceContent = space
+        ? await displaySpaceContent({
+            space: {
+              id: space.id,
+              name: space.name,
+              description: space.description,
+              content: space.content,
+              storey: {
+                id: storey.id,
+                name: storey.name,
+                description: storey.description,
+                suite: {
+                  id: storey.suite_id,
+                  name: 'NOT YET IMPLEMENTED',
+                  description: 'NOT YET IMPLEMENTED',
+                },
+              },
+            },
+            historyIdForMultiContent,
+            user,
+          })
+        : 'SPACE NOT FOUND'
+
+      returnContent =
+        returnContent.slice(0, index) +
+        spaceContent +
+        returnContent.slice(index! + match.length)
+    }
+
+    resolvedMultiContents.push(await displayContent(returnContent, user))
   }
 
-  return displayContent(returnContent, user)
+  return (
+    '<div class="*:mb-2"><div>' +
+    resolvedMultiContents.join('</div><div>') +
+    '</div></div>'
+  )
 }
 
-export const displaySpaceContent = async (
+export const displaySpaceContent = async ({
+  space,
+  historyIdForMultiContent,
+  user,
+}: {
   space: {
     id: string
     name: string
@@ -929,55 +1002,74 @@ export const displaySpaceContent = async (
         description: string
       }
     }
-  },
-  user: User,
-) => {
-  if (!space.content) {
-    return ''
   }
+  historyIdForMultiContent: string
+  user: User
+}) => {
+  const multiContents = await db.pkmContents.findMany({
+    where: {
+      history_id: historyIdForMultiContent,
+      model_id: space.id,
+    },
+    orderBy: {
+      sort_order: 'asc',
+    },
+  })
 
-  let returnContent = space.content
+  const resolvedMultiContents = []
 
-  // == Space Specific ==
+  for (const content of multiContents) {
+    let returnContent = content.content
 
-  returnContent = await expandSpaceKanbans(returnContent, space, user)
+    // == Space Specific ==
 
-  const nameLinks = [...returnContent.matchAll(/<div data-name-link><\/div>/gi)]
+    returnContent = await expandSpaceKanbans(returnContent, space, user)
 
-  if (nameLinks.length) {
-    for (const { 0: match, index } of nameLinks.reverse()) {
-      returnContent =
-        returnContent.slice(0, index) +
-        `<a href="/suite/${space.storey.suite.id}/storey/${space.storey.id}/space/${space.id}/dashboard"><div>${space.name}</div></a>` +
-        returnContent.slice(index! + match.length)
+    const nameLinks = [
+      ...returnContent.matchAll(/<div data-name-link><\/div>/gi),
+    ]
+
+    if (nameLinks.length) {
+      for (const { 0: match, index } of nameLinks.reverse()) {
+        returnContent =
+          returnContent.slice(0, index) +
+          `<a href="/suite/${space.storey.suite.id}/storey/${space.storey.id}/space/${space.id}/dashboard"><div>${space.name}</div></a>` +
+          returnContent.slice(index! + match.length)
+      }
     }
-  }
 
-  const names = [...returnContent.matchAll(/<div data-name><\/div>/gi)]
+    const names = [...returnContent.matchAll(/<div data-name><\/div>/gi)]
 
-  if (names.length) {
-    for (const { 0: match, index } of names.reverse()) {
-      returnContent =
-        returnContent.slice(0, index) +
-        `<div>${space.name}</div>` +
-        returnContent.slice(index! + match.length)
+    if (names.length) {
+      for (const { 0: match, index } of names.reverse()) {
+        returnContent =
+          returnContent.slice(0, index) +
+          `<div>${space.name}</div>` +
+          returnContent.slice(index! + match.length)
+      }
     }
-  }
 
-  const descriptions = [
-    ...returnContent.matchAll(/<div data-description><\/div>/gi),
-  ]
+    const descriptions = [
+      ...returnContent.matchAll(/<div data-description><\/div>/gi),
+    ]
 
-  if (descriptions.length) {
-    for (const { 0: match, index } of descriptions.reverse()) {
-      returnContent =
-        returnContent.slice(0, index) +
-        `<div>${space.description}</div>` +
-        returnContent.slice(index! + match.length)
+    if (descriptions.length) {
+      for (const { 0: match, index } of descriptions.reverse()) {
+        returnContent =
+          returnContent.slice(0, index) +
+          `<div>${space.description}</div>` +
+          returnContent.slice(index! + match.length)
+      }
     }
+
+    resolvedMultiContents.push(await displayContent(returnContent, user))
   }
 
-  return displayContent(returnContent, user)
+  return (
+    '<div class="*:mb-2"><div>' +
+    resolvedMultiContents.join('</div><div>') +
+    '</div></div>'
+  )
 }
 
 export const displayContent = async (content: string, user: User) => {

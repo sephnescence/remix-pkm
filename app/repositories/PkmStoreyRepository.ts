@@ -1,5 +1,6 @@
 import { db } from '@/utils/db'
 import { Prisma } from '@prisma/client'
+import { autoHealStoreyHistoryAndContents } from '~/services/PkmStoreyService'
 
 export type ItemCountRow = {
   epiphany_count: number
@@ -14,22 +15,6 @@ export type StoreyItemCountsResults = ItemCountRow & {
   id: string
 }
 
-type StoreStoreyArgs = {
-  suiteId: string
-  userId: string
-  content: string
-  description: string
-  name: string
-}
-
-type UpdateStoreyArgs = {
-  storeyId: string
-  userId: string
-  content: string
-  description: string
-  name: string
-}
-
 export type StoreyForMove = {
   id: string
   description: string
@@ -39,70 +24,6 @@ export type StoreyForMove = {
   suiteId: string
 }
 
-export const storeStoreyConfig = async ({
-  suiteId,
-  userId,
-  content,
-  description,
-  name,
-}: StoreStoreyArgs) => {
-  return await db.storey
-    .create({
-      data: {
-        suite_id: suiteId,
-        user_id: userId,
-        name,
-        description,
-        content,
-      },
-    })
-    .then((storey) => {
-      return {
-        success: true,
-        storey,
-      }
-    })
-    .catch(() => {
-      return {
-        success: false,
-        storey: null,
-      }
-    })
-}
-
-export const updateStoreyConfig = async ({
-  storeyId,
-  userId,
-  content,
-  description,
-  name,
-}: UpdateStoreyArgs) => {
-  return await db.storey
-    .update({
-      where: {
-        user_id: userId,
-        id: storeyId,
-      },
-      data: {
-        name,
-        description,
-        content,
-      },
-    })
-    .then((storey) => {
-      return {
-        success: true,
-        storey,
-      }
-    })
-    .catch(() => {
-      return {
-        success: false,
-        storey: null,
-      }
-    })
-}
-
 export const getStoreyConfig = async ({
   storeyId,
   userId,
@@ -110,7 +31,7 @@ export const getStoreyConfig = async ({
   storeyId: string
   userId: string
 }) => {
-  const storey = await db.storey.findFirst({
+  const args = {
     where: {
       user_id: userId,
       id: storeyId,
@@ -121,16 +42,41 @@ export const getStoreyConfig = async ({
       content: true,
       description: true,
       name: true,
+      pkm_history: {
+        where: {
+          suite_id: null,
+          storey_id: storeyId,
+          space_id: null,
+          is_current: true,
+          model_type: 'StoreyContents',
+        },
+        select: {
+          history_id: true,
+        },
+      },
       suite: {
         select: {
           name: true,
         },
       },
     },
-  })
+  }
+
+  const storey = await db.storey.findFirst(args)
 
   if (!storey) {
     return null
+  }
+
+  if (!storey.pkm_history.length) {
+    await autoHealStoreyHistoryAndContents({
+      storeyId,
+      userId,
+      content: storey.content,
+    })
+
+    // TypeScript complains if I just call the method recursively
+    return await db.storey.findFirst(args)
   }
 
   return storey
@@ -145,7 +91,7 @@ export const getStoreyDashboard = async ({
   storeyId: string
   userId: string
 }) => {
-  const storey = await db.storey.findFirst({
+  const args = {
     where: {
       user_id: userId,
       suite_id: suiteId,
@@ -229,7 +175,9 @@ export const getStoreyDashboard = async ({
         },
       },
     },
-  })
+  }
+
+  const storey = await db.storey.findFirst(args)
 
   if (!storey) {
     return null
@@ -416,6 +364,18 @@ export const getStoreyAndChildrenForUser = async ({
       description: true,
       content: true,
       suite_id: true,
+      pkm_history: {
+        where: {
+          suite_id: null,
+          storey_id: storeyId,
+          space_id: null,
+          is_current: true,
+          model_type: 'StoreyContents',
+        },
+        select: {
+          history_id: true,
+        },
+      },
       spaces: {
         select: {
           id: true,

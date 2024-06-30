@@ -1,5 +1,6 @@
 import { db } from '@/utils/db'
 import { Prisma } from '@prisma/client'
+import { autoHealSpaceHistoryAndContents } from '~/services/PkmSpaceService'
 
 export type ItemCountRow = {
   epiphany_count: number
@@ -14,92 +15,12 @@ export type SpaceItemCountsResults = ItemCountRow & {
   id: string
 }
 
-type StoreSpaceArgs = {
-  storeyId: string
-  userId: string
-  content: string
-  description: string
-  name: string
-}
-
-type UpdateSpaceArgs = {
-  spaceId: string
-  userId: string
-  content: string
-  description: string
-  name: string
-}
-
 export type SpaceForMove = {
   id: string
   description: string
   name: string
   counts: ItemCountRow
   storeyId: string
-}
-
-export const storeSpaceConfig = async ({
-  storeyId,
-  userId,
-  content,
-  description,
-  name,
-}: StoreSpaceArgs) => {
-  return await db.space
-    .create({
-      data: {
-        storey_id: storeyId,
-        user_id: userId,
-        name,
-        description,
-        content,
-      },
-    })
-    .then((space) => {
-      return {
-        success: true,
-        space,
-      }
-    })
-    .catch(() => {
-      return {
-        success: false,
-        space: null,
-      }
-    })
-}
-
-export const updateSpaceConfig = async ({
-  spaceId,
-  userId,
-  content,
-  description,
-  name,
-}: UpdateSpaceArgs) => {
-  return await db.space
-    .update({
-      where: {
-        user_id: userId,
-        id: spaceId,
-      },
-      data: {
-        name,
-        description,
-        content,
-      },
-    })
-    .then((space) => {
-      return {
-        success: true,
-        space,
-      }
-    })
-    .catch(() => {
-      return {
-        success: false,
-        space: null,
-      }
-    })
 }
 
 export const getSpaceConfig = async ({
@@ -109,7 +30,7 @@ export const getSpaceConfig = async ({
   spaceId: string
   userId: string
 }) => {
-  const space = await db.space.findFirst({
+  const args = {
     where: {
       user_id: userId,
       id: spaceId,
@@ -119,6 +40,18 @@ export const getSpaceConfig = async ({
       content: true,
       description: true,
       name: true,
+      pkm_history: {
+        where: {
+          suite_id: null,
+          storey_id: null,
+          space_id: spaceId,
+          is_current: true,
+          model_type: 'SpaceContents',
+        },
+        select: {
+          history_id: true,
+        },
+      },
       storey: {
         select: {
           id: true,
@@ -132,10 +65,23 @@ export const getSpaceConfig = async ({
         },
       },
     },
-  })
+  }
+
+  const space = await db.space.findFirst(args)
 
   if (!space) {
     return null
+  }
+
+  if (!space.pkm_history.length) {
+    await autoHealSpaceHistoryAndContents({
+      spaceId,
+      userId,
+      content: space.content,
+    })
+
+    // TypeScript complains if I just call the method recursively
+    return await db.space.findFirst(args)
   }
 
   return space
@@ -150,7 +96,7 @@ export const getSpaceDashboard = async ({
   spaceId: string
   userId: string
 }) => {
-  const space = await db.space.findFirst({
+  const args = {
     where: {
       user_id: userId,
       storey_id: storeyId,
@@ -233,7 +179,9 @@ export const getSpaceDashboard = async ({
         },
       },
     },
-  })
+  }
+
+  const space = await db.space.findFirst(args)
 
   if (!space) {
     return null
@@ -351,6 +299,18 @@ export const getSpaceForUser = async ({
       description: true,
       content: true,
       id: true,
+      pkm_history: {
+        where: {
+          suite_id: null,
+          storey_id: null,
+          space_id: spaceId,
+          is_current: true,
+          model_type: 'SpaceContents',
+        },
+        select: {
+          history_id: true,
+        },
+      },
       storey: {
         select: {
           id: true,

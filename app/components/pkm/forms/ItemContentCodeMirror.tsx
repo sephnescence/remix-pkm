@@ -1,6 +1,6 @@
 'use client'
 
-import { Dispatch, SetStateAction, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import {
   EditorView,
   drawSelection,
@@ -27,9 +27,15 @@ import { html } from '@codemirror/lang-html'
 const ItemContentCodeMirror = ({
   content,
   setContent,
+  parentDivId = 'editor',
+  sortOrder = 1,
+  status = 'add',
 }: {
   content: string
-  setContent: Dispatch<SetStateAction<string>>
+  setContent: (newContent: string) => void
+  parentDivId?: string
+  sortOrder?: number
+  status?: string
 }) => {
   const codeMirrorRef = useRef<EditorView>()
 
@@ -50,7 +56,7 @@ const ItemContentCodeMirror = ({
     )
 
     codeMirrorRef.current = new EditorView({
-      parent: document.getElementById('editor')!,
+      parent: document.getElementById(parentDivId)!,
       extensions: [
         autocompletion(), // Adds autocompletion
         bracketMatching(), // Highlights matching brackets
@@ -76,14 +82,24 @@ const ItemContentCodeMirror = ({
   })
 
   return (
-    <label>
-      <div className="mb-4">Content</div>
+    <>
+      {parentDivId === 'editor' && <div className="mb-1">Content</div>}
       <div
-        id="editor"
-        className="min-w-full min-h-96 bg-zinc-200 text-black"
+        id={parentDivId}
+        className="min-w-full min-h-16 bg-zinc-200 text-black"
       ></div>
-      <textarea hidden readOnly name="content" value={content} />
-    </label>
+      {parentDivId === 'editor' && (
+        <textarea hidden readOnly name="content" value={content} />
+      )}
+      {parentDivId !== 'editor' && (
+        <textarea
+          hidden
+          readOnly
+          name={`multi_contents__${parentDivId}__${sortOrder}__${status}`}
+          value={content}
+        />
+      )}
+    </>
   )
 }
 

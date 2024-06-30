@@ -36,7 +36,7 @@ export const loader: LoaderFunction = async (args) => {
     )
   }
 
-  // Even if the user already exist, ensure "auto healing" by upserting the default Suite, Storey, and Space
+  // Even if the user already exists, ensure "auto healing" by upserting the default Suite, Storey, and Space
   transactions.push(
     db.suite.upsert({
       where: {
@@ -47,10 +47,11 @@ export const loader: LoaderFunction = async (args) => {
         id: userId,
         user_id: userId,
         name: 'Welcome Center',
-        description: 'Enjoy your stay at Innsight',
+        description: 'Enjoy your stay at Rethought',
       },
     }),
   )
+
   transactions.push(
     db.storey.upsert({
       where: {
@@ -66,6 +67,7 @@ export const loader: LoaderFunction = async (args) => {
       },
     }),
   )
+
   transactions.push(
     db.space.upsert({
       where: {

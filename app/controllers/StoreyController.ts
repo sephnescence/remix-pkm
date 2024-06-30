@@ -1,19 +1,21 @@
 import { getUserAuth } from '@/utils/auth'
 import { displayContent, displayStoreyContent } from '@/utils/content'
+import { db } from '@/utils/db'
+import { Prisma } from '@prisma/client'
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
   TypedResponse,
   redirect,
 } from '@remix-run/node'
+import { MultiContentItem } from '~/components/Suites/forms/SuiteForm'
 import { getSpaceItemCounts } from '~/repositories/PkmSpaceRepository'
 import {
   getStoreyConfig,
   getStoreyDashboard,
-  storeStoreyConfig,
-  updateStoreyConfig,
 } from '~/repositories/PkmStoreyRepository'
 import { getSuiteForUser } from '~/repositories/PkmSuiteRepository'
+import { determineSyncContentsTransactionsByFormData } from '~/services/PkmContentService'
 
 export type StoreyUpdateConfigActionResponse = {
   errors: {
@@ -41,6 +43,23 @@ export const storeyUpdateConfigAction = async (
 
   const storeyId = args.params.storey_id
   if (!storeyId) {
+    return redirect('/')
+  }
+
+  const storey = await getStoreyConfig({
+    storeyId,
+    userId: user.id,
+  })
+
+  if (!storey) {
+    return redirect('/')
+  }
+
+  const existingHistoryIdForMultiContent =
+    storey.pkm_history[0]?.history_id ?? null
+
+  // When loading a Storey now, it should auto heal if it doesn't have an existing history
+  if (!existingHistoryIdForMultiContent) {
     return redirect('/')
   }
 
@@ -75,41 +94,77 @@ export const storeyUpdateConfigAction = async (
     }
   }
 
-  const content: FormDataEntryValue | null = formData.get('content')
+  const newHistoryId = crypto.randomUUID()
 
-  if (!content || content === '') {
+  const transactions: Prisma.PrismaPromise<unknown>[] = [
+    db.storey.update({
+      where: {
+        user_id: user.id,
+        id: storey.id,
+      },
+      data: {
+        name: name.toString(),
+        description: description.toString(),
+        content: 'Now handled by Multi Contents',
+      },
+    }),
+    db.pkmHistory.update({
+      where: {
+        history_id: existingHistoryIdForMultiContent,
+        is_current: true,
+      },
+      data: {
+        is_current: false,
+      },
+    }),
+    db.pkmHistory.create({
+      data: {
+        history_id: newHistoryId,
+        model_id: storey.id,
+        model_type: 'StoreyContents',
+        is_current: true,
+        user_id: user.id,
+        suite_id: null,
+        storey_id: storey.id,
+        space_id: null,
+      },
+    }),
+  ]
+
+  try {
+    const incomingContents = determineSyncContentsTransactionsByFormData({
+      formData,
+      modeId: storeyId,
+      historyId: newHistoryId,
+      modelType: 'StoreyContents',
+    })
+
+    incomingContents.forEach((incomingContent) => {
+      transactions.push(incomingContent)
+    })
+  } catch {
     return {
       errors: {
         fieldErrors: {
-          content: 'Content cannot be empty',
+          general: `Failed to update Storey. Please try again. [1]`,
         },
       },
     }
   }
 
-  const response = await updateStoreyConfig({
-    storeyId,
-    userId: user.id,
-    content: content.toString(),
-    description: description.toString(),
-    name: name.toString(),
-  })
+  try {
+    await db.$transaction(transactions)
 
-  if (!response.success) {
+    return redirect(`/suite/${suiteId}/storey/${storeyId}/config`)
+  } catch {
     return {
       errors: {
         fieldErrors: {
-          general: 'Failed to update Storey. Please try again.',
+          general: 'Failed to update Storey. Please try again. [2]',
         },
       },
     }
   }
-
-  if (response.storey) {
-    return redirect(`/suite/${suiteId}/storey/${response.storey.id}/config`)
-  }
-
-  return redirect('/') // Not that it should get here
 }
 
 export const storeyConfigLoader = async (args: LoaderFunctionArgs) => {
@@ -132,12 +187,46 @@ export const storeyConfigLoader = async (args: LoaderFunctionArgs) => {
     return redirect('/')
   }
 
+  // A storey can have multiple pkm_history, but for the sake of getting its Multi Contents
+  //    we need the History Item that's current and belongs specifically to the Suite
+  const historyIdForMultiContent = storey.pkm_history[0]?.history_id ?? null
+
+  const storeyMultiContents: MultiContentItem[] = []
+  const resolvedMultiContents: string[] = []
+
+  if (historyIdForMultiContent) {
+    const multiContents = await db.pkmContents.findMany({
+      where: {
+        history_id: historyIdForMultiContent,
+        model_id: storey.id,
+      },
+    })
+
+    for (const multiContent of multiContents) {
+      storeyMultiContents.push({
+        id: multiContent.content_id,
+        sortOrder: multiContent.sort_order,
+        content: multiContent.content,
+        status: 'active',
+        originalStatus: 'active',
+      })
+
+      resolvedMultiContents.push(
+        await displayContent(multiContent.content, user),
+      )
+    }
+  }
+
   return {
     id: storey.id,
     suiteId: storey.suite_id,
     suiteName: storey.suite.name,
     content: storey.content,
-    resolvedContent: await displayContent(storey.content, user),
+    resolvedContent:
+      '<div class="*:mb-2"><div>' +
+      resolvedMultiContents.join('</div><div>') +
+      '</div></div>',
+    multiContents: storeyMultiContents,
     description: storey.description,
     name: storey.name,
   }
@@ -159,6 +248,21 @@ export const storeyDashboardLoader = async (args: LoaderFunctionArgs) => {
     return redirect('/')
   }
 
+  const storeyConfig = await getStoreyConfig({
+    storeyId: storey_id,
+    userId: user.id,
+  })
+
+  if (!storeyConfig) {
+    return redirect('/')
+  }
+
+  const historyIdForMultiContent = storeyConfig.pkm_history[0]?.history_id
+
+  if (!historyIdForMultiContent) {
+    return redirect('/')
+  }
+
   const storeyDashboard = await getStoreyDashboard({
     suiteId: suite_id,
     storeyId: storey_id,
@@ -177,8 +281,8 @@ export const storeyDashboardLoader = async (args: LoaderFunctionArgs) => {
   const url = new URL(args.request.url)
   const tab = url.searchParams.get('tab')
 
-  const resolvedContent = await displayStoreyContent(
-    {
+  const resolvedContent = await displayStoreyContent({
+    storey: {
       id: storeyDashboard.id,
       name: storeyDashboard.name,
       description: storeyDashboard.description,
@@ -194,8 +298,9 @@ export const storeyDashboardLoader = async (args: LoaderFunctionArgs) => {
         }
       }),
     },
+    historyIdForMultiContent,
     user,
-  )
+  })
 
   return {
     resolvedContent,
@@ -273,39 +378,72 @@ export const storeyConfigNewAction = async (args: ActionFunctionArgs) => {
     }
   }
 
-  const content: FormDataEntryValue | null = formData.get('content')
+  const transactions: Prisma.PrismaPromise<unknown>[] = []
 
-  if (!content || content === '') {
+  const newStoreyId = crypto.randomUUID()
+
+  transactions.push(
+    db.storey.create({
+      data: {
+        id: newStoreyId,
+        suite_id: suiteId,
+        content: 'Now handled by Multi Contents',
+        description: description.toString(),
+        name: name.toString(),
+        user_id: user.id,
+      },
+    }),
+  )
+
+  const newHistoryId = crypto.randomUUID()
+
+  transactions.push(
+    db.pkmHistory.create({
+      data: {
+        history_id: newHistoryId,
+        model_id: newStoreyId,
+        model_type: 'StoreyContents',
+        is_current: true,
+        user_id: user.id,
+        suite_id: null,
+        storey_id: newStoreyId,
+        space_id: null,
+      },
+    }),
+  )
+
+  try {
+    const incomingContents = determineSyncContentsTransactionsByFormData({
+      formData,
+      modeId: newStoreyId,
+      historyId: newHistoryId,
+      modelType: 'StoreyContents',
+    })
+
+    incomingContents.forEach((incomingContent) => {
+      transactions.push(incomingContent)
+    })
+  } catch {
     return {
       errors: {
         fieldErrors: {
-          content: 'Content cannot be empty',
+          general: `Failed to store Storey. Please try again. [1]`,
         },
       },
     }
   }
 
-  const response = await storeStoreyConfig({
-    userId: user.id,
-    suiteId: suiteId.toString(),
-    content: content.toString(),
-    description: description.toString(),
-    name: name.toString(),
-  })
+  try {
+    await db.$transaction(transactions)
 
-  if (!response.success) {
+    return redirect(`/suite/${suiteId}/storey/${newStoreyId}/config`)
+  } catch {
     return {
       errors: {
         fieldErrors: {
-          general: 'Failed to store Storey. Please try again.',
+          general: 'Failed to store Storey. Please try again. [2]',
         },
       },
     }
   }
-
-  if (response.storey) {
-    return redirect(`/suite/${suiteId}/storey/${response.storey.id}/config`)
-  }
-
-  return redirect('/') // Not that it should get here
 }
