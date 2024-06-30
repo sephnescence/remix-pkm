@@ -2,6 +2,7 @@ import { SignedIn, UserButton } from '@clerk/remix'
 import { Link } from '@remix-run/react'
 import PkmIcon from '../icons/PkmIcon'
 import BuildingOffice2Icon from '../icons/BuildingOffice2Icon'
+import FaSolidBuildingMemoIcon from '../icons/FaSolidBuildingMemoIcon'
 
 const TopNav = () => {
   return (
@@ -19,12 +20,16 @@ const TopNav = () => {
         </div>
         <div className="mr-4 bg-indigo-900 rounded-full">
           <Link to="/history" prefetch="intent">
-            <div className="min-w-8 min-h-8 max-w-8 max-h-8 align-middle">
+            <FaSolidBuildingMemoIcon
+              className="w-8 h-8 align-middle"
+              style={{ scale: '0.5' }}
+            />
+            {/* <div className="min-w-8 min-h-8 max-w-8 max-h-8 align-middle">
               <i
                 className="fa-solid fa-building-memo pt-1"
                 style={{ scale: '0.5' }}
               ></i>
-            </div>
+            </div> */}
           </Link>
         </div>
         <div className="mr-4">
