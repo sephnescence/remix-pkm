@@ -1,0 +1,9 @@
+# I don't have migrations in place at the moment, but I can "do it live" with this container
+# docker build -f Dockerfile-migrations -t remix-pkm-run-db-push .
+# docker run --rm -e PRISMA_DB_URL=<Grab your connection string> remix-pkm-run-db-push
+
+FROM node:20-alpine
+
+COPY ./prisma/schema.prisma .
+
+CMD [ "npx", "prisma", "db", "push" ]
