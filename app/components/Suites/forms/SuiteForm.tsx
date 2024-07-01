@@ -1,119 +1,129 @@
-import { Form, Link, useNavigation } from '@remix-run/react'
-import { useEffect, useReducer, useState } from 'react'
-import { SuiteUpdateConfigActionResponse } from '~/controllers/SuiteController'
+import { Form, Link } from '@remix-run/react'
+import { useEffect, useState } from 'react'
 import ItemContentCodeMirror from '~/components/pkm/forms/ItemContentCodeMirror'
-import { FIXED_NEW_MULTI_CONTENT_ID } from '~/repositories/PkmContentRepository'
+import useImageUploadReducer, {
+  ImageReducerItem,
+} from '~/hooks/useImageUploadReducer'
+import Dropzone from '~/components/pkm/forms/Dropzone'
+import useMultiContentsReducer, {
+  MultiContentItem,
+} from '~/hooks/useMultiContentsReducer'
 
 type SuiteFormProps = {
   pageTitle: string
+  apiEndpoint: string
   cancelUrl?: string
   defaultName?: string
   defaultDescription?: string
-  actionData?: SuiteUpdateConfigActionResponse
-  defaultMultiContents?: MultiContentItem[]
-}
-
-export type MultiContentItem = {
-  id: string // Note: Will be ignored when adding a new MultiContent
-  sortOrder: number
-  content: string
-  status: string
-  originalStatus: string // Tell the difference between a "new" and "active" Content. Different buttons become available
+  defaultMultiContents?: string
+  existingMultiContents?: MultiContentItem[]
 }
 
 const SuiteForm = ({
   pageTitle,
+  apiEndpoint,
   cancelUrl,
   defaultName,
   defaultDescription,
-  actionData,
   defaultMultiContents,
+  existingMultiContents,
 }: SuiteFormProps) => {
+  const [actionData, setActionData] = useState({
+    errors: {
+      fieldErrors: { general: '', content: '', name: '', summary: '' },
+    },
+  })
+
   const [name, setName] = useState(() => defaultName || '')
   const [description, setDescription] = useState(() => defaultDescription || '')
 
   const [interactive, setInteractive] = useState(() => false)
-  const navigation = useNavigation()
-  const submitting = navigation.state === 'submitting'
+  const [submitting, setSubmitting] = useState(() => false)
 
-  const [multiContents, setMultiContents] = useReducer(
-    (
-      multiContents: MultiContentItem[],
-      action: {
-        type: string
-        payload: MultiContentItem
-      },
-    ) => {
-      if (action.type === 'add') {
-        const id = crypto.randomUUID()
-        return [
-          ...multiContents,
-          { ...action.payload, status: 'new', originalStatus: 'new', id },
-        ]
-      }
+  const imageUploadReducerHook = useImageUploadReducer()
+  const images = imageUploadReducerHook[0] as ImageReducerItem[]
+  const manipulateImages = imageUploadReducerHook[1] as React.Dispatch<{
+    type: string
+    payload: ImageReducerItem
+  }>
 
-      if (action.type === 'update') {
-        return multiContents.map((multiContent: MultiContentItem) => {
-          if (multiContent.id === action.payload.id) {
-            // We potentially want to update the Contents of _other_ contents when this is updated, so "updated" is actually an important status
-            const newStatus =
-              action.payload.originalStatus === 'active' ? 'updated' : 'new'
-            return {
-              ...multiContent,
-              status: newStatus,
-              content: action.payload.content,
-            }
-          }
-
-          return multiContent
-        })
-      }
-
-      if (action.type === 'discard') {
-        return multiContents.map((multiContent: MultiContentItem) => {
-          if (multiContent.id === action.payload.id) {
-            return { ...multiContent, status: 'discarded' }
-          }
-
-          return multiContent
-        })
-      }
-
-      if (action.type === 'removeNow') {
-        // There's no going back from this
-        return multiContents.filter(
-          (multiContent) => multiContent.id !== action.payload.id,
-        )
-      }
-
-      if (action.type === 'restore') {
-        return multiContents.map((multiContent: MultiContentItem) => {
-          if (multiContent.id === action.payload.id) {
-            return { ...multiContent, status: multiContent.originalStatus }
-          }
-
-          return multiContent
-        })
-      }
-
-      return multiContents
-    },
-    defaultMultiContents
-      ? defaultMultiContents
-      : [
-          {
-            id: FIXED_NEW_MULTI_CONTENT_ID,
-            sortOrder: 1,
-            content: '<div data-children></div>\n\n',
-            status: 'new',
-            originalStatus: 'new',
-          },
-        ],
-  )
+  const useMultiContentsReducerHook = useMultiContentsReducer({
+    defaultMultiContents,
+    existingMultiContents,
+  })
+  const multiContents = useMultiContentsReducerHook[0] as MultiContentItem[]
+  const setMultiContents = useMultiContentsReducerHook[1] as React.Dispatch<{
+    type: string
+    payload: MultiContentItem
+  }>
 
   useEffect(() => {
     setInteractive(true)
   }, [interactive])
+
+  // Was hoping I could get all this for free now, but I need to construct a manual request in order
+  //  to submit _all_ images in the request
+  const handleSubmit = async () => {
+    setSubmitting(true)
+
+    const thisForm = document.getElementById('item-form') as HTMLFormElement
+    if (!thisForm) {
+      return false
+    }
+    const formData = new FormData(thisForm)
+    formData.append('content', 'BTTODO - Should not be saved anymore')
+    formData.append('name', name)
+    formData.append('description', description)
+    images.map((image: ImageReducerItem, index) => {
+      if (
+        !image.blob ||
+        !image.name ||
+        !image.size ||
+        !image.type ||
+        !image.url
+      ) {
+        return true
+      }
+      formData.append('images_' + index, image.blob)
+      formData.append('images_' + index + '_url', image.url)
+      formData.append('images_' + index + '_name', image.name)
+      formData.append('images_' + index + '_size', image.size.toString())
+      formData.append('images_' + index + '_type', image.type)
+    })
+    const res = await fetch(
+      new Request(apiEndpoint, {
+        method: 'POST',
+        body: formData,
+      }),
+    )
+
+    const resJson = await JSON.parse(await res.text())
+
+    if (resJson.success === false) {
+      setActionData({
+        errors: {
+          fieldErrors: {
+            general: resJson?.errors.fieldErrors.general || '',
+            content: resJson?.errors.fieldErrors.content || '',
+            name: resJson?.errors.fieldErrors.name || '',
+            summary: resJson?.errors.fieldErrors.summary || '',
+          },
+        },
+      })
+    }
+
+    if (!resJson.redirect) {
+      setSubmitting(false)
+    }
+
+    if (resJson.success === false && resJson.redirect) {
+      window.location.replace(resJson.redirect)
+    }
+
+    if (resJson.success === true && resJson.redirect) {
+      window.location.href = resJson.redirect
+    }
+  }
 
   return (
     <>
@@ -194,7 +204,7 @@ const SuiteForm = ({
         </div>
         <div className="grid grid-cols-1 gap-1 md:gap-2">
           {multiContents &&
-            multiContents.map((multiContent: MultiContentItem) => {
+            multiContents.map((multiContent) => {
               return (
                 <div
                   key={multiContent.id}
@@ -336,6 +346,9 @@ const SuiteForm = ({
               Add New Multi Content
             </button>
           </div>
+        </div>
+        <div>
+          <Dropzone images={images} manipulateImages={manipulateImages} />
         </div>
         <div className="flex">
           <button

@@ -1,10 +1,13 @@
 'use client'
 
-import { useEffect, useReducer, useState } from 'react'
+import { useEffect, useState } from 'react'
 import PkmItem from '../PkmItem'
 import ItemContentCodeMirror from './ItemContentCodeMirror'
 import ItemImageCarousel from './ItemImageCarousel'
 import Dropzone from './Dropzone'
+import useImageUploadReducer, {
+  ImageReducerItem,
+} from '~/hooks/useImageUploadReducer'
 
 type ItemFormProps = {
   pageTitle: string
@@ -129,39 +132,12 @@ export default function ItemForm({
   const [name, setName] = useState(() => defaultName || '')
   const [summary, setSummary] = useState(() => defaultSummary || '')
 
-  const [images, manipulateImages] = useReducer(
-    (
-      images: {
-        blob: Blob | null
-        id: string
-        name: string
-        size: number
-        type: string
-        url: string
-      }[],
-      action: {
-        type: string
-        payload: {
-          blob: Blob | null
-          id: string
-          name: string
-          size: number
-          type: string
-          url: string
-        }
-      },
-    ) => {
-      switch (action.type) {
-        case 'add':
-          return [...images, action.payload]
-        case 'remove':
-          return images.filter((image) => image.id !== action.payload.id)
-        default:
-          return images
-      }
-    },
-    [],
-  )
+  const imageUploaderDispatcher = useImageUploadReducer()
+  const images = imageUploaderDispatcher[0] as ImageReducerItem[]
+  const manipulateImages = imageUploaderDispatcher[1] as React.Dispatch<{
+    type: string
+    payload: ImageReducerItem
+  }>
 
   const [interactive, setInteractive] = useState(() => false)
   const [submitting, setSubmitting] = useState(() => false)
@@ -184,7 +160,7 @@ export default function ItemForm({
     formData.append('content', content)
     formData.append('name', name)
     formData.append('summary', summary)
-    images.map((image, index) => {
+    images.map((image: ImageReducerItem, index) => {
       if (
         !image.blob ||
         !image.name ||
