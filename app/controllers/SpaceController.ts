@@ -8,7 +8,7 @@ import {
   TypedResponse,
   redirect,
 } from '@remix-run/node'
-import { MultiContentItem } from '~/components/Suites/forms/SuiteForm'
+import { MultiContentItem } from '~/hooks/useMultiContentsReducer'
 import {
   getSpaceItemCounts,
   getSpaceConfig,
@@ -138,15 +138,26 @@ export const spaceUpdateConfigAction = async (
   ]
 
   try {
-    const incomingContents = determineSyncContentsTransactionsByFormData({
+    const incomingContents = await determineSyncContentsTransactionsByFormData({
       formData,
-      modeId: spaceId,
+      modelId: spaceId,
       historyId: newHistoryId,
       modelType: 'SpaceContents',
+      userId: user.id,
     })
 
-    incomingContents.forEach((incomingContent) => {
-      transactions.push(incomingContent)
+    if (incomingContents.error) {
+      return {
+        errors: {
+          fieldErrors: {
+            general: incomingContents.error,
+          },
+        },
+      }
+    }
+
+    incomingContents.transactions.forEach((transaction) => {
+      transactions.push(transaction)
     })
   } catch {
     return {
@@ -239,6 +250,7 @@ export const spaceConfigLoader = async (args: LoaderFunctionArgs) => {
     suiteName: space.storey.suite.name,
     storeyId: space.storey.id,
     storeyName: space.storey.name,
+    historyIdForMultiContent,
   }
 }
 
@@ -445,15 +457,26 @@ export const spaceConfigNewAction = async (args: ActionFunctionArgs) => {
   )
 
   try {
-    const incomingContents = determineSyncContentsTransactionsByFormData({
+    const incomingContents = await determineSyncContentsTransactionsByFormData({
       formData,
-      modeId: newSpaceId,
+      modelId: newSpaceId,
       historyId: newHistoryId,
       modelType: 'SpaceContents',
+      userId: user.id,
     })
 
-    incomingContents.forEach((incomingContent) => {
-      transactions.push(incomingContent)
+    if (incomingContents.error) {
+      return {
+        errors: {
+          fieldErrors: {
+            general: incomingContents.error,
+          },
+        },
+      }
+    }
+
+    incomingContents.transactions.forEach((transaction) => {
+      transactions.push(transaction)
     })
   } catch {
     return {

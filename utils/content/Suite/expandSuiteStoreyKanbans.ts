@@ -82,7 +82,7 @@ const expandSuiteStoreyKanbans = async (
             <div>
               <div class="pb-4 flex gap-2">
                 <div>
-                  <a class="p-2 bg-indigo-950 hover:bg-violet-900 rounded-md" href="/item/create/nSuiteId/${storey.suite_id}/nStoreyId/${storey.id}/nModelType/${modelType}">Add</a>
+                  <a class="p-2 bg-indigo-950 hover:bg-violet-900 rounded-md" href="/item/create/eSuiteId/${storey.suite_id}/eStoreyId/${storey.id}/nModelType/${modelType}">Add</a>
                 </div>
                 <div class="line-clamp-1">${storey.name}</div>
               </div>

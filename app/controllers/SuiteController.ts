@@ -8,7 +8,7 @@ import {
   TypedResponse,
   redirect,
 } from '@remix-run/node'
-import { MultiContentItem } from '~/components/Suites/forms/SuiteForm'
+import { MultiContentItem } from '~/hooks/useMultiContentsReducer'
 import { getStoreyItemCounts } from '~/repositories/PkmStoreyRepository'
 import {
   getSuiteConfig,
@@ -126,15 +126,26 @@ export const suiteUpdateConfigAction = async (
   ]
 
   try {
-    const incomingContents = determineSyncContentsTransactionsByFormData({
+    const incomingContents = await determineSyncContentsTransactionsByFormData({
       formData,
-      modeId: suiteId,
+      modelId: suiteId,
       historyId: newHistoryId,
       modelType: 'SuiteContents',
+      userId: user.id,
     })
 
-    incomingContents.forEach((incomingContent) => {
-      transactions.push(incomingContent)
+    if (incomingContents.error) {
+      return {
+        errors: {
+          fieldErrors: {
+            general: incomingContents.error,
+          },
+        },
+      }
+    }
+
+    incomingContents.transactions.forEach((transaction) => {
+      transactions.push(transaction)
     })
   } catch {
     return {
@@ -222,6 +233,7 @@ export const suiteConfigLoader = async (args: LoaderFunctionArgs) => {
     multiContents: suiteMultiContents,
     description: suite.description,
     name: suite.name,
+    historyIdForMultiContent,
   }
 }
 
@@ -376,15 +388,26 @@ export const suiteConfigNewAction = async (args: ActionFunctionArgs) => {
   )
 
   try {
-    const incomingContents = determineSyncContentsTransactionsByFormData({
+    const incomingContents = await determineSyncContentsTransactionsByFormData({
       formData,
-      modeId: newSuiteId,
+      modelId: newSuiteId,
       historyId: newHistoryId,
       modelType: 'SuiteContents',
+      userId: user.id,
     })
 
-    incomingContents.forEach((incomingContent) => {
-      transactions.push(incomingContent)
+    if (incomingContents.error) {
+      return {
+        errors: {
+          fieldErrors: {
+            general: incomingContents.error,
+          },
+        },
+      }
+    }
+
+    incomingContents.transactions.forEach((transaction) => {
+      transactions.push(transaction)
     })
   } catch {
     return {

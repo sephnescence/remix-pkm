@@ -8,7 +8,7 @@ import {
   TypedResponse,
   redirect,
 } from '@remix-run/node'
-import { MultiContentItem } from '~/components/Suites/forms/SuiteForm'
+import { MultiContentItem } from '~/hooks/useMultiContentsReducer'
 import { getSpaceItemCounts } from '~/repositories/PkmSpaceRepository'
 import {
   getStoreyConfig,
@@ -132,15 +132,26 @@ export const storeyUpdateConfigAction = async (
   ]
 
   try {
-    const incomingContents = determineSyncContentsTransactionsByFormData({
+    const incomingContents = await determineSyncContentsTransactionsByFormData({
       formData,
-      modeId: storeyId,
+      modelId: storeyId,
       historyId: newHistoryId,
       modelType: 'StoreyContents',
+      userId: user.id,
     })
 
-    incomingContents.forEach((incomingContent) => {
-      transactions.push(incomingContent)
+    if (incomingContents.error) {
+      return {
+        errors: {
+          fieldErrors: {
+            general: incomingContents.error,
+          },
+        },
+      }
+    }
+
+    incomingContents.transactions.forEach((transaction) => {
+      transactions.push(transaction)
     })
   } catch {
     return {
@@ -229,6 +240,7 @@ export const storeyConfigLoader = async (args: LoaderFunctionArgs) => {
     multiContents: storeyMultiContents,
     description: storey.description,
     name: storey.name,
+    historyIdForMultiContent,
   }
 }
 
@@ -413,15 +425,26 @@ export const storeyConfigNewAction = async (args: ActionFunctionArgs) => {
   )
 
   try {
-    const incomingContents = determineSyncContentsTransactionsByFormData({
+    const incomingContents = await determineSyncContentsTransactionsByFormData({
       formData,
-      modeId: newStoreyId,
+      modelId: newStoreyId,
       historyId: newHistoryId,
       modelType: 'StoreyContents',
+      userId: user.id,
     })
 
-    incomingContents.forEach((incomingContent) => {
-      transactions.push(incomingContent)
+    if (incomingContents.error) {
+      return {
+        errors: {
+          fieldErrors: {
+            general: incomingContents.error,
+          },
+        },
+      }
+    }
+
+    incomingContents.transactions.forEach((transaction) => {
+      transactions.push(transaction)
     })
   } catch {
     return {
