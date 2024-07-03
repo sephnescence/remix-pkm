@@ -52,7 +52,6 @@ export default function ItemRoute() {
         pageTitle={pageTitle}
         cancelUrl={cancelUrl}
         apiEndpoint={apiEndpoint}
-        apiMethod="POST"
         // defaultContent={'IMPLEMENT PARENT LEVEL CONFIGURATION OF CHILDREN ITEMS'}
         // defaultName={'IMPLEMENT PARENT LEVEL CONFIGURATION OF CHILDREN ITEMS'}
         // defaultSummary={'IMPLEMENT PARENT LEVEL CONFIGURATION OF CHILDREN ITEMS'}
