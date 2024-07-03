@@ -1,4 +1,4 @@
-import { Form, Link } from '@remix-run/react'
+import { Link } from '@remix-run/react'
 import { useEffect, useState } from 'react'
 import ItemContentCodeMirror from '~/components/pkm/forms/ItemContentCodeMirror'
 import useImageUploadReducer, {
@@ -6,8 +6,9 @@ import useImageUploadReducer, {
 } from '~/hooks/useImageUploadReducer'
 import Dropzone from '~/components/pkm/forms/Dropzone'
 import useMultiContentsReducer, {
-  MultiContentItem,
+  MultiContentReducerItem,
 } from '~/hooks/useMultiContentsReducer'
+import ItemImageCarousel from '~/components/pkm/forms/ItemImageCarousel'
 
 type SuiteFormProps = {
   pageTitle: string
@@ -16,7 +17,12 @@ type SuiteFormProps = {
   defaultName?: string
   defaultDescription?: string
   defaultMultiContents?: string
-  existingMultiContents?: MultiContentItem[]
+  existingMultiContents?: MultiContentReducerItem[]
+  images?: {
+    name: string
+    image_id: string
+    s3_url: string
+  }[]
 }
 
 const SuiteForm = ({
@@ -27,10 +33,11 @@ const SuiteForm = ({
   defaultDescription,
   defaultMultiContents,
   existingMultiContents,
+  images: modelImages,
 }: SuiteFormProps) => {
   const [actionData, setActionData] = useState({
     errors: {
-      fieldErrors: { general: '', content: '', name: '', summary: '' },
+      fieldErrors: { general: '', content: '', name: '', description: '' },
     },
   })
 
@@ -51,10 +58,11 @@ const SuiteForm = ({
     defaultMultiContents,
     existingMultiContents,
   })
-  const multiContents = useMultiContentsReducerHook[0] as MultiContentItem[]
+  const multiContents =
+    useMultiContentsReducerHook[0] as MultiContentReducerItem[]
   const setMultiContents = useMultiContentsReducerHook[1] as React.Dispatch<{
     type: string
-    payload: MultiContentItem
+    payload: MultiContentReducerItem
   }>
 
   useEffect(() => {
@@ -66,14 +74,21 @@ const SuiteForm = ({
   const handleSubmit = async () => {
     setSubmitting(true)
 
-    const thisForm = document.getElementById('item-form') as HTMLFormElement
+    const thisForm = document.getElementById('suite-form') as HTMLFormElement
     if (!thisForm) {
       return false
     }
     const formData = new FormData(thisForm)
-    formData.append('content', 'BTTODO - Should not be saved anymore')
+    formData.append('historyId', 'BTTODO')
+    formData.append('content', 'Now handled by Multi Contents')
     formData.append('name', name)
     formData.append('description', description)
+    multiContents.map((content: MultiContentReducerItem) => {
+      formData.append(
+        `multi_contents__${content.id}__${content.sortOrder}__${content.status}`,
+        content.content,
+      )
+    })
     images.map((image: ImageReducerItem, index) => {
       if (
         !image.blob ||
@@ -106,7 +121,7 @@ const SuiteForm = ({
             general: resJson?.errors.fieldErrors.general || '',
             content: resJson?.errors.fieldErrors.content || '',
             name: resJson?.errors.fieldErrors.name || '',
-            summary: resJson?.errors.fieldErrors.summary || '',
+            description: resJson?.errors.fieldErrors.description || '',
           },
         },
       })
@@ -135,7 +150,7 @@ const SuiteForm = ({
       <div className="mb-4">
         <div className="text-4xl">{pageTitle}</div>
       </div>
-      <Form method="POST" className="grid">
+      <form id="suite-form" className="grid" onSubmit={() => false}>
         <div className="grid grid-cols-1 md:grid-cols-2 md:gap-2">
           <div>
             <div className="mb-4">
@@ -226,8 +241,6 @@ const SuiteForm = ({
                       }}
                       content={multiContent.content}
                       parentDivId={multiContent.id}
-                      sortOrder={multiContent.sortOrder}
-                      status={multiContent.status}
                     />
                     <div className="flex gap-2 mb-2">
                       {(multiContent.status === 'active' ||
@@ -347,13 +360,19 @@ const SuiteForm = ({
             </button>
           </div>
         </div>
+        <div className="grid grid-cols-1">
+          {modelImages && <ItemImageCarousel images={modelImages} />}
+        </div>
         <div>
           <Dropzone images={images} manipulateImages={manipulateImages} />
         </div>
         <div className="flex">
           <button
             className={`px-4 py-2 rounded-lg bg-blue-600 ${(!interactive || submitting ? 'bg-gray-400' : '') || 'hover:bg-blue-500'}`}
-            type="submit"
+            type="button"
+            onClick={() => {
+              void handleSubmit()
+            }}
             disabled={!interactive || submitting}
           >
             Submit
@@ -367,7 +386,7 @@ const SuiteForm = ({
             Cancel
           </Link>
         </div>
-      </Form>
+      </form>
     </>
   )
 }

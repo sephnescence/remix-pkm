@@ -18,11 +18,12 @@ export default function StoreyConfigEditRoute() {
       />
       <SuiteForm
         pageTitle="Edit Storey Configuration"
-        apiEndpoint={`/api/history/suite/edit/eSuiteId/${storey.suiteId}/eStoreyId/${storey.id}/eHistoryId/${storey.historyIdForMultiContent}`}
+        apiEndpoint={`/api/history/suite/${storey.suiteId}/storey/${storey.id}/edit`}
         cancelUrl={`/suite/${storey.suiteId}/storey/${storey.id}/config`}
         defaultName={storey.name}
         defaultDescription={storey.description}
         existingMultiContents={storey.multiContents}
+        images={storey.images}
       />
     </>
   )

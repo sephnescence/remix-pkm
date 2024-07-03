@@ -19,7 +19,7 @@ export default function StoreyConfigNewRoute() {
       />
       <SuiteForm
         pageTitle="Configure New Space"
-        apiEndpoint={`/api/history/suite/create/eSuiteId/${suiteId}/eStoreyId/${storeyId}`}
+        apiEndpoint={`/api/history/suite/${suiteId}/storey/${storeyId}/space/create`}
         cancelUrl={`/suite/${suiteId}/storey/${storeyId}/dashboard?tab=spaces`}
       />
     </>

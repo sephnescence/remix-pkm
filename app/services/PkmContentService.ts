@@ -35,10 +35,6 @@ export const determineSyncContentsTransactionsByFormData = async ({
     userId,
   })
 
-  console.log('Start Response')
-  console.log(uploadImagesForModelResponse)
-  console.log('End Response')
-
   if (uploadImagesForModelResponse.success === false) {
     return {
       error:

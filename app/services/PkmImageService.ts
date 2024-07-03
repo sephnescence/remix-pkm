@@ -34,7 +34,6 @@ export const uploadImagesForModel = async ({
   const imageUploads: PkmImageUpload[] = []
 
   for (const key of keys) {
-    console.log('key', key)
     const value = formData.get(key)
 
     if (value instanceof File) {
@@ -42,8 +41,6 @@ export const uploadImagesForModel = async ({
       const size = parseInt(formData.get(`${key}_size`)?.toString() ?? '0')
       const type = formData.get(`${key}_type`)?.toString()
       const localStorageUrl = formData.get(`${key}_url`)?.toString()
-
-      console.log('localStorageUrl', localStorageUrl)
 
       if (name && size && type) {
         const s3_name = randomUUID().toString() + '-' + name

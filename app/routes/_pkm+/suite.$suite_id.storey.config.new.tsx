@@ -13,7 +13,7 @@ export default function StoreyConfigNewRoute() {
       <SuiteBreadcrumbs suiteId={suiteId} suiteName={suiteName} />
       <SuiteForm
         pageTitle="Configure New Storey"
-        apiEndpoint={`/api/history/suite/create/eSuiteId/${suiteId}`}
+        apiEndpoint={`/api/history/suite/${suiteId}/storey/create`}
         cancelUrl={`/suite/${suiteId}/dashboard?tab=storeys`}
       />
     </>

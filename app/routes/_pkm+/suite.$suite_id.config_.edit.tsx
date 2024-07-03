@@ -13,11 +13,12 @@ export default function SuiteConfigEditRoute() {
       <SuiteBreadcrumbs suiteId={suite.id} suiteName={suite.name} />
       <SuiteForm
         pageTitle="Edit Suite Configuration"
-        apiEndpoint={`/api/history/suite/edit/eSuiteId/${suite.id}/eHistoryId/${suite.historyIdForMultiContent}`}
+        apiEndpoint={`/api/history/suite/${suite.id}/edit`}
         cancelUrl={`/suite/${suite.id}/config`}
         defaultName={suite.name}
         defaultDescription={suite.description}
         existingMultiContents={suite.multiContents}
+        images={suite.images}
       />
     </>
   )

@@ -1,7 +1,7 @@
 import { useReducer } from 'react'
 import { FIXED_NEW_MULTI_CONTENT_ID } from '~/repositories/PkmContentRepository'
 
-export type MultiContentItem = {
+export type MultiContentReducerItem = {
   id: string // Note: Will be ignored when adding a new MultiContent
   sortOrder: number
   content: string
@@ -15,15 +15,15 @@ function useMultiContentsReducer({
   existingMultiContents,
   defaultMultiContents = '<div data-children></div>\n\n',
 }: {
-  existingMultiContents?: MultiContentItem[]
+  existingMultiContents?: MultiContentReducerItem[]
   defaultMultiContents?: string
 }) {
   const [multiContents, setMultiContents] = useReducer(
     (
-      multiContents: MultiContentItem[],
+      multiContents: MultiContentReducerItem[],
       action: {
         type: string
-        payload: MultiContentItem
+        payload: MultiContentReducerItem
       },
     ) => {
       if (action.type === 'add') {
@@ -35,7 +35,7 @@ function useMultiContentsReducer({
       }
 
       if (action.type === 'update') {
-        return multiContents.map((multiContent: MultiContentItem) => {
+        return multiContents.map((multiContent: MultiContentReducerItem) => {
           if (multiContent.id === action.payload.id) {
             // We potentially want to update the Contents of _other_ contents when this is updated, so "updated" is actually an important status
             const newStatus =
@@ -52,7 +52,7 @@ function useMultiContentsReducer({
       }
 
       if (action.type === 'discard') {
-        return multiContents.map((multiContent: MultiContentItem) => {
+        return multiContents.map((multiContent: MultiContentReducerItem) => {
           if (multiContent.id === action.payload.id) {
             return { ...multiContent, status: 'discarded' }
           }
@@ -69,7 +69,7 @@ function useMultiContentsReducer({
       }
 
       if (action.type === 'restore') {
-        return multiContents.map((multiContent: MultiContentItem) => {
+        return multiContents.map((multiContent: MultiContentReducerItem) => {
           if (multiContent.id === action.payload.id) {
             return { ...multiContent, status: multiContent.originalStatus }
           }

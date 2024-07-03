@@ -20,11 +20,12 @@ export default function SpaceConfigEditRoute() {
       />
       <SuiteForm
         pageTitle="Edit Space Configuration"
-        apiEndpoint={`/api/history/suite/edit/eSuiteId/${space.suiteId}/eStoreyId/${space.storeyId}/eHistoryId/${space.historyIdForMultiContent}`}
+        apiEndpoint={`/api/history/suite/${space.suiteId}/storey/${space.storeyId}/space/${space.id}/edit`}
         cancelUrl={`/suite/${space.suiteId}/storey/${space.storeyId}/space/${space.id}/config`}
         defaultName={space.name}
         defaultDescription={space.description}
         existingMultiContents={space.multiContents}
+        images={space.images}
       />
     </>
   )

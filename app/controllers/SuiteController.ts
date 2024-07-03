@@ -5,10 +5,10 @@ import { Prisma } from '@prisma/client'
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
-  TypedResponse,
   redirect,
 } from '@remix-run/node'
-import { MultiContentItem } from '~/hooks/useMultiContentsReducer'
+import { MultiContentReducerItem } from '~/hooks/useMultiContentsReducer'
+import { getImagesForItem } from '~/repositories/PkmImageRepository'
 import { getStoreyItemCounts } from '~/repositories/PkmStoreyRepository'
 import {
   getSuiteConfig,
@@ -16,7 +16,7 @@ import {
 } from '~/repositories/PkmSuiteRepository'
 import { determineSyncContentsTransactionsByFormData } from '~/services/PkmContentService'
 
-export type SuiteUpdateConfigActionResponse = {
+export type SuiteConfigActionResponse = {
   errors: {
     fieldErrors: {
       general?: string
@@ -25,19 +25,38 @@ export type SuiteUpdateConfigActionResponse = {
       name?: string
     }
   }
+  success: boolean
+  redirect: string | null
 }
 
 export const suiteUpdateConfigAction = async (
   args: ActionFunctionArgs,
-): Promise<SuiteUpdateConfigActionResponse | TypedResponse<never>> => {
+): Promise<SuiteConfigActionResponse> => {
   const user = await getUserAuth(args)
   if (!user) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general:
+            'Your session has expired. Please log in again in another window to avoid losing your work',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const suiteId = args.params.suite_id
   if (!suiteId) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Suite id not provided',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const suite = await getSuiteConfig({
@@ -46,7 +65,15 @@ export const suiteUpdateConfigAction = async (
   })
 
   if (!suite) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Suite not found',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const existingHistoryIdForMultiContent =
@@ -54,14 +81,30 @@ export const suiteUpdateConfigAction = async (
 
   // When loading a Suite now, it should auto heal if it doesn't have an existing history
   if (!existingHistoryIdForMultiContent) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Suite not found',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const { request } = args
 
   const formData = await request.formData()
   if (!formData) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Form Data was missing. This is not an expected error',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const name: FormDataEntryValue | null = formData.get('name')
@@ -73,6 +116,8 @@ export const suiteUpdateConfigAction = async (
           name: 'Name cannot be empty',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 
@@ -85,6 +130,8 @@ export const suiteUpdateConfigAction = async (
           description: 'Description cannot be empty',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 
@@ -141,6 +188,8 @@ export const suiteUpdateConfigAction = async (
             general: incomingContents.error,
           },
         },
+        success: false,
+        redirect: null,
       }
     }
 
@@ -154,13 +203,21 @@ export const suiteUpdateConfigAction = async (
           general: `Failed to update Suite. Please try again. [1]`,
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 
   try {
     await db.$transaction(transactions)
 
-    return redirect(`/suite/${suiteId}/config`)
+    return {
+      errors: {
+        fieldErrors: {},
+      },
+      success: true,
+      redirect: `/suite/${suiteId}/config`,
+    }
   } catch {
     return {
       errors: {
@@ -168,6 +225,8 @@ export const suiteUpdateConfigAction = async (
           general: 'Failed to update Suite. Please try again. [2]',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 }
@@ -196,7 +255,7 @@ export const suiteConfigLoader = async (args: LoaderFunctionArgs) => {
   //    we need the History Item that's current and belongs specifically to the Suite
   const historyIdForMultiContent = suite.pkm_history[0]?.history_id ?? null
 
-  const suiteMultiContents: MultiContentItem[] = []
+  const suiteMultiContents: MultiContentReducerItem[] = []
   const resolvedMultiContents: string[] = []
 
   if (historyIdForMultiContent) {
@@ -222,6 +281,12 @@ export const suiteConfigLoader = async (args: LoaderFunctionArgs) => {
     }
   }
 
+  // BTTODO - Reception Suite won't be unique. Reception Storey and Reception Space will have the same id
+  const images = await getImagesForItem({
+    modelId: suite.id,
+    userId: user.id,
+  })
+
   return {
     id: suite.id,
     content: suite.content,
@@ -234,6 +299,7 @@ export const suiteConfigLoader = async (args: LoaderFunctionArgs) => {
     description: suite.description,
     name: suite.name,
     historyIdForMultiContent,
+    images,
   }
 }
 
@@ -317,17 +383,36 @@ export const suiteDashboardLoader = async (args: LoaderFunctionArgs) => {
   }
 }
 
-export const suiteConfigNewAction = async (args: ActionFunctionArgs) => {
+export const suiteConfigNewAction = async (
+  args: ActionFunctionArgs,
+): Promise<SuiteConfigActionResponse> => {
   const user = await getUserAuth(args)
   if (!user) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general:
+            'Your session has expired. Please log in again in another window to avoid losing your work',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const { request } = args
 
   const formData = await request.formData()
   if (!formData) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Form Data was missing. This is not an expected error',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const name: FormDataEntryValue | null = formData.get('name')
@@ -339,6 +424,8 @@ export const suiteConfigNewAction = async (args: ActionFunctionArgs) => {
           name: 'Name cannot be empty',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 
@@ -351,6 +438,8 @@ export const suiteConfigNewAction = async (args: ActionFunctionArgs) => {
           description: 'Description cannot be empty',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 
@@ -403,6 +492,8 @@ export const suiteConfigNewAction = async (args: ActionFunctionArgs) => {
             general: incomingContents.error,
           },
         },
+        success: false,
+        redirect: null,
       }
     }
 
@@ -416,13 +507,21 @@ export const suiteConfigNewAction = async (args: ActionFunctionArgs) => {
           general: `Failed to store Suite. Please try again. [1]`,
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 
   try {
     await db.$transaction(transactions)
 
-    return redirect(`/suite/${newSuiteId}/config`)
+    return {
+      errors: {
+        fieldErrors: {},
+      },
+      success: true,
+      redirect: `/suite/${newSuiteId}/config`,
+    }
   } catch {
     return {
       errors: {
@@ -430,6 +529,8 @@ export const suiteConfigNewAction = async (args: ActionFunctionArgs) => {
           general: 'Failed to store Suite. Please try again. [2]',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 }

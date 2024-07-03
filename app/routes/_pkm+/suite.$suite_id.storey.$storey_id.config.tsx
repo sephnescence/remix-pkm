@@ -1,6 +1,7 @@
 import { Link, useLoaderData } from '@remix-run/react'
 import { useEffect, useState } from 'react'
 import StoreyBreadcrumbs from '~/components/nav/StoreyBreadcrumbs'
+import ItemImageCarousel from '~/components/pkm/forms/ItemImageCarousel'
 import { storeyConfigLoader } from '~/controllers/StoreyController'
 
 export const loader = storeyConfigLoader
@@ -95,6 +96,7 @@ export default function StoreyConfigRoute() {
               }}
             />
           </div>
+          <ItemImageCarousel images={storey.images} />
           <div className="flex gap-2">
             <Link
               to={`/suite/${storey.suiteId}/storey/${storey.id}/config/edit`}

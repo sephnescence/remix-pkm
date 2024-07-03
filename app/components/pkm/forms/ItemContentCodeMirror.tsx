@@ -28,14 +28,10 @@ const ItemContentCodeMirror = ({
   content,
   setContent,
   parentDivId = 'editor',
-  sortOrder = 1,
-  status = 'add',
 }: {
   content: string
   setContent: (newContent: string) => void
   parentDivId?: string
-  sortOrder?: number
-  status?: string
 }) => {
   const codeMirrorRef = useRef<EditorView>()
 
@@ -88,17 +84,6 @@ const ItemContentCodeMirror = ({
         id={parentDivId}
         className="min-w-full min-h-16 bg-zinc-200 text-black"
       ></div>
-      {parentDivId === 'editor' && (
-        <textarea hidden readOnly name="content" value={content} />
-      )}
-      {parentDivId !== 'editor' && (
-        <textarea
-          hidden
-          readOnly
-          name={`multi_contents__${parentDivId}__${sortOrder}__${status}`}
-          value={content}
-        />
-      )}
     </>
   )
 }
