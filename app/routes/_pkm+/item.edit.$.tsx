@@ -11,7 +11,8 @@ export const loader = itemLoader
 export default function EditItemRoute() {
   const loaderData = useLoaderData<typeof loader>()
 
-  const { args, history, images, item } = loaderData as ItemLoaderResponse
+  const { args, history, images, item, multiContents } =
+    loaderData as ItemLoaderResponse
 
   return (
     <>
@@ -43,10 +44,9 @@ export default function EditItemRoute() {
         pageTitle={`Edit ${args.itemLocationName} ${feModelTypeMap[args.conformedArgs.eModelType]}  Item`}
         cancelUrl={args.feViewUrl}
         apiEndpoint={args.apiEditUrl}
-        apiMethod="POST"
-        defaultContent={item.content}
         defaultName={item.name}
         defaultSummary={item.summary}
+        existingMultiContents={multiContents}
         images={images}
       />
     </>

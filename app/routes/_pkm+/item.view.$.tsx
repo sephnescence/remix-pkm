@@ -12,7 +12,8 @@ export const loader = itemLoader
 export default function ViewItemRoute() {
   const loaderData = useLoaderData<typeof loader>()
 
-  const { args, history, images, item } = loaderData as ItemLoaderResponse
+  const { args, history, images, item, resolvedContent } =
+    loaderData as ItemLoaderResponse
 
   const [interactive, setInteractive] = useState(() => false)
   const [submitting, setSubmitting] = useState(() => false)
@@ -117,7 +118,7 @@ export default function ViewItemRoute() {
             <div className="mb-4">Content</div>
             <div
               dangerouslySetInnerHTML={{
-                __html: item.content,
+                __html: resolvedContent,
               }}
             />
           </div>

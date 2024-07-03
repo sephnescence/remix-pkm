@@ -8,15 +8,18 @@ import Dropzone from './Dropzone'
 import useImageUploadReducer, {
   ImageReducerItem,
 } from '~/hooks/useImageUploadReducer'
+import useMultiContentsReducer, {
+  MultiContentReducerItem,
+} from '~/hooks/useMultiContentsReducer'
 
 type ItemFormProps = {
   pageTitle: string
-  cancelUrl?: string
   apiEndpoint: string
-  apiMethod: string
-  defaultContent?: string
+  cancelUrl?: string
   defaultName?: string
   defaultSummary?: string
+  defaultMultiContents?: string
+  existingMultiContents?: MultiContentReducerItem[]
   images?: {
     name: string
     image_id: string
@@ -111,12 +114,12 @@ export const handleMoveToSubmit = async ({
 
 export default function ItemForm({
   pageTitle,
-  cancelUrl,
   apiEndpoint,
-  apiMethod,
-  defaultContent,
+  cancelUrl,
   defaultName,
   defaultSummary,
+  defaultMultiContents,
+  existingMultiContents,
   images: modelImages,
 }: ItemFormProps) {
   const [actionData, setActionData] = useState({
@@ -124,13 +127,12 @@ export default function ItemForm({
       fieldErrors: { general: '', content: '', name: '', summary: '' },
     },
   })
-  const [content, setContent] = useState(
-    () =>
-      defaultContent ||
-      `<div class="bg-blue-950 p-4">\n  Enter your content here\n</div>\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n`,
-  )
+
   const [name, setName] = useState(() => defaultName || '')
   const [summary, setSummary] = useState(() => defaultSummary || '')
+
+  const [interactive, setInteractive] = useState(() => false)
+  const [submitting, setSubmitting] = useState(() => false)
 
   const imageUploaderDispatcher = useImageUploadReducer()
   const images = imageUploaderDispatcher[0] as ImageReducerItem[]
@@ -139,8 +141,16 @@ export default function ItemForm({
     payload: ImageReducerItem
   }>
 
-  const [interactive, setInteractive] = useState(() => false)
-  const [submitting, setSubmitting] = useState(() => false)
+  const useMultiContentsReducerHook = useMultiContentsReducer({
+    defaultMultiContents,
+    existingMultiContents,
+  })
+  const multiContents =
+    useMultiContentsReducerHook[0] as MultiContentReducerItem[]
+  const setMultiContents = useMultiContentsReducerHook[1] as React.Dispatch<{
+    type: string
+    payload: MultiContentReducerItem
+  }>
 
   // Prevent form interaction while submitting and while the page is rendering
   useEffect(() => {
@@ -157,9 +167,15 @@ export default function ItemForm({
       return false
     }
     const formData = new FormData(thisForm)
-    formData.append('content', content)
+    formData.append('content', 'Now handled by Multi Contents')
     formData.append('name', name)
     formData.append('summary', summary)
+    multiContents.map((content: MultiContentReducerItem) => {
+      formData.append(
+        `multi_contents__${content.id}__${content.sortOrder}__${content.status}`,
+        content.content,
+      )
+    })
     images.map((image: ImageReducerItem, index) => {
       if (
         !image.blob ||
@@ -178,7 +194,7 @@ export default function ItemForm({
     })
     const res = await fetch(
       new Request(apiEndpoint, {
-        method: apiMethod,
+        method: 'POST',
         body: formData,
       }),
     )
@@ -283,6 +299,14 @@ export default function ItemForm({
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 md:gap-2">
+          <div className="md:block">
+            <div className="mb-4">Content</div>
+          </div>
+          <div className="hidden md:block">
+            <div className="mb-4">Content Preview</div>
+          </div>
+        </div>
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 md:gap-2">
           <div className="mb-2">
             <ItemContentCodeMirror setContent={setContent} content={content} />
             <br />
@@ -303,6 +327,149 @@ export default function ItemForm({
             {!content && (
               <div className="bg-blue-950 p-4">Enter your content here</div>
             )}
+          </div>
+        </div> */}
+        <div className="grid grid-cols-1 gap-1 md:gap-2">
+          {multiContents &&
+            multiContents.map((multiContent) => {
+              return (
+                <div
+                  key={multiContent.id}
+                  className="grid grid-cols-1 gap-1 md:grid-cols-2 md:gap-2"
+                >
+                  <div className="">
+                    <ItemContentCodeMirror
+                      setContent={(newContent: string) => {
+                        setMultiContents({
+                          type: 'update',
+                          payload: {
+                            id: multiContent.id,
+                            sortOrder: multiContent.sortOrder,
+                            content: newContent,
+                            status: '<unused>',
+                            originalStatus: '<unused>',
+                          },
+                        })
+                      }}
+                      content={multiContent.content}
+                      parentDivId={multiContent.id}
+                    />
+                    <div className="flex gap-2 mb-2">
+                      {(multiContent.status === 'active' ||
+                        multiContent.status === 'new') && (
+                        <div>
+                          <button
+                            className="bg-orange-700 hover:bg-orange-600 px-1"
+                            type="button"
+                            title="Remove"
+                            onClick={() => {
+                              setMultiContents({
+                                type: 'discard',
+                                payload: {
+                                  id: multiContent.id,
+                                  sortOrder: multiContents.length,
+                                  content: multiContent.content,
+                                  status: '<unused>',
+                                  originalStatus: '<unused>',
+                                },
+                              })
+                            }}
+                          >
+                            Delete after saving
+                          </button>
+                        </div>
+                      )}
+                      {multiContent.status === 'discarded' && (
+                        <div>
+                          <button
+                            className="bg-blue-600 hover:bg-blue-500 px-1"
+                            type="button"
+                            title="Restore"
+                            onClick={() => {
+                              setMultiContents({
+                                type: 'restore',
+                                payload: {
+                                  id: multiContent.id,
+                                  sortOrder: multiContents.length,
+                                  content: multiContent.content,
+                                  status: '<unused>',
+                                  originalStatus: '<unused>',
+                                },
+                              })
+                            }}
+                          >
+                            Do not delete
+                          </button>
+                        </div>
+                      )}
+                      {multiContent.status === 'discarded' && (
+                        <div>
+                          <button
+                            className="bg-red-600 hover:bg-red-500 px-1"
+                            type="button"
+                            title="Restore"
+                            onClick={() => {
+                              setMultiContents({
+                                type: 'removeNow',
+                                payload: {
+                                  id: multiContent.id,
+                                  sortOrder: multiContents.length,
+                                  content: multiContent.content,
+                                  status: '<unused>',
+                                  originalStatus: '<unused>',
+                                },
+                              })
+                            }}
+                          >
+                            Delete now
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {actionData?.errors.fieldErrors.content && (
+                      <div className="text-red-500">
+                        {actionData.errors.fieldErrors?.content}
+                      </div>
+                    )}
+                  </div>
+                  <div className="hidden md:block">
+                    {multiContent.content && (
+                      <div
+                        id="innsight-content-preview"
+                        dangerouslySetInnerHTML={{
+                          __html: multiContent.content,
+                        }}
+                      ></div>
+                    )}
+                    {!multiContent.content && (
+                      <div className="bg-blue-950 p-4">
+                        Enter your content here
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 md:gap-2 mb-2">
+          <div className="grid grid-cols-1 bg-blue-500">
+            <button
+              type="button"
+              onClick={() => {
+                setMultiContents({
+                  type: 'add',
+                  payload: {
+                    id: crypto.randomUUID(),
+                    sortOrder: multiContents.length + 1,
+                    content: `<div class="bg-blue-950 p-4">\n  Enter your content here\n</div>`,
+                    status: '<unused>',
+                    originalStatus: '<unused>',
+                  },
+                })
+              }}
+            >
+              Add New Multi Content
+            </button>
           </div>
         </div>
         <div className="grid grid-cols-1">

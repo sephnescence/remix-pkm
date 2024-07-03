@@ -24,7 +24,6 @@ import {
   cloneModelImages,
   getImagesForItem,
 } from '~/repositories/PkmImageRepository'
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import {
   SpaceForMove,
   getSpacesForMove,
@@ -41,7 +40,10 @@ import {
 } from '~/repositories/PkmSuiteRepository'
 import { getNewSuiteStoreyAndSpaceIds } from '@/utils/move'
 import { getDetailsForBreadcrumbs } from '@/utils/content/suiteStoreySpace'
-import { uploadImagesForModel } from '~/services/PkmImageService'
+import { MultiContentReducerItem } from '~/hooks/useMultiContentsReducer'
+import { displayContent } from '@/utils/content'
+import { Prisma } from '@prisma/client'
+import { determineSyncContentsTransactionsByFormData } from '~/services/PkmContentService'
 
 export type ItemUpdateConfigActionResponse = {
   errors: {
@@ -59,6 +61,8 @@ export type ItemUpdateConfigActionResponse = {
 export type ItemLoaderResponse = {
   args: ConformArrayArgsToObjectResponse
   history: Awaited<ReturnType<typeof getCurrentHistoryItemForUser>>
+  resolvedContent: string
+  multiContents: MultiContentReducerItem[]
   images: {
     image_id: string
     name: string
@@ -208,48 +212,7 @@ export const itemCreateAction = async (
     }
   }
 
-  let content: string | undefined = formData.get('content')?.toString()
-
-  if (!content || content === undefined || content === '') {
-    return {
-      errors: {
-        fieldErrors: {
-          content: 'Content cannot be empty',
-        },
-      },
-      success: false,
-      redirect: null,
-    }
-  }
-
   const newModelId = randomUUID().toString()
-
-  const uploadImagesForModelResponse = await uploadImagesForModel({
-    formData,
-    modelId: newModelId,
-    userId: user.id,
-  })
-
-  if (uploadImagesForModelResponse.success === false) {
-    return {
-      errors: {
-        fieldErrors: {
-          general:
-            uploadImagesForModelResponse.error ??
-            'Image upload failed. Please try again later',
-        },
-      },
-      success: false,
-      redirect: null,
-    }
-  }
-
-  uploadImagesForModelResponse.imageUploads.forEach(
-    ({ s3_url, localStorageUrl }) => {
-      // I still need a bang here despite returning early if content is undefined
-      content = content!.replaceAll(localStorageUrl, s3_url)
-    },
-  )
 
   const itemArgs: {
     content: string
@@ -259,7 +222,7 @@ export const itemCreateAction = async (
     user_id: string
     void_at?: Date
   } = {
-    content,
+    content: 'Now handled by Multi Contents',
     name,
     summary,
     model_id: newModelId,
@@ -280,9 +243,11 @@ export const itemCreateAction = async (
     eSpaceId: args.conformedArgs.eSpaceId ?? null,
   })
 
+  const transactions: Prisma.PrismaPromise<unknown>[] = []
+
   const newHistoryId = randomUUID().toString()
 
-  const results = await db.$transaction([
+  transactions.push(
     db.pkmHistory.create({
       data: {
         history_id: newHistoryId,
@@ -300,19 +265,34 @@ export const itemCreateAction = async (
           },
       },
     }),
-  ])
+  )
 
-  if (!results) {
+  const incomingContents = await determineSyncContentsTransactionsByFormData({
+    formData,
+    modelId: newModelId,
+    historyId: newHistoryId,
+    modelType:
+      'Pkm' + modelTypeSlugToHistoryModelType[args.conformedArgs.nModelType],
+    userId: user.id,
+  })
+
+  if (incomingContents.error) {
     return {
       errors: {
         fieldErrors: {
-          general: 'System Error. Please file a bug report',
+          general: incomingContents.error,
         },
       },
       success: false,
       redirect: null,
     }
   }
+
+  incomingContents.transactions.forEach((transaction) => {
+    transactions.push(transaction)
+  })
+
+  await db.$transaction(transactions)
 
   let redirectUrlPart = '/item/view/'
 
@@ -428,85 +408,6 @@ export const itemUpdateAction = async (
     }
   }
 
-  let content: string | undefined = formData.get('content')?.toString()
-
-  if (!content || content === '') {
-    return {
-      errors: {
-        fieldErrors: {
-          content: 'Content cannot be empty',
-        },
-      },
-      success: false,
-      redirect: null,
-    }
-  }
-
-  const s3Client = new S3Client({
-    region: 'ap-southeast-2',
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-    },
-  })
-
-  const keys = [...formData.keys()]
-
-  for (const key of keys) {
-    const value = formData.get(key)
-
-    if (value instanceof File) {
-      const name = formData.get(`${key}_name`)?.toString()
-      const size = parseInt(formData.get(`${key}_size`)?.toString() ?? '0')
-      const type = formData.get(`${key}_type`)?.toString()
-      const localStorageUrl = formData.get(`${key}_url`)?.toString()
-      if (name && size && type) {
-        const s3_name = randomUUID().toString() + '-' + name
-
-        const arrayBuffer = await value.arrayBuffer()
-        const buffer = Buffer.from(arrayBuffer)
-
-        const results = await s3Client.send(
-          new PutObjectCommand({
-            Bucket: 'rethought-item-images',
-            Key: `${user.id}/${args.conformedArgs.eModelId}/${s3_name}`,
-            Body: buffer,
-            ACL: 'public-read',
-          }),
-        )
-
-        const s3_url = `https://rethought-item-images.s3-ap-southeast-2.amazonaws.com/${user.id}/${args.conformedArgs.eModelId}/${s3_name}`
-
-        if (results.$metadata.httpStatusCode !== 200) {
-          return {
-            errors: {
-              fieldErrors: {
-                general: 'Image upload failed. Please try again later',
-              },
-            },
-            success: false,
-            redirect: null,
-          }
-        }
-
-        await db.pkmImage.create({
-          data: {
-            s3_url,
-            name,
-            size,
-            type,
-            user_id: user.id,
-            model_id: args.conformedArgs.eModelId,
-          },
-        })
-
-        if (localStorageUrl) {
-          content = content.replaceAll(localStorageUrl, s3_url)
-        }
-      }
-    }
-  }
-
   if (
     !args.apiDuplicateUrl ||
     !args.apiEditUrl ||
@@ -589,7 +490,7 @@ export const itemUpdateAction = async (
     user_id: string
     void_at?: Date
   } = {
-    content,
+    content: 'Now handled by Multi Contents',
     name,
     summary,
     model_id: args.conformedArgs.eModelId,
@@ -610,9 +511,11 @@ export const itemUpdateAction = async (
     eSpaceId: args.conformedArgs.eSpaceId ?? null,
   })
 
+  const transactions: Prisma.PrismaPromise<unknown>[] = []
+
   const newHistoryId = randomUUID().toString()
 
-  const results = await db.$transaction([
+  transactions.push(
     db.pkmHistory.update({
       where: {
         history_id: args.conformedArgs.eHistoryId,
@@ -622,6 +525,9 @@ export const itemUpdateAction = async (
         is_current: false,
       },
     }),
+  )
+
+  transactions.push(
     db.pkmHistory.create({
       data: {
         history_id: newHistoryId,
@@ -639,19 +545,34 @@ export const itemUpdateAction = async (
           },
       },
     }),
-  ])
+  )
 
-  if (!results) {
+  const incomingContents = await determineSyncContentsTransactionsByFormData({
+    formData,
+    modelId: args.conformedArgs.eModelId,
+    historyId: newHistoryId,
+    modelType:
+      'Pkm' + modelTypeSlugToHistoryModelType[args.conformedArgs.eModelType],
+    userId: user.id,
+  })
+
+  if (incomingContents.error) {
     return {
       errors: {
         fieldErrors: {
-          general: 'System Error. Please file a bug report',
+          general: incomingContents.error,
         },
       },
       success: false,
       redirect: null,
     }
   }
+
+  incomingContents.transactions.forEach((transaction) => {
+    transactions.push(transaction)
+  })
+
+  await db.$transaction(transactions)
 
   let redirectUrlPart = '/item/view/'
 
@@ -791,6 +712,49 @@ export const itemLoader = async (
     return redirect('/')
   }
 
+  const suiteMultiContents: MultiContentReducerItem[] = []
+  const resolvedMultiContents: string[] = []
+
+  const multiContents = await db.pkmContents.findMany({
+    where: {
+      history_id: history.historyItem.history_id,
+      model_id: args.conformedArgs.eModelId,
+    },
+  })
+
+  if (!multiContents || multiContents.length === 0) {
+    await db.pkmContents.create({
+      data: {
+        content_id: crypto.randomUUID(),
+        model_id: args.conformedArgs.eModelId,
+        history_id: history.historyItem.history_id,
+        sort_order: 1,
+        content: item.content,
+      },
+    })
+
+    const newContent = await db.pkmContents.findFirst({
+      where: {
+        history_id: history.historyItem.history_id,
+        model_id: args.conformedArgs.eModelId,
+      },
+    })
+
+    multiContents.push(newContent!)
+  }
+
+  for (const multiContent of multiContents) {
+    suiteMultiContents.push({
+      id: multiContent.content_id,
+      sortOrder: multiContent.sort_order,
+      content: multiContent.content,
+      status: 'active',
+      originalStatus: 'active',
+    })
+
+    resolvedMultiContents.push(await displayContent(multiContent.content, user))
+  }
+
   const images = await getImagesForItem({
     modelId: args.conformedArgs.eModelId,
     userId: user.id,
@@ -801,6 +765,11 @@ export const itemLoader = async (
     history,
     images,
     item,
+    resolvedContent:
+      '<div class="*:mb-2"><div>' +
+      resolvedMultiContents.join('</div><div>') +
+      '</div></div>',
+    multiContents: suiteMultiContents,
   }
 }
 
@@ -1091,7 +1060,7 @@ export const itemMoveAction = async (
     user_id: string
     void_at?: Date
   } = {
-    content: item.content,
+    content: 'Now handled by Multi Contents',
     name: item.name,
     summary: item.summary,
     model_id: args.conformedArgs.eModelId,
@@ -1101,8 +1070,6 @@ export const itemMoveAction = async (
   if (args.conformedArgs.nModelType === 'passing-thought') {
     itemArgs.void_at = new Date('9000-01-01 00:00:00')
   }
-
-  let redirectUrlPart = '/'
 
   try {
     const {
@@ -1118,7 +1085,9 @@ export const itemMoveAction = async (
       nSpaceId: args.conformedArgs.nSpaceId ?? null,
     })
 
-    const results = await db.$transaction([
+    const transactions: Prisma.PrismaPromise<unknown>[] = []
+
+    transactions.push(
       db.pkmHistory.update({
         where: {
           history_id: history.historyItem.history_id,
@@ -1128,6 +1097,9 @@ export const itemMoveAction = async (
           is_current: false,
         },
       }),
+    )
+
+    transactions.push(
       db.pkmHistory.create({
         data: {
           history_id: newHistoryId,
@@ -1146,21 +1118,32 @@ export const itemMoveAction = async (
             },
         },
       }),
-    ])
+    )
 
-    if (!results) {
-      return {
-        errors: {
-          fieldErrors: {
-            general: 'Move - Item was not moved',
+    const multiContents = await db.pkmContents.findMany({
+      where: {
+        history_id: args.conformedArgs.eHistoryId,
+        model_id: args.conformedArgs.eModelId,
+      },
+    })
+
+    multiContents.forEach((multiContent) => {
+      transactions.push(
+        db.pkmContents.create({
+          data: {
+            content_id: randomUUID().toString(),
+            model_id: args.conformedArgs.eModelId,
+            history_id: newHistoryId,
+            sort_order: multiContent.sort_order,
+            content: multiContent.content,
           },
-        },
-        success: false,
-        redirect: null,
-      }
-    }
+        }),
+      )
+    })
 
-    redirectUrlPart = '/item/view/'
+    await db.$transaction(transactions)
+
+    let redirectUrlPart = '/item/view/'
 
     if (newSuiteId) {
       redirectUrlPart += `eSuiteId/${newSuiteId}/`
@@ -1180,7 +1163,7 @@ export const itemMoveAction = async (
       redirectUrlPart += `eSpaceId/${newSpaceId}/`
     }
 
-    redirectUrlPart += `eModelType/${args.conformedArgs.nModelType ?? args.conformedArgs.eModelType}/eModelId/${args.conformedArgs.eModelId}/eHistoryId/${results[1].history_id}`
+    redirectUrlPart += `eModelType/${args.conformedArgs.nModelType ?? args.conformedArgs.eModelType}/eModelId/${args.conformedArgs.eModelId}/eHistoryId/${newHistoryId}`
 
     return {
       errors: null,
