@@ -722,6 +722,27 @@ export const itemLoader = async (
     },
   })
 
+  if (!multiContents || multiContents.length === 0) {
+    await db.pkmContents.create({
+      data: {
+        content_id: crypto.randomUUID(),
+        model_id: args.conformedArgs.eModelId,
+        history_id: history.historyItem.history_id,
+        sort_order: 1,
+        content: item.content,
+      },
+    })
+
+    const newContent = await db.pkmContents.findFirst({
+      where: {
+        history_id: history.historyItem.history_id,
+        model_id: args.conformedArgs.eModelId,
+      },
+    })
+
+    multiContents.push(newContent!)
+  }
+
   for (const multiContent of multiContents) {
     suiteMultiContents.push({
       id: multiContent.content_id,
