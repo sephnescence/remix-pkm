@@ -5,20 +5,45 @@ import {
   FIXED_NEW_MULTI_CONTENT_ID,
   PkmContentInput,
 } from '~/repositories/PkmContentRepository'
+import { uploadImagesForModel } from './PkmImageService'
 
-export const determineSyncContentsTransactionsByFormData = ({
+export type DetermineSyncContentsTransactionsByFormDataResponse = {
+  success: boolean
+  error: string | null
+  transactions: Prisma.PrismaPromise<unknown>[]
+}
+
+export const determineSyncContentsTransactionsByFormData = async ({
   formData,
-  modeId,
+  modelId,
   historyId,
   modelType,
+  userId,
 }: {
   formData: FormData
-  modeId: string
+  modelId: string
   historyId: string
   modelType: string
-}): Prisma.PrismaPromise<unknown>[] => {
+  userId: string
+}): Promise<DetermineSyncContentsTransactionsByFormDataResponse> => {
   const incomingContents = []
   let pkmContentsSortOrder = 1
+
+  const uploadImagesForModelResponse = await uploadImagesForModel({
+    formData,
+    modelId,
+    userId,
+  })
+
+  if (uploadImagesForModelResponse.success === false) {
+    return {
+      error:
+        uploadImagesForModelResponse.error ??
+        'Image upload failed. Please try again later',
+      success: false,
+      transactions: [],
+    }
+  }
 
   const keys = [...formData.keys()]
   for (const key of keys) {
@@ -68,22 +93,34 @@ export const determineSyncContentsTransactionsByFormData = ({
       return
     }
 
+    let newContent = incomingContent.content
+      ? incomingContent.content.toString()
+      : ''
+
+    uploadImagesForModelResponse.imageUploads.forEach(
+      ({ s3_url, localStorageUrl }) => {
+        newContent = newContent.replaceAll(localStorageUrl, s3_url)
+      },
+    )
+
     transactions.push(
       db.pkmContents.create({
         data: {
           content_id: incomingContent.id,
-          model_id: modeId,
+          model_id: modelId,
           history_id: historyId,
           sort_order: pkmContentsSortOrder++, // Ignore the sort order from the frontend. It can have gaps
-          content: incomingContent.content
-            ? incomingContent.content.toString()
-            : '',
+          content: newContent,
         },
       }),
     )
   })
 
-  return transactions
+  return {
+    success: true,
+    error: null,
+    transactions,
+  }
 }
 
 export const determineSyncContentsTransactions = ({

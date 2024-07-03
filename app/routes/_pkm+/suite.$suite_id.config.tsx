@@ -1,6 +1,7 @@
 import { Link, useLoaderData } from '@remix-run/react'
 import { useEffect, useState } from 'react'
 import SuiteBreadcrumbs from '~/components/nav/SuiteBreadcrumbs'
+import ItemImageCarousel from '~/components/pkm/forms/ItemImageCarousel'
 import { suiteConfigLoader } from '~/controllers/SuiteController'
 
 export const loader = suiteConfigLoader
@@ -89,6 +90,7 @@ export default function SuiteConfigRoute() {
               }}
             />
           </div>
+          <ItemImageCarousel images={suite.images} />
           <div className="flex gap-2">
             <Link to={`/suite/${suite.id}/config/edit`} prefetch="intent">
               <button

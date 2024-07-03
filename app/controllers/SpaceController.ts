@@ -5,51 +5,126 @@ import { Prisma } from '@prisma/client'
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
-  TypedResponse,
   redirect,
 } from '@remix-run/node'
-import { MultiContentItem } from '~/components/Suites/forms/SuiteForm'
+import { MultiContentReducerItem } from '~/hooks/useMultiContentsReducer'
+import { getImagesForItem } from '~/repositories/PkmImageRepository'
 import {
   getSpaceItemCounts,
   getSpaceConfig,
   getSpaceDashboard,
 } from '~/repositories/PkmSpaceRepository'
-import { getStoreyForUser } from '~/repositories/PkmStoreyRepository'
-import { getSuiteForUser } from '~/repositories/PkmSuiteRepository'
+import {
+  getStoreyConfig,
+  getStoreyForUser,
+} from '~/repositories/PkmStoreyRepository'
+import {
+  getSuiteConfig,
+  getSuiteForUser,
+} from '~/repositories/PkmSuiteRepository'
 import { determineSyncContentsTransactionsByFormData } from '~/services/PkmContentService'
 
-export type SpaceUpdateConfigActionResponse = {
+export type SpaceConfigActionResponse = {
   errors: {
     fieldErrors: {
       general?: string
       content?: string
-      description?: string
       name?: string
-    }
-  }
+      description?: string
+    } | null
+  } | null
+  success: boolean
+  redirect: string | null
 }
 
 export const spaceUpdateConfigAction = async (
   args: ActionFunctionArgs,
-): Promise<SpaceUpdateConfigActionResponse | TypedResponse<never>> => {
+): Promise<SpaceConfigActionResponse> => {
   const user = await getUserAuth(args)
   if (!user) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general:
+            'Your session has expired. Please log in again in another window to avoid losing your work',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const suiteId = args.params.suite_id
   if (!suiteId) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Suite id not provided',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const suite = await getSuiteConfig({
+    suiteId,
+    userId: user.id,
+  })
+
+  if (!suite) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Suite not found',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const storeyId = args.params.storey_id
   if (!storeyId) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Storey id not provided',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const storey = await getStoreyConfig({
+    storeyId,
+    userId: user.id,
+  })
+
+  if (!storey || storey.suite_id !== suite.id) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Storey not found',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const spaceId = args.params.space_id
   if (!spaceId) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Space id not provided',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const space = await getSpaceConfig({
@@ -57,8 +132,16 @@ export const spaceUpdateConfigAction = async (
     userId: user.id,
   })
 
-  if (!space) {
-    return redirect('/')
+  if (!space || space.storey.id !== storey.id) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Space not found',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const existingHistoryIdForMultiContent =
@@ -66,14 +149,30 @@ export const spaceUpdateConfigAction = async (
 
   // When loading a Space now, it should auto heal if it doesn't have an existing history
   if (!existingHistoryIdForMultiContent) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Space not found',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const { request } = args
 
   const formData = await request.formData()
   if (!formData) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Form Data was missing. This is not an expected error',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const name: FormDataEntryValue | null = formData.get('name')
@@ -85,6 +184,8 @@ export const spaceUpdateConfigAction = async (
           name: 'Name cannot be empty',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 
@@ -97,6 +198,8 @@ export const spaceUpdateConfigAction = async (
           description: 'Description cannot be empty',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 
@@ -138,15 +241,28 @@ export const spaceUpdateConfigAction = async (
   ]
 
   try {
-    const incomingContents = determineSyncContentsTransactionsByFormData({
+    const incomingContents = await determineSyncContentsTransactionsByFormData({
       formData,
-      modeId: spaceId,
+      modelId: spaceId,
       historyId: newHistoryId,
       modelType: 'SpaceContents',
+      userId: user.id,
     })
 
-    incomingContents.forEach((incomingContent) => {
-      transactions.push(incomingContent)
+    if (incomingContents.error) {
+      return {
+        errors: {
+          fieldErrors: {
+            general: incomingContents.error,
+          },
+        },
+        success: false,
+        redirect: null,
+      }
+    }
+
+    incomingContents.transactions.forEach((transaction) => {
+      transactions.push(transaction)
     })
   } catch {
     return {
@@ -155,15 +271,21 @@ export const spaceUpdateConfigAction = async (
           general: `Failed to update Space. Please try again. [1]`,
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 
   try {
     await db.$transaction(transactions)
 
-    return redirect(
-      `/suite/${suiteId}/storey/${storeyId}/space/${spaceId}/config`,
-    )
+    return {
+      errors: {
+        fieldErrors: {},
+      },
+      success: true,
+      redirect: `/suite/${suiteId}/storey/${storeyId}/space/${spaceId}/config`,
+    }
   } catch {
     return {
       errors: {
@@ -171,6 +293,8 @@ export const spaceUpdateConfigAction = async (
           general: 'Failed to update Space. Please try again. [2]',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 }
@@ -199,7 +323,7 @@ export const spaceConfigLoader = async (args: LoaderFunctionArgs) => {
   //    we need the History Item that's current and belongs specifically to the Suite
   const historyIdForMultiContent = space.pkm_history[0]?.history_id ?? null
 
-  const suiteMultiContents: MultiContentItem[] = []
+  const suiteMultiContents: MultiContentReducerItem[] = []
   const resolvedMultiContents: string[] = []
 
   if (historyIdForMultiContent) {
@@ -225,6 +349,12 @@ export const spaceConfigLoader = async (args: LoaderFunctionArgs) => {
     }
   }
 
+  // BTTODO - Reception Space won't be unique. Reception Suite and Reception Storey will have the same id
+  const images = await getImagesForItem({
+    modelId: space.id,
+    userId: user.id,
+  })
+
   return {
     id: space.id,
     content: space.content,
@@ -239,6 +369,8 @@ export const spaceConfigLoader = async (args: LoaderFunctionArgs) => {
     suiteName: space.storey.suite.name,
     storeyId: space.storey.id,
     storeyName: space.storey.name,
+    historyIdForMultiContent,
+    images,
   }
 }
 
@@ -363,27 +495,96 @@ export const spaceConfigNewLoader = async (args: ActionFunctionArgs) => {
   }
 }
 
-export const spaceConfigNewAction = async (args: ActionFunctionArgs) => {
+export const spaceConfigNewAction = async (
+  args: ActionFunctionArgs,
+): Promise<SpaceConfigActionResponse> => {
   const user = await getUserAuth(args)
   if (!user) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general:
+            'Your session has expired. Please log in again in another window to avoid losing your work',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const suiteId = args.params.suite_id
+  if (!suiteId) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Suite not found',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const suite = await getSuiteConfig({
+    suiteId,
+    userId: user.id,
+  })
+
+  if (!suite) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Suite not found',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const storeyId = args.params.storey_id
+  if (!storeyId) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Storey not found',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const storey = await getStoreyConfig({
+    storeyId: storeyId,
+    userId: user.id,
+  })
+
+  if (!storey || storey.suite_id !== suite.id) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Storey not found',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const { request } = args
 
   const formData = await request.formData()
   if (!formData) {
-    return redirect('/')
-  }
-
-  const suiteId = args.params.suite_id
-  if (!suiteId) {
-    return redirect('/')
-  }
-
-  const storeyId = args.params.storey_id
-  if (!storeyId) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Form Data was missing. This is not an expected error',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const name: FormDataEntryValue | null = formData.get('name')
@@ -395,6 +596,8 @@ export const spaceConfigNewAction = async (args: ActionFunctionArgs) => {
           name: 'Name cannot be empty',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 
@@ -407,6 +610,8 @@ export const spaceConfigNewAction = async (args: ActionFunctionArgs) => {
           description: 'Description cannot be empty',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 
@@ -445,39 +650,62 @@ export const spaceConfigNewAction = async (args: ActionFunctionArgs) => {
   )
 
   try {
-    const incomingContents = determineSyncContentsTransactionsByFormData({
+    const incomingContents = await determineSyncContentsTransactionsByFormData({
       formData,
-      modeId: newSpaceId,
+      modelId: newSpaceId,
       historyId: newHistoryId,
       modelType: 'SpaceContents',
+      userId: user.id,
     })
 
-    incomingContents.forEach((incomingContent) => {
-      transactions.push(incomingContent)
+    if (incomingContents.error) {
+      return {
+        errors: {
+          fieldErrors: {
+            general: incomingContents.error,
+          },
+        },
+        success: false,
+        redirect: null,
+      }
+    }
+
+    incomingContents.transactions.forEach((transaction) => {
+      transactions.push(transaction)
     })
   } catch {
     return {
       errors: {
         fieldErrors: {
-          general: `Failed to store Space. Please try again. [1]`,
+          general:
+            'Failed to create Space. Please try again in a new window to avoid losing your work. You can copy across the Name, Description, and Contents. You will have to re-upload your images and update the Contents to refer to the new imag locations instead. Apologies for the inconvenience. [1]',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 
   try {
     await db.$transaction(transactions)
 
-    return redirect(
-      `/suite/${suiteId}/storey/${storeyId}/space/${newSpaceId}/config`,
-    )
+    return {
+      errors: {
+        fieldErrors: {},
+      },
+      success: true,
+      redirect: `/suite/${suiteId}/storey/${storeyId}/space/${newSpaceId}/config`,
+    }
   } catch {
     return {
       errors: {
         fieldErrors: {
-          general: 'Failed to store Space. Please try again. [2]',
+          general:
+            'Failed to create Space. Please try again in a new window to avoid losing your work. You can copy across the Name, Description, and Contents. You will have to re-upload your images and update the Contents to refer to the new imag locations instead. Apologies for the inconvenience. [2]',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 }

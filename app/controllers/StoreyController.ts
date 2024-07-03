@@ -5,19 +5,22 @@ import { Prisma } from '@prisma/client'
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
-  TypedResponse,
   redirect,
 } from '@remix-run/node'
-import { MultiContentItem } from '~/components/Suites/forms/SuiteForm'
+import { MultiContentReducerItem } from '~/hooks/useMultiContentsReducer'
+import { getImagesForItem } from '~/repositories/PkmImageRepository'
 import { getSpaceItemCounts } from '~/repositories/PkmSpaceRepository'
 import {
   getStoreyConfig,
   getStoreyDashboard,
 } from '~/repositories/PkmStoreyRepository'
-import { getSuiteForUser } from '~/repositories/PkmSuiteRepository'
+import {
+  getSuiteConfig,
+  getSuiteForUser,
+} from '~/repositories/PkmSuiteRepository'
 import { determineSyncContentsTransactionsByFormData } from '~/services/PkmContentService'
 
-export type StoreyUpdateConfigActionResponse = {
+export type StoreyConfigActionResponse = {
   errors: {
     fieldErrors: {
       general?: string
@@ -26,24 +29,68 @@ export type StoreyUpdateConfigActionResponse = {
       name?: string
     }
   }
+  success: boolean
+  redirect: string | null
 }
 
 export const storeyUpdateConfigAction = async (
   args: ActionFunctionArgs,
-): Promise<StoreyUpdateConfigActionResponse | TypedResponse<never>> => {
+): Promise<StoreyConfigActionResponse> => {
   const user = await getUserAuth(args)
   if (!user) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general:
+            'Your session has expired. Please log in again in another window to avoid losing your work',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const suiteId = args.params.suite_id
   if (!suiteId) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Suite id not provided',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const suite = await getSuiteConfig({
+    suiteId,
+    userId: user.id,
+  })
+
+  if (!suite) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Suite not found',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const storeyId = args.params.storey_id
   if (!storeyId) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Storey id not provided',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const storey = await getStoreyConfig({
@@ -51,8 +98,16 @@ export const storeyUpdateConfigAction = async (
     userId: user.id,
   })
 
-  if (!storey) {
-    return redirect('/')
+  if (!storey || storey.suite_id !== suite.id) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Storey not found',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const existingHistoryIdForMultiContent =
@@ -60,14 +115,30 @@ export const storeyUpdateConfigAction = async (
 
   // When loading a Storey now, it should auto heal if it doesn't have an existing history
   if (!existingHistoryIdForMultiContent) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Storey not found',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const { request } = args
 
   const formData = await request.formData()
   if (!formData) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Form Data was missing. This is not an expected error',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const name: FormDataEntryValue | null = formData.get('name')
@@ -79,6 +150,8 @@ export const storeyUpdateConfigAction = async (
           name: 'Name cannot be empty',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 
@@ -91,6 +164,8 @@ export const storeyUpdateConfigAction = async (
           description: 'Description cannot be empty',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 
@@ -132,15 +207,28 @@ export const storeyUpdateConfigAction = async (
   ]
 
   try {
-    const incomingContents = determineSyncContentsTransactionsByFormData({
+    const incomingContents = await determineSyncContentsTransactionsByFormData({
       formData,
-      modeId: storeyId,
+      modelId: storeyId,
       historyId: newHistoryId,
       modelType: 'StoreyContents',
+      userId: user.id,
     })
 
-    incomingContents.forEach((incomingContent) => {
-      transactions.push(incomingContent)
+    if (incomingContents.error) {
+      return {
+        errors: {
+          fieldErrors: {
+            general: incomingContents.error,
+          },
+        },
+        success: false,
+        redirect: null,
+      }
+    }
+
+    incomingContents.transactions.forEach((transaction) => {
+      transactions.push(transaction)
     })
   } catch {
     return {
@@ -149,13 +237,21 @@ export const storeyUpdateConfigAction = async (
           general: `Failed to update Storey. Please try again. [1]`,
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 
   try {
     await db.$transaction(transactions)
 
-    return redirect(`/suite/${suiteId}/storey/${storeyId}/config`)
+    return {
+      errors: {
+        fieldErrors: {},
+      },
+      success: true,
+      redirect: `/suite/${suiteId}/storey/${storeyId}/config`,
+    }
   } catch {
     return {
       errors: {
@@ -163,6 +259,8 @@ export const storeyUpdateConfigAction = async (
           general: 'Failed to update Storey. Please try again. [2]',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 }
@@ -191,7 +289,7 @@ export const storeyConfigLoader = async (args: LoaderFunctionArgs) => {
   //    we need the History Item that's current and belongs specifically to the Suite
   const historyIdForMultiContent = storey.pkm_history[0]?.history_id ?? null
 
-  const storeyMultiContents: MultiContentItem[] = []
+  const storeyMultiContents: MultiContentReducerItem[] = []
   const resolvedMultiContents: string[] = []
 
   if (historyIdForMultiContent) {
@@ -217,6 +315,12 @@ export const storeyConfigLoader = async (args: LoaderFunctionArgs) => {
     }
   }
 
+  // BTTODO - Reception Storey won't be unique. Reception Suite and Reception Space will have the same id
+  const images = await getImagesForItem({
+    modelId: storey.id,
+    userId: user.id,
+  })
+
   return {
     id: storey.id,
     suiteId: storey.suite_id,
@@ -229,6 +333,8 @@ export const storeyConfigLoader = async (args: LoaderFunctionArgs) => {
     multiContents: storeyMultiContents,
     description: storey.description,
     name: storey.name,
+    historyIdForMultiContent,
+    images,
   }
 }
 
@@ -336,22 +442,66 @@ export const storeyConfigNewLoader = async (args: ActionFunctionArgs) => {
   }
 }
 
-export const storeyConfigNewAction = async (args: ActionFunctionArgs) => {
+export const storeyConfigNewAction = async (
+  args: ActionFunctionArgs,
+): Promise<StoreyConfigActionResponse> => {
   const user = await getUserAuth(args)
   if (!user) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general:
+            'Your session has expired. Please log in again in another window to avoid losing your work',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const suiteId = args.params.suite_id
+  if (!suiteId) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Suite not found',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  const suite = await getSuiteConfig({
+    suiteId,
+    userId: user.id,
+  })
+
+  if (!suite) {
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Suite not found',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const { request } = args
 
   const formData = await request.formData()
   if (!formData) {
-    return redirect('/')
-  }
-
-  const suiteId = args.params.suite_id
-  if (!suiteId) {
-    return redirect('/')
+    return {
+      errors: {
+        fieldErrors: {
+          general: 'Form Data was missing. This is not an expected error',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
   }
 
   const name: FormDataEntryValue | null = formData.get('name')
@@ -363,6 +513,8 @@ export const storeyConfigNewAction = async (args: ActionFunctionArgs) => {
           name: 'Name cannot be empty',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 
@@ -375,6 +527,8 @@ export const storeyConfigNewAction = async (args: ActionFunctionArgs) => {
           description: 'Description cannot be empty',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 
@@ -413,37 +567,62 @@ export const storeyConfigNewAction = async (args: ActionFunctionArgs) => {
   )
 
   try {
-    const incomingContents = determineSyncContentsTransactionsByFormData({
+    const incomingContents = await determineSyncContentsTransactionsByFormData({
       formData,
-      modeId: newStoreyId,
+      modelId: newStoreyId,
       historyId: newHistoryId,
       modelType: 'StoreyContents',
+      userId: user.id,
     })
 
-    incomingContents.forEach((incomingContent) => {
-      transactions.push(incomingContent)
+    if (incomingContents.error) {
+      return {
+        errors: {
+          fieldErrors: {
+            general: incomingContents.error,
+          },
+        },
+        success: false,
+        redirect: null,
+      }
+    }
+
+    incomingContents.transactions.forEach((transaction) => {
+      transactions.push(transaction)
     })
   } catch {
     return {
       errors: {
         fieldErrors: {
-          general: `Failed to store Storey. Please try again. [1]`,
+          general:
+            'Failed to create Storey. Please try again in a new window to avoid losing your work. You can copy across the Name, Description, and Contents. You will have to re-upload your images and update the Contents to refer to the new imag locations instead. Apologies for the inconvenience. [1]',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 
   try {
     await db.$transaction(transactions)
 
-    return redirect(`/suite/${suiteId}/storey/${newStoreyId}/config`)
+    return {
+      errors: {
+        fieldErrors: {},
+      },
+      success: true,
+      redirect: `/suite/${suiteId}/storey/${newStoreyId}/config`,
+    }
   } catch {
     return {
       errors: {
         fieldErrors: {
-          general: 'Failed to store Storey. Please try again. [2]',
+          general:
+            'Failed to create Storey. Please try again in a new window to avoid losing your work. You can copy across the Name, Description, and Contents. You will have to re-upload your images and update the Contents to refer to the new imag locations instead. Apologies for the inconvenience. [2]',
         },
       },
+      success: false,
+      redirect: null,
     }
   }
 }

@@ -41,6 +41,7 @@ import {
 } from '~/repositories/PkmSuiteRepository'
 import { getNewSuiteStoreyAndSpaceIds } from '@/utils/move'
 import { getDetailsForBreadcrumbs } from '@/utils/content/suiteStoreySpace'
+import { uploadImagesForModel } from '~/services/PkmImageService'
 
 export type ItemUpdateConfigActionResponse = {
   errors: {
@@ -209,7 +210,7 @@ export const itemCreateAction = async (
 
   let content: string | undefined = formData.get('content')?.toString()
 
-  if (!content || content === '') {
+  if (!content || content === undefined || content === '') {
     return {
       errors: {
         fieldErrors: {
@@ -221,71 +222,34 @@ export const itemCreateAction = async (
     }
   }
 
-  const s3Client = new S3Client({
-    region: 'ap-southeast-2',
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-    },
+  const newModelId = randomUUID().toString()
+
+  const uploadImagesForModelResponse = await uploadImagesForModel({
+    formData,
+    modelId: newModelId,
+    userId: user.id,
   })
 
-  const keys = [...formData.keys()]
-  const newModelId = randomUUID().toString()
-  const newHistoryId = randomUUID().toString()
-  for (const key of keys) {
-    const value = formData.get(key)
-
-    if (value instanceof File) {
-      const name = formData.get(`${key}_name`)?.toString()
-      const size = parseInt(formData.get(`${key}_size`)?.toString() ?? '0')
-      const type = formData.get(`${key}_type`)?.toString()
-      const localStorageUrl = formData.get(`${key}_url`)?.toString()
-      if (name && size && type) {
-        const s3_name = randomUUID().toString() + '-' + name
-
-        const arrayBuffer = await value.arrayBuffer()
-        const buffer = Buffer.from(arrayBuffer)
-
-        const results = await s3Client.send(
-          new PutObjectCommand({
-            Bucket: 'rethought-item-images',
-            Key: `${user.id}/${newModelId}/${s3_name}`,
-            Body: buffer,
-            ACL: 'public-read',
-          }),
-        )
-
-        const s3_url = `https://rethought-item-images.s3-ap-southeast-2.amazonaws.com/${user.id}/${newModelId}/${s3_name}`
-
-        if (results.$metadata.httpStatusCode !== 200) {
-          return {
-            errors: {
-              fieldErrors: {
-                general: 'Image upload failed. Please try again later',
-              },
-            },
-            success: false,
-            redirect: null,
-          }
-        }
-
-        await db.pkmImage.create({
-          data: {
-            s3_url,
-            name,
-            size,
-            type,
-            user_id: user.id,
-            model_id: newModelId,
-          },
-        })
-
-        if (localStorageUrl) {
-          content = content.replaceAll(localStorageUrl, s3_url)
-        }
-      }
+  if (uploadImagesForModelResponse.success === false) {
+    return {
+      errors: {
+        fieldErrors: {
+          general:
+            uploadImagesForModelResponse.error ??
+            'Image upload failed. Please try again later',
+        },
+      },
+      success: false,
+      redirect: null,
     }
   }
+
+  uploadImagesForModelResponse.imageUploads.forEach(
+    ({ s3_url, localStorageUrl }) => {
+      // I still need a bang here despite returning early if content is undefined
+      content = content!.replaceAll(localStorageUrl, s3_url)
+    },
+  )
 
   const itemArgs: {
     content: string
@@ -315,6 +279,8 @@ export const itemCreateAction = async (
     eStoreyId: args.conformedArgs.eStoreyId ?? null,
     eSpaceId: args.conformedArgs.eSpaceId ?? null,
   })
+
+  const newHistoryId = randomUUID().toString()
 
   const results = await db.$transaction([
     db.pkmHistory.create({

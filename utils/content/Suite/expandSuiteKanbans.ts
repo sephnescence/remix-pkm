@@ -46,7 +46,7 @@ const formatModelTypeHeader = (modelType: string, suite: Suite) => {
     <div>
         <div class="pb-4 flex gap-2">
             <div>
-                <a class="p-2 bg-indigo-950 hover:bg-violet-900 rounded-md" href="/item/create/nSuiteId/${suite.id}/nModelType/${modelType}">Add</a>
+                <a class="p-2 bg-indigo-950 hover:bg-violet-900 rounded-md" href="/item/create/eSuiteId/${suite.id}/nModelType/${modelType}">Add</a>
             </div>
             <div class="line-clamp-1">${feModelTypeMap[modelType]}</div>
         </div>
