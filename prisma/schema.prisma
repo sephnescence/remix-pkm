@@ -34,6 +34,10 @@ model User {
   suites Suite[]
   storeys Storey[]
   spaces Space[]
+
+  suite_id String? @db.Uuid
+  storey_id String? @db.Uuid
+  space_id String? @db.Uuid
 }
 
 model PkmHistory {
