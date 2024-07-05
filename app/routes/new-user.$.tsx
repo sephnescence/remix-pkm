@@ -3,6 +3,12 @@ import { getAuth } from '@clerk/remix/ssr.server'
 import { LoaderFunction, redirect } from '@remix-run/node'
 import { randomUUID } from 'node:crypto'
 import { sessionStorage } from '~/session/session.server'
+import { createClerkClient } from '@clerk/remix/api.server'
+import {
+  defaultSpaceId,
+  defaultStoreyId,
+  defaultSuiteId,
+} from '~/repositories/PkmUserRepository'
 
 export const loader: LoaderFunction = async (args) => {
   const clerkUser = await getAuth(args)
@@ -21,7 +27,17 @@ export const loader: LoaderFunction = async (args) => {
 
   const userId = user?.id ?? randomUUID()
 
+  const clerkClient = createClerkClient({
+    secretKey: process.env.CLERK_SECRET_KEY,
+  })
+
+  const clerkUserDetails = await clerkClient.users.getUser(clerkUserId)
+
   const transactions = []
+
+  const newEmail =
+    clerkUserDetails.emailAddresses[0].emailAddress ??
+    `${clerkUserId}@example.com`
 
   if (!user) {
     transactions.push(
@@ -29,8 +45,22 @@ export const loader: LoaderFunction = async (args) => {
         data: {
           id: userId,
           clerkId: clerkUserId,
-          email: `${clerkUserId}@example.com`,
-          username: `${clerkUserId}@example.com`,
+          email: newEmail,
+          username: newEmail,
+        },
+      }),
+    )
+  }
+
+  if (user?.email !== newEmail) {
+    transactions.push(
+      db.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          email: newEmail,
+          username: newEmail,
         },
       }),
     )
@@ -44,7 +74,7 @@ export const loader: LoaderFunction = async (args) => {
       },
       update: {},
       create: {
-        id: userId,
+        id: defaultSuiteId,
         user_id: userId,
         name: 'Welcome Center',
         description: 'Enjoy your stay at Rethought',
@@ -59,9 +89,9 @@ export const loader: LoaderFunction = async (args) => {
       },
       update: {},
       create: {
-        id: userId,
+        id: defaultStoreyId,
         user_id: userId,
-        suite_id: userId,
+        suite_id: defaultSuiteId,
         name: 'Foyer',
         description: 'Please head to reception',
       },
@@ -75,9 +105,9 @@ export const loader: LoaderFunction = async (args) => {
       },
       update: {},
       create: {
-        id: userId,
+        id: defaultSpaceId,
         user_id: userId,
-        storey_id: userId,
+        storey_id: defaultStoreyId,
         name: 'Reception',
         description: 'Check in',
       },
