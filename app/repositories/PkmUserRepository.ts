@@ -1,5 +1,9 @@
 import { db } from '@/utils/db'
 
+export const defaultSuiteId = 'cfe57969-cf72-4b9d-a57d-8dafbd3690c2'
+export const defaultStoreyId = '6294a0e5-ddff-49c6-b6b9-0d102808f770'
+export const defaultSpaceId = 'daa94ddd-a090-488f-a3fb-caad7249bb0c'
+
 export const getUserTrashByClerkId = async (clerkId: string) => {
   return await db.user.findFirst({
     where: {
