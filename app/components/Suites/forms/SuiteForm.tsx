@@ -243,6 +243,28 @@ const SuiteForm = ({
                       parentDivId={multiContent.id}
                     />
                     <div className="flex gap-2 mb-2">
+                      <div>
+                        <button
+                          className="bg-blue-700 hover:bg-blue-600 px-1"
+                          type="button"
+                          title="Add Before"
+                          onClick={() => {
+                            setMultiContents({
+                              type: 'addBefore',
+                              payload: {
+                                id: crypto.randomUUID(),
+                                sortOrder: multiContent.sortOrder,
+                                content:
+                                  '<div class="bg-blue-950 p-4">\n  Enter your content here\n</div>',
+                                status: '<unused>',
+                                originalStatus: '<unused>',
+                              },
+                            })
+                          }}
+                        >
+                          Add Before
+                        </button>
+                      </div>
                       {(multiContent.status === 'active' ||
                         multiContent.status === 'new') && (
                         <div>
@@ -313,6 +335,28 @@ const SuiteForm = ({
                           </button>
                         </div>
                       )}
+                      <div>
+                        <button
+                          className="bg-blue-700 hover:bg-blue-600 px-1"
+                          type="button"
+                          title="Add After"
+                          onClick={() => {
+                            setMultiContents({
+                              type: 'addAfter',
+                              payload: {
+                                id: crypto.randomUUID(),
+                                sortOrder: multiContent.sortOrder,
+                                content:
+                                  '<div class="bg-blue-950 p-4">\n  Enter your content here\n</div>',
+                                status: '<unused>',
+                                originalStatus: '<unused>',
+                              },
+                            })
+                          }}
+                        >
+                          Add After
+                        </button>
+                      </div>
                     </div>
                     {actionData?.errors.fieldErrors.content && (
                       <div className="text-red-500">
