@@ -1,6 +1,13 @@
 import { useReducer } from 'react'
 import { FIXED_NEW_MULTI_CONTENT_ID } from '~/repositories/PkmContentRepository'
 
+const reindex = (multiContents: MultiContentReducerItem[]) => {
+  return multiContents.map((multiContent, index) => ({
+    ...multiContent,
+    sortOrder: index + 1,
+  }))
+}
+
 export type MultiContentReducerItem = {
   id: string // Note: Will be ignored when adding a new MultiContent
   sortOrder: number
@@ -28,10 +35,56 @@ function useMultiContentsReducer({
     ) => {
       if (action.type === 'add') {
         const id = crypto.randomUUID()
-        return [
+        return reindex([
           ...multiContents,
           { ...action.payload, status: 'new', originalStatus: 'new', id },
-        ]
+        ])
+      }
+
+      if (action.type === 'addBefore') {
+        const id = crypto.randomUUID()
+        const newMultiContent = {
+          ...action.payload,
+          status: 'new',
+          originalStatus: 'new',
+          id,
+        }
+
+        const index = multiContents.findIndex(
+          (multiContent) => multiContent.sortOrder === action.payload.sortOrder,
+        )
+        if (index === -1) {
+          return reindex([newMultiContent, ...multiContents])
+        }
+
+        return reindex([
+          ...multiContents.slice(0, index),
+          newMultiContent,
+          ...multiContents.slice(index),
+        ])
+      }
+
+      if (action.type === 'addAfter') {
+        const id = crypto.randomUUID()
+        const newMultiContent = {
+          ...action.payload,
+          status: 'new',
+          originalStatus: 'new',
+          id,
+        }
+
+        const index = multiContents.findIndex(
+          (multiContent) => multiContent.sortOrder === action.payload.sortOrder,
+        )
+        if (index === -1) {
+          return reindex([...multiContents, newMultiContent])
+        }
+
+        return reindex([
+          ...multiContents.slice(0, index + 1),
+          newMultiContent,
+          ...multiContents.slice(index + 1),
+        ])
       }
 
       if (action.type === 'update') {
