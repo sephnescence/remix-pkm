@@ -29,6 +29,96 @@ export const getTransactionsForDuplicateStorey = async (
     }),
   )
 
+  const storeyHistory = await db.pkmHistory.findFirst({
+    where: {
+      suite_id: null,
+      storey_id: eStoreyId,
+      space_id: null,
+      user_id: userId,
+      is_current: true,
+      model_type: 'StoreyContents',
+    },
+    select: {
+      history_id: true,
+    },
+  })
+
+  if (!storeyHistory) {
+    // Not certain this will ever happen
+    return transactions
+  }
+
+  const nHistoryId = randomUUID()
+  transactions.push(
+    db.pkmHistory.create({
+      data: {
+        history_id: nHistoryId,
+        model_id: nStoreyId,
+        model_type: 'StoreyContents',
+        is_current: true,
+        user_id: userId,
+        suite_id: null,
+        storey_id: nStoreyId,
+        space_id: null,
+      },
+    }),
+  )
+
+  const contents = await db.pkmContents.findMany({
+    where: {
+      model_id: eStoreyId,
+      history_id: storeyHistory.history_id,
+    },
+    select: {
+      content: true,
+      sort_order: true,
+    },
+  })
+
+  for (const content of contents) {
+    transactions.push(
+      db.pkmContents.create({
+        data: {
+          content_id: randomUUID().toString(),
+          model_id: nStoreyId,
+          content: content.content,
+          history_id: nHistoryId,
+          sort_order: content.sort_order,
+        },
+      }),
+    )
+  }
+
+  const images = await db.pkmImage.findMany({
+    where: {
+      model_id: eStoreyId,
+      user_id: userId,
+    },
+    select: {
+      model_id: true,
+      name: true,
+      size: true,
+      type: true,
+      s3_url: true,
+      user_id: true,
+    },
+  })
+
+  images.map((image) => {
+    transactions.push(
+      db.pkmImage.create({
+        data: {
+          model_id: nStoreyId,
+          name: image.name,
+          size: image.size,
+          type: image.type,
+          s3_url: image.s3_url,
+          user_id: image.user_id,
+        },
+      }),
+    )
+  })
+
   const storeyDashboard = await getStoreyDashboardForUser({
     suiteId: eSuiteId,
     storeyId: eStoreyId,
@@ -59,7 +149,8 @@ export const getTransactionsForDuplicateStorey = async (
       return transactions
     }
 
-    const newModelId = randomUUID()
+    const nModelId = randomUUID()
+    const nHistoryId = randomUUID()
 
     const itemArgs: {
       content: string
@@ -72,7 +163,7 @@ export const getTransactionsForDuplicateStorey = async (
       content: item.content,
       name: item.name,
       summary: item.summary,
-      model_id: newModelId,
+      model_id: nModelId,
       user_id: userId,
     }
 
@@ -83,7 +174,8 @@ export const getTransactionsForDuplicateStorey = async (
     transactions.push(
       db.pkmHistory.create({
         data: {
-          model_id: newModelId,
+          history_id: nHistoryId,
+          model_id: nModelId,
           model_type: historyItem.model_type,
           is_current: true,
           user_id: userId,
@@ -96,6 +188,31 @@ export const getTransactionsForDuplicateStorey = async (
         },
       }),
     )
+
+    const contents = await db.pkmContents.findMany({
+      where: {
+        model_id: historyItem.model_id,
+        history_id: historyItem.history_id,
+      },
+      select: {
+        content: true,
+        sort_order: true,
+      },
+    })
+
+    for (const content of contents) {
+      transactions.push(
+        db.pkmContents.create({
+          data: {
+            content_id: randomUUID().toString(),
+            model_id: nModelId,
+            content: content.content,
+            history_id: nHistoryId,
+            sort_order: content.sort_order,
+          },
+        }),
+      )
+    }
 
     const images = await db.pkmImage.findMany({
       where: {
@@ -116,7 +233,7 @@ export const getTransactionsForDuplicateStorey = async (
       transactions.push(
         db.pkmImage.create({
           data: {
-            model_id: newModelId,
+            model_id: nModelId,
             name: image.name,
             size: image.size,
             type: image.type,

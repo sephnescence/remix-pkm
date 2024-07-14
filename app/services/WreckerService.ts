@@ -174,6 +174,16 @@ const getSuiteTransactions = async ({
 
   if (!existingSuite) return transactions
 
+  for (const storey of existingSuite.storeys) {
+    transactions.push(
+      ...(await getStoreyTransactions({
+        suiteId,
+        storeyId: storey.id,
+        userId,
+      })),
+    )
+  }
+
   transactions.push(
     ...(await getChildItemTransactions({
       userId,
@@ -225,6 +235,16 @@ const getStoreyTransactions = async ({
   })
 
   if (!existingStorey) return transactions
+
+  for (const space of existingStorey.spaces) {
+    transactions.push(
+      ...(await getSpaceTransactions({
+        storeyId,
+        spaceId: space.id,
+        userId,
+      })),
+    )
+  }
 
   transactions.push(
     ...(await getChildItemTransactions({

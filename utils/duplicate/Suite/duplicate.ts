@@ -26,6 +26,96 @@ export const getTransactionsForDuplicateSuite = async (
     }),
   )
 
+  const suiteHistory = await db.pkmHistory.findFirst({
+    where: {
+      suite_id: eSuiteId,
+      storey_id: null,
+      space_id: null,
+      user_id: userId,
+      is_current: true,
+      model_type: 'StoreyContents',
+    },
+    select: {
+      history_id: true,
+    },
+  })
+
+  if (!suiteHistory) {
+    // Not certain this will ever happen
+    return transactions
+  }
+
+  const nHistoryId = randomUUID()
+  transactions.push(
+    db.pkmHistory.create({
+      data: {
+        history_id: nHistoryId,
+        model_id: nSuiteId,
+        model_type: 'SuiteContents',
+        is_current: true,
+        user_id: userId,
+        suite_id: nSuiteId,
+        storey_id: null,
+        space_id: null,
+      },
+    }),
+  )
+
+  const contents = await db.pkmContents.findMany({
+    where: {
+      model_id: eSuiteId,
+      history_id: suiteHistory.history_id,
+    },
+    select: {
+      content: true,
+      sort_order: true,
+    },
+  })
+
+  for (const content of contents) {
+    transactions.push(
+      db.pkmContents.create({
+        data: {
+          content_id: randomUUID().toString(),
+          model_id: nSuiteId,
+          content: content.content,
+          history_id: nHistoryId,
+          sort_order: content.sort_order,
+        },
+      }),
+    )
+  }
+
+  const images = await db.pkmImage.findMany({
+    where: {
+      model_id: eSuiteId,
+      user_id: userId,
+    },
+    select: {
+      model_id: true,
+      name: true,
+      size: true,
+      type: true,
+      s3_url: true,
+      user_id: true,
+    },
+  })
+
+  images.map((image) => {
+    transactions.push(
+      db.pkmImage.create({
+        data: {
+          model_id: nSuiteId,
+          name: image.name,
+          size: image.size,
+          type: image.type,
+          s3_url: image.s3_url,
+          user_id: image.user_id,
+        },
+      }),
+    )
+  })
+
   const suiteDashboard = await getSuiteDashboardForUser({
     suiteId: eSuiteId,
     userId,

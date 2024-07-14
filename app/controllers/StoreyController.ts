@@ -635,7 +635,7 @@ export const storeyWreckAction = async (args: ActionFunctionArgs) => {
   if (!suiteId || !storeyId) {
     return {
       success: false,
-      error: 'Store not found',
+      error: 'Storey not found',
       redirect: '/',
     }
   }
