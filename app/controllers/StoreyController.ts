@@ -19,6 +19,7 @@ import {
   getSuiteForUser,
 } from '~/repositories/PkmSuiteRepository'
 import { determineSyncContentsTransactionsByFormData } from '~/services/PkmContentService'
+import { wreckStorey } from '~/services/WreckerService'
 
 export type StoreyConfigActionResponse = {
   errors: {
@@ -625,4 +626,37 @@ export const storeyConfigNewAction = async (
       redirect: null,
     }
   }
+}
+
+export const storeyWreckAction = async (args: ActionFunctionArgs) => {
+  const suiteId = args.params.suite_id
+  const storeyId = args.params.storey_id
+
+  if (!suiteId || !storeyId) {
+    return {
+      success: false,
+      error: 'Storey not found',
+      redirect: '/',
+    }
+  }
+
+  const user = await getUserAuth(args)
+  if (!user) {
+    return {
+      errors: {
+        fieldErrors: {
+          general:
+            'Your session has expired. Please log in again in another window to avoid losing your work',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  return await wreckStorey({
+    suiteId,
+    storeyId,
+    userId: user.id,
+  })
 }

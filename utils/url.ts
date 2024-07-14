@@ -1,5 +1,5 @@
 import { ZodError, z } from 'zod'
-import { parseParams } from './apiUtils'
+import { feModelTypeMap, parseParams } from './apiUtils'
 import { getNewItemSuiteStoreyAndSpaceIds } from './create'
 
 export type ConformArrayArgsToObjectResponse = {
@@ -332,6 +332,6 @@ export const conformArrayArgsToObjectForItemCreate = async (
         : searchSpaceId === null
           ? 'Storey'
           : 'Space',
-    pageTitle: `Create ${searchStoreyId === null ? 'Suite' : searchSpaceId === null ? 'Storey' : 'Space'} ${conformedArgs.nModelType} Item`,
+    pageTitle: `Create ${searchStoreyId === null ? 'Suite' : searchSpaceId === null ? 'Storey' : 'Space'} ${feModelTypeMap[conformedArgs.nModelType]} Item`,
   } as ConformArrayArgsToObjectForItemCreateResponse
 }

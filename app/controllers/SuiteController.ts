@@ -15,6 +15,7 @@ import {
   getSuiteDashboard,
 } from '~/repositories/PkmSuiteRepository'
 import { determineSyncContentsTransactionsByFormData } from '~/services/PkmContentService'
+import { wreckSuite } from '~/services/WreckerService'
 
 export type SuiteConfigActionResponse = {
   errors: {
@@ -533,4 +534,35 @@ export const suiteConfigNewAction = async (
       redirect: null,
     }
   }
+}
+
+export const suiteWreckAction = async (args: ActionFunctionArgs) => {
+  const suiteId = args.params.suite_id
+
+  if (!suiteId) {
+    return {
+      success: false,
+      error: 'Suite not found',
+      redirect: '/',
+    }
+  }
+
+  const user = await getUserAuth(args)
+  if (!user) {
+    return {
+      errors: {
+        fieldErrors: {
+          general:
+            'Your session has expired. Please log in again in another window to avoid losing your work',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  return await wreckSuite({
+    suiteId,
+    userId: user.id,
+  })
 }

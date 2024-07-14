@@ -12,6 +12,47 @@ export default function StoreyConfigRoute() {
   const [interactive, setInteractive] = useState(() => false)
   const [submitting, setSubmitting] = useState(() => false)
 
+  const handleWreck = async () => {
+    if (!confirm('Are you sure you want to wreck this Space?')) return false
+
+    setSubmitting(true)
+
+    const thisForm = document.getElementById('wreck-space') as HTMLFormElement
+    if (!thisForm) {
+      return false
+    }
+
+    const formData = new FormData(thisForm)
+    formData.append('suiteId', space.suiteId)
+    formData.append('storeyId', space.storeyId)
+    formData.append('spaceId', space.id)
+
+    const res = await fetch(
+      new Request(
+        `/api/history/suite/${space.suiteId}/storey/${space.storeyId}/space/${space.id}/wreck`,
+        {
+          method: 'POST',
+          body: formData,
+        },
+      ),
+    )
+
+    const resText = await res.text()
+    const resJson = await JSON.parse(resText)
+
+    if (!resJson.redirect) {
+      setSubmitting(false)
+    }
+
+    if (resJson.success === false && resJson.redirect) {
+      window.location.replace(resJson.redirect)
+    }
+
+    if (resJson.success === true && resJson.redirect) {
+      window.location.href = resJson.redirect
+    }
+  }
+
   const handleDuplicate = async () => {
     setSubmitting(true)
 
@@ -131,6 +172,17 @@ export default function StoreyConfigRoute() {
                 disabled={!interactive || submitting}
               >
                 Duplicate
+              </button>
+            </form>
+            <form id="wreck-space" onSubmit={() => false}>
+              <button
+                className={`bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg`}
+                type="button"
+                title="Wreck"
+                onClick={() => void handleWreck()}
+                disabled={!interactive || submitting}
+              >
+                Wreck
               </button>
             </form>
             <Link

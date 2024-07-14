@@ -23,6 +23,7 @@ import {
   getSuiteForUser,
 } from '~/repositories/PkmSuiteRepository'
 import { determineSyncContentsTransactionsByFormData } from '~/services/PkmContentService'
+import { wreckSpace } from '~/services/WreckerService'
 
 export type SpaceConfigActionResponse = {
   errors: {
@@ -708,4 +709,39 @@ export const spaceConfigNewAction = async (
       redirect: null,
     }
   }
+}
+
+export const spaceWreckAction = async (args: ActionFunctionArgs) => {
+  const suiteId = args.params.suite_id
+  const storeyId = args.params.storey_id
+  const spaceId = args.params.space_id
+
+  if (!suiteId || !storeyId || !spaceId) {
+    return {
+      success: false,
+      error: 'Space not found',
+      redirect: '/',
+    }
+  }
+
+  const user = await getUserAuth(args)
+  if (!user) {
+    return {
+      errors: {
+        fieldErrors: {
+          general:
+            'Your session has expired. Please log in again in another window to avoid losing your work',
+        },
+      },
+      success: false,
+      redirect: null,
+    }
+  }
+
+  return await wreckSpace({
+    suiteId,
+    storeyId,
+    spaceId,
+    userId: user.id,
+  })
 }
