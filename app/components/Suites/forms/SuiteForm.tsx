@@ -217,7 +217,7 @@ const SuiteForm = ({
             <div className="mb-4">Content Preview</div>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-1 md:gap-2">
+        <div className="grid grid-cols-1 gap-1">
           {multiContents &&
             multiContents.map((multiContent) => {
               return (
@@ -225,7 +225,7 @@ const SuiteForm = ({
                   key={multiContent.id}
                   className="grid grid-cols-1 gap-1 md:grid-cols-2 md:gap-2"
                 >
-                  <div className="">
+                  <div className="hover:bg-yellow-600 p-1">
                     <ItemContentCodeMirror
                       setContent={(newContent: string) => {
                         setMultiContents({
@@ -242,15 +242,16 @@ const SuiteForm = ({
                       content={multiContent.content}
                       parentDivId={multiContent.id}
                     />
-                    <div className="flex gap-2 mb-2">
+                    <div className="flex gap-2 mt-1">
+                      <div>{multiContent.sortOrder}</div>
                       <div>
                         <button
                           className="bg-blue-700 hover:bg-blue-600 px-1"
                           type="button"
-                          title="Add Before"
+                          title="Add Above"
                           onClick={() => {
                             setMultiContents({
-                              type: 'addBefore',
+                              type: 'addAbove',
                               payload: {
                                 id: crypto.randomUUID(),
                                 sortOrder: multiContent.sortOrder,
@@ -262,7 +263,7 @@ const SuiteForm = ({
                             })
                           }}
                         >
-                          Add Before
+                          Add Above
                         </button>
                       </div>
                       {(multiContent.status === 'active' ||
@@ -285,7 +286,7 @@ const SuiteForm = ({
                               })
                             }}
                           >
-                            Delete after saving
+                            {`Don't keep`}
                           </button>
                         </div>
                       )}
@@ -308,7 +309,7 @@ const SuiteForm = ({
                               })
                             }}
                           >
-                            Do not delete
+                            Keep
                           </button>
                         </div>
                       )}
@@ -339,10 +340,10 @@ const SuiteForm = ({
                         <button
                           className="bg-blue-700 hover:bg-blue-600 px-1"
                           type="button"
-                          title="Add After"
+                          title="Add Below"
                           onClick={() => {
                             setMultiContents({
-                              type: 'addAfter',
+                              type: 'addBelow',
                               payload: {
                                 id: crypto.randomUUID(),
                                 sortOrder: multiContent.sortOrder,
@@ -354,7 +355,7 @@ const SuiteForm = ({
                             })
                           }}
                         >
-                          Add After
+                          Add Below
                         </button>
                       </div>
                     </div>

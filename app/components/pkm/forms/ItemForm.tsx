@@ -329,7 +329,7 @@ export default function ItemForm({
             )}
           </div>
         </div> */}
-        <div className="grid grid-cols-1 gap-1 md:gap-2">
+        <div className="grid grid-cols-1 gap-1">
           {multiContents &&
             multiContents.map((multiContent) => {
               return (
@@ -337,7 +337,7 @@ export default function ItemForm({
                   key={multiContent.id}
                   className="grid grid-cols-1 gap-1 md:grid-cols-2 md:gap-2"
                 >
-                  <div className="">
+                  <div className="hover:bg-yellow-600 p-1">
                     <ItemContentCodeMirror
                       setContent={(newContent: string) => {
                         setMultiContents({
@@ -354,7 +354,30 @@ export default function ItemForm({
                       content={multiContent.content}
                       parentDivId={multiContent.id}
                     />
-                    <div className="flex gap-2 mb-2">
+                    <div className="flex gap-2 mt-1">
+                      <div>{multiContent.sortOrder}</div>
+                      <div>
+                        <button
+                          className="bg-blue-700 hover:bg-blue-600 px-1"
+                          type="button"
+                          title="Add Above"
+                          onClick={() => {
+                            setMultiContents({
+                              type: 'addAbove',
+                              payload: {
+                                id: crypto.randomUUID(),
+                                sortOrder: multiContent.sortOrder,
+                                content:
+                                  '<div class="bg-blue-950 p-4">\n  Enter your content here\n</div>',
+                                status: '<unused>',
+                                originalStatus: '<unused>',
+                              },
+                            })
+                          }}
+                        >
+                          Add Above
+                        </button>
+                      </div>
                       {(multiContent.status === 'active' ||
                         multiContent.status === 'new') && (
                         <div>
@@ -375,7 +398,7 @@ export default function ItemForm({
                               })
                             }}
                           >
-                            Delete after saving
+                            {`Don't Keep`}
                           </button>
                         </div>
                       )}
@@ -398,7 +421,7 @@ export default function ItemForm({
                               })
                             }}
                           >
-                            Do not delete
+                            Keep
                           </button>
                         </div>
                       )}
@@ -425,6 +448,28 @@ export default function ItemForm({
                           </button>
                         </div>
                       )}
+                      <div>
+                        <button
+                          className="bg-blue-700 hover:bg-blue-600 px-1"
+                          type="button"
+                          title="Add Below"
+                          onClick={() => {
+                            setMultiContents({
+                              type: 'addBelow',
+                              payload: {
+                                id: crypto.randomUUID(),
+                                sortOrder: multiContent.sortOrder,
+                                content:
+                                  '<div class="bg-blue-950 p-4">\n  Enter your content here\n</div>',
+                                status: '<unused>',
+                                originalStatus: '<unused>',
+                              },
+                            })
+                          }}
+                        >
+                          Add Below
+                        </button>
+                      </div>
                     </div>
                     {actionData?.errors.fieldErrors.content && (
                       <div className="text-red-500">
