@@ -41,7 +41,7 @@ function useMultiContentsReducer({
         ])
       }
 
-      if (action.type === 'addBefore') {
+      if (action.type === 'addAbove') {
         const id = crypto.randomUUID()
         const newMultiContent = {
           ...action.payload,
@@ -64,7 +64,7 @@ function useMultiContentsReducer({
         ])
       }
 
-      if (action.type === 'addAfter') {
+      if (action.type === 'addBelow') {
         const id = crypto.randomUUID()
         const newMultiContent = {
           ...action.payload,
