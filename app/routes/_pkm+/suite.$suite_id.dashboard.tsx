@@ -122,7 +122,7 @@ export default function SuiteIndexRoute() {
                       >
                         <Epiphany
                           epiphanyItem={item.epiphany_item!}
-                          copyToClipBoardLink={`<div data-contents="/modelId/${item.model_id}"></div>`}
+                          copyToClipBoardLink={`<div contents="/modelId/${item.model_id}"></div>`}
                         />
                       </Link>
                     </div>
@@ -170,7 +170,7 @@ export default function SuiteIndexRoute() {
                       >
                         <Inbox
                           inboxItem={item.inbox_item!}
-                          copyToClipBoardLink={`<div data-contents="/modelId/${item.model_id}"></div>`}
+                          copyToClipBoardLink={`<div contents="/modelId/${item.model_id}"></div>`}
                         />
                       </Link>
                     </div>
@@ -218,7 +218,7 @@ export default function SuiteIndexRoute() {
                       >
                         <PassingThought
                           passingThoughtItem={item.passing_thought_item!}
-                          copyToClipBoardLink={`<div data-contents="/modelId/${item.model_id}"></div>`}
+                          copyToClipBoardLink={`<div contents="/modelId/${item.model_id}"></div>`}
                         />
                       </Link>
                     </div>
@@ -266,7 +266,7 @@ export default function SuiteIndexRoute() {
                       >
                         <Todo
                           todoItem={item.todo_item!}
-                          copyToClipBoardLink={`<div data-contents="/modelId/${item.model_id}"></div>`}
+                          copyToClipBoardLink={`<div contents="/modelId/${item.model_id}"></div>`}
                         />
                       </Link>
                     </div>
@@ -314,7 +314,7 @@ export default function SuiteIndexRoute() {
                       >
                         <Void
                           voidItem={item.void_item!}
-                          copyToClipBoardLink={`<div data-contents="/modelId/${item.model_id}"></div>`}
+                          copyToClipBoardLink={`<div contents="/modelId/${item.model_id}"></div>`}
                         />
                       </Link>
                     </div>
@@ -346,7 +346,7 @@ export default function SuiteIndexRoute() {
                       >
                         <Trash
                           trashItem={item.trash_item!}
-                          copyToClipBoardLink={`<div data-contents="/modelId/${item.model_id}"></div>`}
+                          copyToClipBoardLink={`<div contents="/modelId/${item.model_id}"></div>`}
                         />
                       </Link>
                     </div>

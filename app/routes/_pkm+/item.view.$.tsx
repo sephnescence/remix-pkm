@@ -91,16 +91,18 @@ export default function ViewItemRoute() {
         <div className="text-4xl mb-2">
           View {args.itemLocationName}{' '}
           {feModelTypeMap[args.conformedArgs.eModelType]} Item
-          <CopyToClipBoardButton
-            className="p-1 bg-violet-700 hover:bg-violet-600 ml-2"
-            display={<LinkIcon className="w-6 h-6" />}
-            copy={`<div data-contents="/modelId/${args.conformedArgs.eModelId}"></div>`}
-          />
         </div>
         <div className="w-full mb-4">
           <div className="mb-4">
             <label>
-              <div className="mb-4">Name</div>
+              <div className="mb-4">
+                Name
+                <CopyToClipBoardButton
+                  className="p-1 bg-violet-700 hover:bg-violet-600 ml-2"
+                  display={<LinkIcon className="w-3 h-3" />}
+                  copy={`<span name="/modelId/${args.conformedArgs.eModelId}"></span>`}
+                />
+              </div>
               <input
                 type="text"
                 className="min-w-full bg-slate-800 p-4"
@@ -122,7 +124,14 @@ export default function ViewItemRoute() {
             </label>
           </div>
           <div className="mb-4">
-            <div className="mb-4">Content</div>
+            <div className="mb-4">
+              Content
+              <CopyToClipBoardButton
+                className="p-1 bg-violet-700 hover:bg-violet-600 ml-2"
+                display={<LinkIcon className="w-3 h-3" />}
+                copy={`<div contents="/modelId/${args.conformedArgs.eModelId}"></div>`}
+              />
+            </div>
             <div
               dangerouslySetInnerHTML={{
                 __html: resolvedContent,

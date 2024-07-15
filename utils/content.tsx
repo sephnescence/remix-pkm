@@ -4,8 +4,9 @@
     The "content" field of Suite, Storey, and Space has a domain-specific language that allows for dynamic content generation
 
     For example `<div [variable-name]></div>`. The following variable names are supported:
-      - data-contents: Replaced with the content of the Suite, Storey, or Space
-        - It is recommended to add `<div data-name></div>` if it's required to be linked to
+      - contents: Replaced with the content of the Suite, Storey, or Space
+        - It is recommended to add `<span name></span>` if it's required to be linked to
+      - name: Replaced with a link to the Suite, Storey, Space, or Model. The link will display the name
       - data-name: Replaced with the name of the Suite, Storey, or Space
       - data-name-link: Replaced with the name of the Suite, Storey, or Space, but as a link
       - data-description: Replaced with the description of the Suite, Storey, or Space
@@ -55,6 +56,7 @@ import expandStoreyKanbans from './content/Storey/expandStoreyKanbans'
 import expandSuiteKanbans from './content/Suite/expandSuiteKanbans'
 import {
   getAlwaysLatestHistoryItemForUser,
+  getAlwaysLatestUrlByModelId,
   getPermalinkedHistoryItemForUser,
 } from '~/repositories/PkmHistoryRepository'
 import { getSpaceForUser } from '~/repositories/PkmSpaceRepository'
@@ -188,6 +190,29 @@ const formatMultiContents = ({
       .join('</div><div>') +
     '</div>'
   )
+}
+
+export const viewName = async (
+  params: Awaited<ReturnType<typeof looselyCheckArrayParamsAreValid>>,
+  user: User,
+) => {
+  try {
+    const args = z
+      .object({
+        modelId: z.string().uuid(),
+      })
+      .strict()
+      .parse(params)
+
+    const [url, name] = await getAlwaysLatestUrlByModelId({
+      modelId: args.modelId,
+      userId: user.id,
+    })
+
+    return `<a href="${url}" class="text-violet-400 hover:underline">${name}</a>`
+  } catch {
+    return '/'
+  }
 }
 
 export const viewSuiteContent = async (
@@ -846,7 +871,7 @@ export const displaySuiteContent = async ({
       returnContent =
         returnContent.slice(0, index) +
         `<a href="/suite/${suite.id}/storey/${storeyId}/dashboard">
-        <div data-contents="/modelId/${storeyId}"></div>
+        <div contents="/modelId/${storeyId}"></div>
       </a>` +
         returnContent.slice(index! + match.length)
     }
@@ -1171,13 +1196,26 @@ export const displaySpaceContent = async ({
 
 export const displayContent = async (content: string, user: User) => {
   const contentLocations = [
-    ...content.matchAll(/<div data-contents="\/([a-zA-Z0-9/-]*)"><\/div>/gi),
+    ...content.matchAll(/<div contents="\/([a-zA-Z0-9/-]*)"><\/div>/gi),
   ]
 
   for (const { 0: match, 1: url, index } of contentLocations.reverse()) {
     const parsedParams = looselyCheckArrayParamsAreValid(url.split('/'))
 
     const resolved = await viewContents(parsedParams, user)
+
+    content =
+      content.slice(0, index) + resolved + content.slice(index! + match.length)
+  }
+
+  const nameLocations = [
+    ...content.matchAll(/<span name="\/([a-zA-Z0-9/-]*)"><\/span>/gi),
+  ]
+
+  for (const { 0: match, 1: url, index } of nameLocations.reverse()) {
+    const parsedParams = looselyCheckArrayParamsAreValid(url.split('/'))
+
+    const resolved = await viewName(parsedParams, user)
 
     content =
       content.slice(0, index) + resolved + content.slice(index! + match.length)

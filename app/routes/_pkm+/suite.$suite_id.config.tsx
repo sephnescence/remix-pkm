@@ -95,18 +95,18 @@ export default function SuiteConfigRoute() {
     <>
       <SuiteBreadcrumbs suiteId={suite.id} suiteName={suite.name} />
       <div className="">
-        <div className="text-4xl mb-2">
-          View Suite
-          <CopyToClipBoardButton
-            className="p-1 bg-violet-700 hover:bg-violet-600 ml-2"
-            display={<LinkIcon className="w-6 h-6" />}
-            copy={`<div data-contents="/modelId/${suite.id}"></div>`}
-          />
-        </div>
+        <div className="text-4xl mb-2">View Suite</div>
         <div className="w-full mb-4">
           <div className="mb-4">
             <label>
-              <div className="mb-4">Name</div>
+              <div className="mb-4">
+                Name
+                <CopyToClipBoardButton
+                  className="p-1 bg-violet-700 hover:bg-violet-600 ml-2"
+                  display={<LinkIcon className="w-3 h-3" />}
+                  copy={`<span name="/modelId/${suite.id}"></span>`}
+                />
+              </div>
               <input
                 type="text"
                 className="min-w-full bg-slate-800 p-4"
@@ -128,7 +128,14 @@ export default function SuiteConfigRoute() {
             </label>
           </div>
           <div className="mb-4">
-            <div className="mb-4">Content</div>
+            <div className="mb-4">
+              Content
+              <CopyToClipBoardButton
+                className="p-1 bg-violet-700 hover:bg-violet-600 ml-2"
+                display={<LinkIcon className="w-3 h-3" />}
+                copy={`<div contents="/modelId/${suite.id}"></div>`}
+              />
+            </div>
             <div
               dangerouslySetInnerHTML={{
                 __html: suite.resolvedContent,
