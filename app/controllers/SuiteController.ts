@@ -265,6 +265,9 @@ export const suiteConfigLoader = async (args: LoaderFunctionArgs) => {
         history_id: historyIdForMultiContent,
         model_id: suite.id,
       },
+      orderBy: {
+        sort_order: 'asc',
+      },
     })
 
     for (const multiContent of multiContents) {

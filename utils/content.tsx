@@ -4,7 +4,7 @@
     The "content" field of Suite, Storey, and Space has a domain-specific language that allows for dynamic content generation
 
     For example `<div [variable-name]></div>`. The following variable names are supported:
-      - data-content-loc: Replaced with the content of the Suite, Storey, or Space
+      - data-contents: Replaced with the content of the Suite, Storey, or Space
         - It is recommended to add `<div data-name></div>` if it's required to be linked to
       - data-name: Replaced with the name of the Suite, Storey, or Space
       - data-name-link: Replaced with the name of the Suite, Storey, or Space, but as a link
@@ -61,6 +61,12 @@ import { getSpaceForUser } from '~/repositories/PkmSpaceRepository'
 import { getStoreyAndChildrenForUser } from '~/repositories/PkmStoreyRepository'
 import { getSuiteAndChildrenForUser } from '~/repositories/PkmSuiteRepository'
 import { db } from './db'
+import {
+  getContentsByAlwaysLatestContentId,
+  getContentsByModelId,
+  getContentsByPermalinkId,
+} from '~/repositories/PkmContentRepository'
+import { MultiContentReducerItem } from '~/hooks/useMultiContentsReducer'
 
 export const resolveContentByArrayParams = async ({
   params,
@@ -92,6 +98,95 @@ export const autoResolveContent = async (
     (await viewItemFromPermalink(args, user)) ??
     (await viewItemFromAlwaysLatestLink(args, user)) ??
     invalidOperationResponse('Unable to figure out what to do')
+  )
+}
+
+export const viewContents = async (
+  params: Awaited<ReturnType<typeof looselyCheckArrayParamsAreValid>>,
+  user: User,
+) => {
+  let contents = null
+
+  try {
+    const args = z
+      .object({
+        modelId: z.string().uuid(),
+      })
+      .strict()
+      .parse(params)
+
+    contents = await getContentsByModelId({
+      modelId: args.modelId,
+      userId: user.id,
+    })
+
+    if (contents.length) {
+      const formatted = formatMultiContents({ contents })
+
+      if (formatted) return formatted
+    }
+  } catch {
+    // Swallow. There's just no content to show
+  }
+
+  try {
+    const args = z
+      .object({
+        contentId: z.string().uuid(),
+      })
+      .strict()
+      .parse(params)
+
+    contents = await getContentsByAlwaysLatestContentId({
+      alwaysLatestContentId: args.contentId,
+      userId: user.id,
+    })
+
+    if (contents.length) {
+      const formatted = formatMultiContents({ contents })
+
+      if (formatted) return formatted
+    }
+  } catch {
+    // Swallow. There's just no content to show
+  }
+
+  try {
+    const args = z
+      .object({
+        id: z.string().uuid(),
+      })
+      .strict()
+      .parse(params)
+
+    contents = await getContentsByPermalinkId({
+      permalinkId: args.id,
+      userId: user.id,
+    })
+
+    if (contents.length) {
+      const formatted = formatMultiContents({ contents })
+
+      if (formatted) return formatted
+    }
+  } catch {
+    // Swallow. There's just no content to show
+  }
+
+  return '<div>Unable to resolve contents</div>'
+}
+
+const formatMultiContents = ({
+  contents,
+}: {
+  contents: MultiContentReducerItem[]
+}) => {
+  return (
+    '<div>' +
+    contents
+      .flatMap((content: { content: string }) => content.content)
+      .join('</div><div>') +
+    '</div>'
   )
 }
 
@@ -524,11 +619,13 @@ export const looselyCheckArrayParamsAreValid = (params: string[]) => {
 
     return z
       .object({
-        suiteId: z.string().optional(),
-        storeyId: z.string().optional(),
-        spaceId: z.string().optional(),
-        modelId: z.string().optional(),
-        historyId: z.string().optional(),
+        suiteId: z.string().uuid().optional(),
+        storeyId: z.string().uuid().optional(),
+        spaceId: z.string().uuid().optional(),
+        modelId: z.string().uuid().optional(),
+        historyId: z.string().uuid().optional(),
+        contentId: z.string().uuid().optional(),
+        id: z.string().uuid().optional(),
       })
       .strict()
       .parse(parsedParams)
@@ -749,7 +846,7 @@ export const displaySuiteContent = async ({
       returnContent =
         returnContent.slice(0, index) +
         `<a href="/suite/${suite.id}/storey/${storeyId}/dashboard">
-        <div data-content-loc="/content/suiteId/${suite.id}/storeyId/${storeyId}"></div>
+        <div data-contents="/modelId/${storeyId}"></div>
       </a>` +
         returnContent.slice(index! + match.length)
     }
@@ -1074,14 +1171,13 @@ export const displaySpaceContent = async ({
 
 export const displayContent = async (content: string, user: User) => {
   const contentLocations = [
-    ...content.matchAll(
-      /<div data-content-loc="\/content\/([a-zA-Z0-9/-]*)"><\/div>/gi,
-    ),
+    ...content.matchAll(/<div data-contents="\/([a-zA-Z0-9/-]*)"><\/div>/gi),
   ]
 
   for (const { 0: match, 1: url, index } of contentLocations.reverse()) {
-    const parsedParams = parseParams(url)
-    const resolved = await autoResolveContent(parsedParams, user)
+    const parsedParams = looselyCheckArrayParamsAreValid(url.split('/'))
+
+    const resolved = await viewContents(parsedParams, user)
 
     content =
       content.slice(0, index) + resolved + content.slice(index! + match.length)

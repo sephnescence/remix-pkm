@@ -333,6 +333,9 @@ export const spaceConfigLoader = async (args: LoaderFunctionArgs) => {
         history_id: historyIdForMultiContent,
         model_id: space.id,
       },
+      orderBy: {
+        sort_order: 'asc',
+      },
     })
 
     for (const multiContent of multiContents) {

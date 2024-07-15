@@ -1,6 +1,8 @@
 import { Link, useLoaderData } from '@remix-run/react'
 import { useEffect, useState } from 'react'
+import LinkIcon from '~/components/icons/LinkIcon'
 import StoreyBreadcrumbs from '~/components/nav/StoreyBreadcrumbs'
+import CopyToClipBoardButton from '~/components/pkm/forms/CopyToClipBoardButton'
 import ItemImageCarousel from '~/components/pkm/forms/ItemImageCarousel'
 import { storeyConfigLoader } from '~/controllers/StoreyController'
 
@@ -103,7 +105,14 @@ export default function StoreyConfigRoute() {
         storeyName={storey.name}
       />
       <div className="">
-        <div className="text-4xl mb-2">View Storey</div>
+        <div className="text-4xl mb-2">
+          View Storey
+          <CopyToClipBoardButton
+            className="p-1 bg-violet-700 hover:bg-violet-600 ml-2"
+            display={<LinkIcon className="w-6 h-6" />}
+            copy={`<div data-contents="/modelId/${storey.id}"></div>`}
+          />
+        </div>
         <div className="w-full mb-4">
           <div className="mb-4">
             <label>

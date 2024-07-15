@@ -1,9 +1,11 @@
 import { feModelTypeMap } from '@/utils/apiUtils'
 import { Link, useLoaderData } from '@remix-run/react'
 import { useEffect, useState } from 'react'
+import LinkIcon from '~/components/icons/LinkIcon'
 import SpaceBreadcrumbs from '~/components/nav/SpaceBreadcrumbs'
 import StoreyBreadcrumbs from '~/components/nav/StoreyBreadcrumbs'
 import SuiteBreadcrumbs from '~/components/nav/SuiteBreadcrumbs'
+import CopyToClipBoardButton from '~/components/pkm/forms/CopyToClipBoardButton'
 import ItemImageCarousel from '~/components/pkm/forms/ItemImageCarousel'
 import { ItemLoaderResponse, itemLoader } from '~/controllers/ItemController'
 
@@ -89,6 +91,11 @@ export default function ViewItemRoute() {
         <div className="text-4xl mb-2">
           View {args.itemLocationName}{' '}
           {feModelTypeMap[args.conformedArgs.eModelType]} Item
+          <CopyToClipBoardButton
+            className="p-1 bg-violet-700 hover:bg-violet-600 ml-2"
+            display={<LinkIcon className="w-6 h-6" />}
+            copy={`<div data-contents="/modelId/${args.conformedArgs.eModelId}"></div>`}
+          />
         </div>
         <div className="w-full mb-4">
           <div className="mb-4">

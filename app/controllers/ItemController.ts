@@ -720,6 +720,9 @@ export const itemLoader = async (
       history_id: history.historyItem.history_id,
       model_id: args.conformedArgs.eModelId,
     },
+    orderBy: {
+      sort_order: 'asc',
+    },
   })
 
   if (!multiContents || multiContents.length === 0) {
