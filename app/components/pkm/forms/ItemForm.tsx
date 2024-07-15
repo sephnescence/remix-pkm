@@ -472,11 +472,11 @@ export default function ItemForm({
                           Add Below
                         </button>
                       </div>
-                      {multiContent.status === 'active' && (
+                      {multiContent.originalStatus === 'active' && (
                         <CopyToClipBoardButton
                           className="p-1 bg-violet-700 hover:bg-violet-600"
                           display={<LinkIcon className="w-4 h-4" />}
-                          copy={`<div data-contents="/contentId/${multiContent.id}"></div>`}
+                          copy={`<div contents="/contentId/${multiContent.id}"></div>`}
                         />
                       )}
                     </div>
