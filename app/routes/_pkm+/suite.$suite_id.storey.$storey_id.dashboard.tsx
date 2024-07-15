@@ -122,7 +122,7 @@ export default function StoreyIndexRoute() {
                       >
                         <Epiphany
                           epiphanyItem={item.epiphany_item!}
-                          copyToClipBoardLink={`<div data-content-loc="/content/storeyId/${storeyDashboard.id}/modelId/${item.model_id}"></div>`}
+                          copyToClipBoardLink={`<div data-contents="/modelId/${item.model_id}"></div>`}
                         />
                       </Link>
                     </div>
@@ -170,7 +170,7 @@ export default function StoreyIndexRoute() {
                       >
                         <Inbox
                           inboxItem={item.inbox_item!}
-                          copyToClipBoardLink={`<div data-content-loc="/content/storeyId/${storeyDashboard.id}/modelId/${item.model_id}"></div>`}
+                          copyToClipBoardLink={`<div data-contents="/modelId/${item.model_id}"></div>`}
                         />
                       </Link>
                     </div>
@@ -218,7 +218,7 @@ export default function StoreyIndexRoute() {
                       >
                         <PassingThought
                           passingThoughtItem={item.passing_thought_item!}
-                          copyToClipBoardLink={`<div data-content-loc="/content/storeyId/${storeyDashboard.id}/modelId/${item.model_id}"></div>`}
+                          copyToClipBoardLink={`<div data-contents="/modelId/${item.model_id}"></div>`}
                         />
                       </Link>
                     </div>
@@ -266,7 +266,7 @@ export default function StoreyIndexRoute() {
                       >
                         <Todo
                           todoItem={item.todo_item!}
-                          copyToClipBoardLink={`<div data-content-loc="/content/storeyId/${storeyDashboard.id}/modelId/${item.model_id}"></div>`}
+                          copyToClipBoardLink={`<div data-contents="/modelId/${item.model_id}"></div>`}
                         />
                       </Link>
                     </div>
@@ -314,7 +314,7 @@ export default function StoreyIndexRoute() {
                       >
                         <Void
                           voidItem={item.void_item!}
-                          copyToClipBoardLink={`<div data-content-loc="/content/storeyId/${storeyDashboard.id}/modelId/${item.model_id}"></div>`}
+                          copyToClipBoardLink={`<div data-contents="/modelId/${item.model_id}"></div>`}
                         />
                       </Link>
                     </div>
@@ -346,7 +346,7 @@ export default function StoreyIndexRoute() {
                       >
                         <Trash
                           trashItem={item.trash_item!}
-                          copyToClipBoardLink={`<div data-content-loc="/content/storeyId/${storeyDashboard.id}/modelId/${item.model_id}"></div>`}
+                          copyToClipBoardLink={`<div data-contents="/modelId/${item.model_id}"></div>`}
                         />
                       </Link>
                     </div>

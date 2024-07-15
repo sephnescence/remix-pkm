@@ -299,6 +299,9 @@ export const storeyConfigLoader = async (args: LoaderFunctionArgs) => {
         history_id: historyIdForMultiContent,
         model_id: storey.id,
       },
+      orderBy: {
+        sort_order: 'asc',
+      },
     })
 
     for (const multiContent of multiContents) {

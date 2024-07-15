@@ -9,6 +9,8 @@ import useMultiContentsReducer, {
   MultiContentReducerItem,
 } from '~/hooks/useMultiContentsReducer'
 import ItemImageCarousel from '~/components/pkm/forms/ItemImageCarousel'
+import CopyToClipBoardButton from '~/components/pkm/forms/CopyToClipBoardButton'
+import LinkIcon from '~/components/icons/LinkIcon'
 
 type SuiteFormProps = {
   pageTitle: string
@@ -358,6 +360,13 @@ const SuiteForm = ({
                           Add Below
                         </button>
                       </div>
+                      {multiContent.status === 'active' && (
+                        <CopyToClipBoardButton
+                          className="p-1 bg-violet-700 hover:bg-violet-600"
+                          display={<LinkIcon className="w-4 h-4" />}
+                          copy={`<div data-contents="/contentId/${multiContent.id}"></div>`}
+                        />
+                      )}
                     </div>
                     {actionData?.errors.fieldErrors.content && (
                       <div className="text-red-500">
