@@ -364,7 +364,7 @@ const SuiteForm = ({
                         <CopyToClipBoardButton
                           className="p-1 bg-violet-700 hover:bg-violet-600"
                           display={<LinkIcon className="w-4 h-4" />}
-                          copy={`<div contents="/contentId/${multiContent.id}"></div>`}
+                          copy={`<span contents="/contentId/${multiContent.id}"></span>`}
                         />
                       )}
                     </div>
