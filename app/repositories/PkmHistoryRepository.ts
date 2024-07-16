@@ -515,3 +515,67 @@ export const getAlwaysLatestUrlByModelId = async ({
 
   return ['/', 'Unknown']
 }
+
+export const getAlwaysLatestUrlByContentId = async ({
+  contentId,
+  userId,
+}: {
+  contentId: string
+  userId: string
+}) => {
+  const query = Prisma.sql`
+    select
+      case
+        when model_type = 'SuiteContents' then '/suite/' || su_su.id || '/config#' || c.content_id
+        when model_type = 'StoreyContents' then '/suite/' || st_su.id || '/storey/' || st_st.id || '/config#' || c.content_id
+        when model_type = 'SpaceContents' then '/suite/' || sp_su.id || '/storey/' || sp_st.id || '/space/' || sp_sp.id || '/config#' || c.content_id
+        when model_type = 'PkmEpiphany' and h.storey_id is null then '/item/view/eSuiteId/' || su_su.id || '/eModelType/epiphany/eModelId/' || h.model_id || '/eHistoryId/' || h.history_id || '#' || c.content_id
+        when model_type = 'PkmEpiphany' and h.space_id is null then '/item/view/eSuiteId/' || st_su.id || '/eStoreyId/' || st_st.id ||  '/eModelType/epiphany/eModelId/' || h.model_id || '/eHistoryId/' || h.history_id || '#' || c.content_id
+        when model_type = 'PkmEpiphany' then '/item/view/eSuiteId/' || sp_su.id || '/eStoreyId/' || sp_st.id ||  '/eSpaceId/' || sp_sp.id || '/eModelType/epiphany/eModelId/' || h.model_id || '/eHistoryId/' || h.history_id || '#' || c.content_id
+        when model_type = 'PkmInbox' and h.storey_id is null then '/item/view/eSuiteId/' || su_su.id || '/eModelType/inbox/eModelId/' || h.model_id || '/eHistoryId/' || h.history_id || '#' || c.content_id
+        when model_type = 'PkmInbox' and h.space_id is null then '/item/view/eSuiteId/' || st_su.id || '/eStoreyId/' || st_st.id ||  '/eModelType/inbox/eModelId/' || h.model_id || '/eHistoryId/' || h.history_id || '#' || c.content_id
+        when model_type = 'PkmInbox' then '/item/view/eSuiteId/' || sp_su.id || '/eStoreyId/' || sp_st.id ||  '/eSpaceId/' || sp_sp.id || '/eModelType/inbox/eModelId/' || h.model_id || '/eHistoryId/' || h.history_id || '#' || c.content_id
+        when model_type = 'PkmPassingThought' and h.storey_id is null then '/item/view/eSuiteId/' || su_su.id || '/eModelType/passing-thought/eModelId/' || h.model_id || '/eHistoryId/' || h.history_id || '#' || c.content_id
+        when model_type = 'PkmPassingThought' and h.space_id is null then '/item/view/eSuiteId/' || st_su.id || '/eStoreyId/' || st_st.id ||  '/eModelType/passing-thought/eModelId/' || h.model_id || '/eHistoryId/' || h.history_id || '#' || c.content_id
+        when model_type = 'PkmPassingThought' then '/item/view/eSuiteId/' || sp_su.id || '/eStoreyId/' || sp_st.id ||  '/eSpaceId/' || sp_sp.id || '/eModelType/passing-thought/eModelId/' || h.model_id || '/eHistoryId/' || h.history_id || '#' || c.content_id
+        when model_type = 'PkmTodo' and h.storey_id is null then '/item/view/eSuiteId/' || su_su.id || '/eModelType/todo/eModelId/' || h.model_id || '/eHistoryId/' || h.history_id || '#' || c.content_id
+        when model_type = 'PkmTodo' and h.space_id is null then '/item/view/eSuiteId/' || st_su.id || '/eStoreyId/' || st_st.id ||  '/eModelType/todo/eModelId/' || h.model_id || '/eHistoryId/' || h.history_id || '#' || c.content_id
+        when model_type = 'PkmTodo' then '/item/view/eSuiteId/' || sp_su.id || '/eStoreyId/' || sp_st.id ||  '/eSpaceId/' || sp_sp.id || '/eModelType/todo/eModelId/' || h.model_id || '/eHistoryId/' || h.history_id || '#' || c.content_id
+        when model_type = 'PkmTrash' and h.storey_id is null then '/item/view/eSuiteId/' || su_su.id || '/eModelType/trash/eModelId/' || h.model_id || '/eHistoryId/' || h.history_id || '#' || c.content_id
+        when model_type = 'PkmTrash' and h.space_id is null then '/item/view/eSuiteId/' || st_su.id || '/eStoreyId/' || st_st.id ||  '/eModelType/trash/eModelId/' || h.model_id || '/eHistoryId/' || h.history_id || '#' || c.content_id
+        when model_type = 'PkmTrash' then '/item/view/eSuiteId/' || sp_su.id || '/eStoreyId/' || sp_st.id ||  '/eSpaceId/' || sp_su.id || '/eModelType/trash/eModelId/' || h.model_id || '/eHistoryId/' || h.history_id || '#' || c.content_id
+        when model_type = 'PkmVoid' and h.storey_id is null then '/item/view/eSuiteId/' || su_su.id || '/eModelType/void/eModelId/' || h.model_id || '/eHistoryId/' || h.history_id || '#' || c.content_id
+        when model_type = 'PkmVoid' and h.space_id is null then '/item/view/eSuiteId/' || st_su.id || '/eStoreyId/' || st_st.id ||  '/eModelType/void/eModelId/' || h.model_id || '/eHistoryId/' || h.history_id || '#' || c.content_id
+        when model_type = 'PkmVoid' then '/item/view/eSuiteId/' || sp_su.id || '/eStoreyId/' || sp_st.id ||  '/eSpaceId/' || sp_sp.id || '/eModelType/void/eModelId/' || h.model_id || '/eHistoryId/' || h.history_id || '#' || c.content_id
+      else '/' end as link,
+      case
+        when model_type = 'SuiteContents' then su_su.name
+        when model_type = 'StoreyContents' then st_st.name
+        when model_type = 'SpaceContents' then sp_sp.name
+        when model_type = 'PkmEpiphany' then (select name from "PkmEpiphany" pe where pe.history_id = h.history_id)
+        when model_type = 'PkmInbox' then (select name from "PkmInbox" pe where pe.history_id = h.history_id)
+        when model_type = 'PkmPassingThought' then (select name from "PkmPassingThought" pe where pe.history_id = h.history_id)
+        when model_type = 'PkmTodo' then (select name from "PkmTodo" pe where pe.history_id = h.history_id)
+        when model_type = 'PkmTrash' then (select name from "PkmTrash" pe where pe.history_id = h.history_id)
+        when model_type = 'PkmVoid' then (select name from "PkmVoid" pe where pe.history_id = h.history_id)
+      else '/' end as name
+    from "PkmContents" c
+    join "PkmHistory" h on h.history_id = c.history_id and h.is_current is true
+    left join "Suite" su_su on su_su.id = h.suite_id
+    left join "Storey" st_st on st_st.id = h.storey_id
+    left join "Suite" st_su on st_su.id = st_st.suite_id
+    left join "Space" sp_sp on sp_sp.id = h.space_id
+    left join "Storey" sp_st on sp_st.id = sp_sp.storey_id
+    left join "Suite" sp_su on sp_su.id = sp_st.suite_id
+    where c.content_id = ${contentId}::uuid
+      and h.user_id = ${userId}::uuid
+  `
+
+  const results: [{ link: string; name: string }] = await db.$queryRaw(query)
+
+  if (results[0].link && results[0].name) {
+    return [results[0].link, results[0].name]
+  }
+
+  return ['/', 'Unknown']
+}

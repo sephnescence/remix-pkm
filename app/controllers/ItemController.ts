@@ -755,7 +755,10 @@ export const itemLoader = async (
       originalStatus: 'active',
     })
 
-    resolvedMultiContents.push(await displayContent(multiContent.content, user))
+    const content = await displayContent(multiContent.content, user)
+    resolvedMultiContents.push(
+      `<a id="${multiContent.content_id}">&nbsp;</a><br />${content}`,
+    )
   }
 
   const images = await getImagesForItem({

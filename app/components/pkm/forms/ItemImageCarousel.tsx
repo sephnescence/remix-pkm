@@ -21,7 +21,7 @@ const ItemImageCarousel = ({ images }: ItemImageCarouselProps) => {
             return (
               <div
                 key={image.image_id}
-                className="flex gap-2 flex-shrink-0 border-2 border-violet-700 w-[242px] h-[204px] hover:bg-violet-500 hover:bg-opacity-80"
+                className="flex gap-2 flex-shrink-0 border-[0.5px] border-violet-700 w-[242px] h-[204px] hover:bg-violet-500 hover:bg-opacity-80"
               >
                 <div className="flex flex-shrink-0 w-[200px] h-[200px] justify-center items-center">
                   <img

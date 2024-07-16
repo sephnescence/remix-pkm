@@ -347,8 +347,9 @@ export const spaceConfigLoader = async (args: LoaderFunctionArgs) => {
         originalStatus: 'active',
       })
 
+      const content = await displayContent(multiContent.content, user)
       resolvedMultiContents.push(
-        await displayContent(multiContent.content, user),
+        `<a id="${multiContent.content_id}">&nbsp;</a><br />${content}`,
       )
     }
   }
