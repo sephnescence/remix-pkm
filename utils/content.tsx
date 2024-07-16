@@ -6,6 +6,7 @@
     For example `<div [variable-name]></div>`. The following variable names are supported:
       - contents: Replaced with the content of the Suite, Storey, or Space
         - It is recommended to add `<span name></span>` if it's required to be linked to
+        - Update the div to a span to display the contents inline, with the purple text
       - name: Replaced with a link to the Suite, Storey, Space, or Model. The link will display the name
       - data-name: Replaced with the name of the Suite, Storey, or Space
       - data-name-link: Replaced with the name of the Suite, Storey, or Space, but as a link
@@ -56,6 +57,7 @@ import expandStoreyKanbans from './content/Storey/expandStoreyKanbans'
 import expandSuiteKanbans from './content/Suite/expandSuiteKanbans'
 import {
   getAlwaysLatestHistoryItemForUser,
+  getAlwaysLatestUrlByContentId,
   getAlwaysLatestUrlByModelId,
   getPermalinkedHistoryItemForUser,
 } from '~/repositories/PkmHistoryRepository'
@@ -713,8 +715,10 @@ export const displaySuiteContent = async ({
     // == Suite Children ==
 
     if (!suite.storeys) {
-      resolvedMultiContents.push(await displayContent(returnContent, user))
-      continue
+      const displayedContent = await displayContent(returnContent, user)
+      resolvedMultiContents.push(
+        `<a id="${content.content_id}">&nbsp;</a><br />${displayedContent}`,
+      )
     }
 
     const children = [...returnContent.matchAll(/<div data-children><\/div>/gi)]
@@ -876,7 +880,10 @@ export const displaySuiteContent = async ({
         returnContent.slice(index! + match.length)
     }
 
-    resolvedMultiContents.push(await displayContent(returnContent, user))
+    const displayedContent = await displayContent(returnContent, user)
+    resolvedMultiContents.push(
+      `<a id="${content.content_id}">&nbsp;</a><br />${displayedContent}`,
+    )
   }
 
   return (
@@ -971,7 +978,10 @@ export const displayStoreyContent = async ({
     // == Storey Children ==
 
     if (!storey.spaces) {
-      resolvedMultiContents.push(await displayContent(returnContent, user))
+      const displayedContent = await displayContent(returnContent, user)
+      resolvedMultiContents.push(
+        `<a id="${content.content_id}">&nbsp;</a><br />${displayedContent}`,
+      )
       continue
     }
 
@@ -1094,7 +1104,10 @@ export const displayStoreyContent = async ({
         returnContent.slice(index! + match.length)
     }
 
-    resolvedMultiContents.push(await displayContent(returnContent, user))
+    const displayedContent = await displayContent(returnContent, user)
+    resolvedMultiContents.push(
+      `<a id="${content.content_id}">&nbsp;</a><br />${displayedContent}`,
+    )
   }
 
   return (
@@ -1184,7 +1197,10 @@ export const displaySpaceContent = async ({
       }
     }
 
-    resolvedMultiContents.push(await displayContent(returnContent, user))
+    const displayedContent = await displayContent(returnContent, user)
+    resolvedMultiContents.push(
+      `<a id="${content.content_id}">&nbsp;</a><br />${displayedContent}`,
+    )
   }
 
   return (
@@ -1206,6 +1222,33 @@ export const displayContent = async (content: string, user: User) => {
 
     content =
       content.slice(0, index) + resolved + content.slice(index! + match.length)
+  }
+
+  const contentSpanLocations = [
+    ...content.matchAll(/<span contents="\/([a-zA-Z0-9/-]*)"><\/span>/gi),
+  ]
+
+  for (const { 0: match, 1: url, index } of contentSpanLocations.reverse()) {
+    const parsedParams = looselyCheckArrayParamsAreValid(url.split('/'))
+
+    if (!parsedParams || !parsedParams.contentId) {
+      continue
+    }
+
+    const resolved = await viewContents(parsedParams, user)
+    const [contentUrl, name] = await getAlwaysLatestUrlByContentId({
+      contentId: parsedParams.contentId,
+      userId: user.id,
+    })
+
+    content =
+      content.slice(0, index) +
+      '<div class="flex gap-2 border-[0.5px] border-violet-700">' +
+      `<a href="${contentUrl}" class="w-8 flex-shrink-0 bg-violet-700 hover:bg-violet-500 flex"><div class="m-auto">🔍</div></a>` +
+      `<div class="flex-grow px-2 py-3">${resolved}</div>` +
+      '</div>' +
+      `<div class="w-full text-right">Content from <a href="${contentUrl}" class="text-violet-400 hover:underline">${name}</a></div>` +
+      content.slice(index! + match.length)
   }
 
   const nameLocations = [
