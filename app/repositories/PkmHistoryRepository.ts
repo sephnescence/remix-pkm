@@ -516,12 +516,14 @@ export const getAlwaysLatestUrlByModelId = async ({
   return ['/', 'Unknown']
 }
 
-export const getAlwaysLatestUrlByContentId = async ({
+const resolveGetAlwaysLatestUrlByContentId = async ({
   contentId,
   userId,
+  isCurrent = true,
 }: {
   contentId: string
   userId: string
+  isCurrent?: boolean
 }) => {
   const query = Prisma.sql`
     select
@@ -560,7 +562,7 @@ export const getAlwaysLatestUrlByContentId = async ({
         when model_type = 'PkmVoid' then (select name from "PkmVoid" pe where pe.history_id = h.history_id)
       else '/' end as name
     from "PkmContents" c
-    join "PkmHistory" h on h.history_id = c.history_id and h.is_current is true
+    join "PkmHistory" h on h.history_id = c.history_id and h.is_current = ${Prisma.sql`${isCurrent}`}
     left join "Suite" su_su on su_su.id = h.suite_id
     left join "Storey" st_st on st_st.id = h.storey_id
     left join "Suite" st_su on st_su.id = st_st.suite_id
@@ -573,9 +575,37 @@ export const getAlwaysLatestUrlByContentId = async ({
 
   const results: [{ link: string; name: string }] = await db.$queryRaw(query)
 
-  if (results[0].link && results[0].name) {
-    return [results[0].link, results[0].name]
+  if (results && results[0] && results[0].link && results[0].name) {
+    return [
+      results[0].link,
+      `${results[0].name}${isCurrent === false ? ' (Orphaned)' : ''}`,
+    ]
   }
 
   return ['/', 'Unknown']
+}
+
+export const getAlwaysLatestUrlByContentId = async ({
+  contentId,
+  userId,
+}: {
+  contentId: string
+  userId: string
+}) => {
+  const [resolvedLink, resolvedName] =
+    await resolveGetAlwaysLatestUrlByContentId({
+      contentId,
+      userId,
+      isCurrent: true,
+    })
+
+  if (resolvedLink === '/' && resolvedName === 'Unknown') {
+    return await resolveGetAlwaysLatestUrlByContentId({
+      contentId,
+      userId,
+      isCurrent: false,
+    })
+  }
+
+  return [resolvedLink, resolvedName]
 }

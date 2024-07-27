@@ -67,6 +67,7 @@ export const getTransactionsForDuplicateSuite = async (
       history_id: suiteHistory.history_id,
     },
     select: {
+      content_id: true,
       content: true,
       sort_order: true,
     },
@@ -76,7 +77,7 @@ export const getTransactionsForDuplicateSuite = async (
     transactions.push(
       db.pkmContents.create({
         data: {
-          content_id: randomUUID().toString(),
+          content_id: content.content_id,
           model_id: nSuiteId,
           content: content.content,
           history_id: nHistoryId,

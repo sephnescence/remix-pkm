@@ -1137,7 +1137,7 @@ export const itemMoveAction = async (
       transactions.push(
         db.pkmContents.create({
           data: {
-            content_id: randomUUID().toString(),
+            content_id: multiContent.content_id,
             model_id: args.conformedArgs.eModelId,
             history_id: newHistoryId,
             sort_order: multiContent.sort_order,
