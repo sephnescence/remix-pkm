@@ -143,56 +143,66 @@ export default function SuiteConfigRoute() {
             />
           </div>
           <ItemImageCarousel images={suite.images} />
-          <div className="flex gap-2">
-            <Link to={`/suite/${suite.id}/config/edit`} prefetch="intent">
-              <button
-                className="bg-blue-600 hover:bg-blue-600 px-4 py-2 rounded-lg"
-                type="button"
+          <div className="flex gap-2 overflow-x-scroll">
+            <div className="text-nowrap">
+              <Link
+                to={`/suite/${suite.id}/dashboard?tab=content`}
+                prefetch="intent"
               >
-                Edit
-              </button>
-            </Link>
-            <Link to={`/content/view/suiteId/${suite.id}`} prefetch="intent">
-              <button
-                className="bg-blue-600 hover:bg-blue-600 px-4 py-2 rounded-lg"
-                type="button"
-              >
-                View Content
-              </button>
-            </Link>
-            <form id="duplicate-suite" onSubmit={() => false}>
-              <button
-                className={`bg-violet-600 hover:bg-violet-500 px-4 py-2 rounded-lg`}
-                type="button"
-                title="Duplicate"
-                onClick={() => void handleDuplicate()}
-                disabled={!interactive || submitting}
-              >
-                Duplicate
-              </button>
-            </form>
-            <form id="wreck-suite" onSubmit={() => false}>
-              <button
-                className={`bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg`}
-                type="button"
-                title="Wreck"
-                onClick={() => void handleWreck()}
-                disabled={!interactive || submitting}
-              >
-                Wreck
-              </button>
-            </form>
-            <Link
-              to={`/suite/${suite.id}/dashboard?tab=content`}
-              prefetch="intent"
-            >
-              <button
-                className="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg"
-                type="button"
-              >
-                Cancel
-              </button>
-            </Link>
+                <button
+                  className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg"
+                  type="button"
+                >
+                  Return to Dashboard
+                </button>
+              </Link>
+            </div>
+            <div className="text-nowrap">
+              <Link to={`/suite/${suite.id}/config/edit`} prefetch="intent">
+                <button
+                  className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg"
+                  type="button"
+                >
+                  Edit
+                </button>
+              </Link>
+            </div>
+            <div className="text-nowrap">
+              <Link to={`/content/view/suiteId/${suite.id}`} prefetch="intent">
+                <button
+                  className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg"
+                  type="button"
+                >
+                  View Content
+                </button>
+              </Link>
+            </div>
+            <div className="text-nowrap">
+              <form id="duplicate-suite" onSubmit={() => false}>
+                <button
+                  className={`bg-violet-600 hover:bg-violet-500 px-4 py-2 rounded-lg`}
+                  type="button"
+                  title="Duplicate"
+                  onClick={() => void handleDuplicate()}
+                  disabled={!interactive || submitting}
+                >
+                  Duplicate
+                </button>
+              </form>
+            </div>
+            <div className="text-nowrap">
+              <form id="wreck-suite" onSubmit={() => false}>
+                <button
+                  className={`bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg`}
+                  type="button"
+                  title="Wreck"
+                  onClick={() => void handleWreck()}
+                  disabled={!interactive || submitting}
+                >
+                  Wreck
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>

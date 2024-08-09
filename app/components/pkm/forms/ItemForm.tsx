@@ -532,24 +532,28 @@ export default function ItemForm({
         <div>
           <Dropzone images={images} manipulateImages={manipulateImages} />
         </div>
-        <div className="flex">
-          <button
-            className={`px-4 py-2 rounded-lg bg-blue-600 ${(!interactive || submitting ? 'bg-gray-400' : '') || 'hover:bg-blue-500'}`}
-            type="button"
-            onClick={() => {
-              void handleSubmit()
-            }}
-            disabled={!interactive || submitting}
-          >
-            Submit
-          </button>
-          <button
-            className="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg ml-4"
-            type="button"
-            onClick={() => (window.location.href = cancelUrl || '/reception')}
-          >
-            Cancel
-          </button>
+        <div className="flex gap-2 overflow-x-scroll">
+          <div className="text-nowrap">
+            <button
+              className={`px-4 py-2 rounded-lg bg-blue-600 ${(!interactive || submitting ? 'bg-gray-400' : '') || 'hover:bg-blue-500'}`}
+              type="button"
+              onClick={() => {
+                void handleSubmit()
+              }}
+              disabled={!interactive || submitting}
+            >
+              Submit
+            </button>
+          </div>
+          <div className="text-nowrap">
+            <button
+              className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg"
+              type="button"
+              onClick={() => (window.location.href = cancelUrl || '/reception')}
+            >
+              Return
+            </button>
+          </div>
         </div>
       </form>
     </div>
