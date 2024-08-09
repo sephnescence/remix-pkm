@@ -139,58 +139,70 @@ export default function ViewItemRoute() {
             />
           </div>
           <ItemImageCarousel images={images} />
-          <div className="flex gap-2">
-            <Link to={args.feEditUrl}>
-              <button
-                className="bg-blue-600 hover:bg-blue-600 px-4 py-2 rounded-lg"
-                type="button"
-              >
-                Edit
-              </button>
-            </Link>
-            <Link to={args.fePermalinkUrl}>
-              <button
-                className="bg-blue-600 hover:bg-blue-600 px-4 py-2 rounded-lg"
-                type="button"
-              >
-                Permalink
-              </button>
-            </Link>
-            <Link to={args.feAlwaysLatestUrl}>
-              <button
-                className="bg-blue-600 hover:bg-blue-600 px-4 py-2 rounded-lg"
-                type="button"
-              >
-                Always-Latest Link
-              </button>
-            </Link>
-            <Link to={args.feMoveUrl}>
-              <button
-                className="bg-indigo-600 hover:bg-indigo-600 px-4 py-2 rounded-lg"
-                type="button"
-              >
-                Move
-              </button>
-            </Link>
-            <form id="duplicate-item" onSubmit={() => false}>
-              <button
-                className={`bg-violet-600 hover:bg-violet-500 px-4 py-2 rounded-lg`}
-                type="button"
-                title="Duplicate"
-                onClick={() => void handleDuplicate()}
-                disabled={!interactive || submitting}
-              >
-                Duplicate
-              </button>
-            </form>
-            <Link to={args.feParentUrl}>
-              <button
-                className="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg"
-                type="button"
-              >
-                Cancel
-              </button>
-            </Link>
+          <div className="flex gap-2 overflow-x-scroll">
+            <div className="text-nowrap">
+              <Link to={args.feParentUrl}>
+                <button
+                  className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg"
+                  type="button"
+                >
+                  Return to Dashboard
+                </button>
+              </Link>
+            </div>
+            <div className="text-nowrap">
+              <Link to={args.feEditUrl}>
+                <button
+                  className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg"
+                  type="button"
+                >
+                  Edit
+                </button>
+              </Link>
+            </div>
+            <div className="text-nowrap">
+              <Link to={args.fePermalinkUrl}>
+                <button
+                  className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg"
+                  type="button"
+                >
+                  Permalink
+                </button>
+              </Link>
+            </div>
+            <div className="text-nowrap">
+              <Link to={args.feAlwaysLatestUrl}>
+                <button
+                  className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg"
+                  type="button"
+                >
+                  Always-Latest Link
+                </button>
+              </Link>
+            </div>
+            <div className="text-nowrap">
+              <Link to={args.feMoveUrl}>
+                <button
+                  className="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg"
+                  type="button"
+                >
+                  Move
+                </button>
+              </Link>
+            </div>
+            <div className="text-nowrap">
+              <form id="duplicate-item" onSubmit={() => false}>
+                <button
+                  className={`bg-violet-600 hover:bg-violet-500 px-4 py-2 rounded-lg`}
+                  type="button"
+                  title="Duplicate"
+                  onClick={() => void handleDuplicate()}
+                  disabled={!interactive || submitting}
+                >
+                  Duplicate
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>

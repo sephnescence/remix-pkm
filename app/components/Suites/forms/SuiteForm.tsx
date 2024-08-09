@@ -420,25 +420,29 @@ const SuiteForm = ({
         <div>
           <Dropzone images={images} manipulateImages={manipulateImages} />
         </div>
-        <div className="flex">
-          <button
-            className={`px-4 py-2 rounded-lg bg-blue-600 ${(!interactive || submitting ? 'bg-gray-400' : '') || 'hover:bg-blue-500'}`}
-            type="button"
-            onClick={() => {
-              void handleSubmit()
-            }}
-            disabled={!interactive || submitting}
-          >
-            Submit
-          </button>
-          <Link
-            to={cancelUrl || '/suites'}
-            className="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg ml-4"
-            type="button"
-            prefetch="intent"
-          >
-            Cancel
-          </Link>
+        <div className="flex gap-2">
+          <div className="text-nowrap">
+            <button
+              className={`px-4 py-2 rounded-lg bg-blue-600 ${(!interactive || submitting ? 'bg-gray-400' : '') || 'hover:bg-blue-500'}`}
+              type="button"
+              onClick={() => {
+                void handleSubmit()
+              }}
+              disabled={!interactive || submitting}
+            >
+              Submit
+            </button>
+          </div>
+          <div className="text-nowrap">
+            <Link
+              to={cancelUrl || '/suites'}
+              className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg"
+              type="button"
+              prefetch="intent"
+            >
+              Return
+            </Link>
+          </div>
         </div>
       </form>
     </>

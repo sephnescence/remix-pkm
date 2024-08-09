@@ -1245,7 +1245,7 @@ export const displayContent = async (content: string, user: User) => {
       content.slice(0, index) +
       '<div class="flex gap-2 border-[0.5px] border-violet-700">' +
       `<a href="${contentUrl}" class="w-8 flex-shrink-0 bg-violet-700 hover:bg-violet-500 flex"><div class="m-auto">🔍</div></a>` +
-      `<div class="flex-grow px-2 py-3">${resolved}</div>` +
+      `<div class="flex-grow px-2 py-3 overflow-x-scroll">${resolved}</div>` +
       '</div>' +
       `<div class="w-full text-right">Content from <a href="${contentUrl}" class="text-violet-400 hover:underline">${name}</a></div>` +
       content.slice(index! + match.length)
